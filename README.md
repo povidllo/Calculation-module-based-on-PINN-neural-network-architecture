@@ -1,9 +1,9 @@
 # Calculation-module-based-on-PINN-neural-network-architecture
 
-Использовать:<br />
+<b>Использовать:</b><br />
 python 3.9<br />
 
-Зависимости:<br />
+<b>Зависимости:</b><br />
 fastapi-jsonrpc==3.1.1<br />
 fastapi==0.109.2<br />
 pybase64==1.3.2<br />
@@ -15,6 +15,7 @@ pandas==1.3.0<br />
 matplotlib==3.4.2<br />
 uvicorn==0.24.0.post1<br />
 
-Как использовать:<br />
+<b>Как запускать:</b><br />
+Запустить скрипт habr_test.py<br />
 http://localhost:8010/train - url для обучения модели. Когда ответит {"ok":true,"training":true} значит модель обучилась.<br />
 http://localhost:8010/pinn - ulr для расчета модели, будет работать только после того как сеть обучилась.<br />
