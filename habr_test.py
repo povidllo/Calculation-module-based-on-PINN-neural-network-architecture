@@ -220,7 +220,7 @@ async def train_pinn(background_tasks: BackgroundTasks, N:Optional[int] = None):
     if (N is not None) and (not isTraining):
         isTrained = False
         steps = N
-        
+
     if (not isTrained) and (not isTraining):
         background_tasks.add_task(train, steps)
     return {"ok" : isTrained , 'training' : isTraining}
