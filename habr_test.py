@@ -65,9 +65,6 @@ mtemplate = lambda gscripts, gdivs: """
 </html>
 """
 
-isTrained = False
-isTraining = False
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class simpleModel(nn.Module):
   def __init__(self,
@@ -88,9 +85,17 @@ class simpleModel(nn.Module):
         nn.Tanh(),
     )
 
+
   def forward(self, x):
     return self.layers_stack(x)
 
+isTrained = False
+isTraining = False
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+x0_true=torch.tensor([1], dtype=float).float().to(device)
+dx0dt_true = torch.tensor([0], dtype=float).float().to(device)
+model = simpleModel().to(device)
 
 def pde(out, t, nu=2):
     omega = 2 * torch.pi * nu
@@ -100,12 +105,6 @@ def pde(out, t, nu=2):
                             retain_graph=True)[0]
     f = d2xdt2 + (omega ** 2) * out
     return f
-
-
-
-x0_true=torch.tensor([1], dtype=float).float().to(device)
-dx0dt_true = torch.tensor([0], dtype=float).float().to(device)
-model = simpleModel().to(device)
 
 
 def pdeBC(t):
