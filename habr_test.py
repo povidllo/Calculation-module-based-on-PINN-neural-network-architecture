@@ -1,3 +1,15 @@
+from contextlib import asynccontextmanager
+from fastapi import Body
+import json
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi import FastAPI, BackgroundTasks, Request, Depends,WebSocket, WebSocketDisconnect, Query, Response
+from typing import List, Dict, Optional, Union
+from pydantic import BaseModel
+import fastapi_jsonrpc as jsonrpc
+import jinja2
+import io
+import base64
+
 import torch
 import torch.nn as nn
 
@@ -12,6 +24,49 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 # from google.colab import files as filescolab
 
+
+
+cur_host = 'localhost'
+api_v1 = jsonrpc.Entrypoint('/api/v1/jsonrpc')
+
+class MyError(jsonrpc.BaseError):
+    CODE = 5000
+    MESSAGE = 'My error'
+
+    class DataModel(BaseModel):
+        details: str
+
+
+mtemplate = lambda gscripts, gdivs: """
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script>
+            var url_login = "https://""" + str(cur_host) + """:8008/login"
+
+            async function login_auth(){
+            return await fetch(url_login, {
+                    method: 'POST',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ "username": cur_key,  "password" : cur_val })
+                }).then((response) => response.json())
+            }
+        </script>    
+        """ + str(gscripts) + """
+    </head>
+    <body>
+        """ + str(gdivs) + """
+        <div id="myplot"></div><p>
+    </body>
+</html>
+"""
+
+isTrained = False
+isTraining = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class simpleModel(nn.Module):
@@ -46,41 +101,18 @@ def pde(out, t, nu=2):
     f = d2xdt2 + (omega ** 2) * out
     return f
 
-# def pde(out, x, C=1):
-#     du_dx = torch.autograd.grad(out, x, torch.ones_like(x), create_graph=True, retain_graph=True)[0]
-#     d2u_dx2 = torch.autograd.grad(du_dx, x, torch.ones_like(x), create_graph=True, retain_graph=True)[0]
-#
-#     f = C * x
-#
-#     residual = d2u_dx2 + f
-#     return residual
 
 
-nu=2
-omega = 2 * torch.pi * nu
 x0_true=torch.tensor([1], dtype=float).float().to(device)
-dx0dt_true=torch.tensor([0], dtype=float).float().to(device)
-# C = 1.0
-# T_star = 1.0
-# u_star = 1.0
-# L = 10.0
-# x0_true=torch.tensor([-T_star], dtype=float).float().to(device)
-# dx0dt_true=torch.tensor([u_star], dtype=float).float().to(device)
-
-
+dx0dt_true = torch.tensor([0], dtype=float).float().to(device)
 model = simpleModel().to(device)
-
-steps=1000
-pbar = tqdm(range(steps), desc='Training Progress')
-t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
-t.requires_grad = True
-
-metric_data = nn.MSELoss()
-writer = SummaryWriter()
-optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
 
 
 def pdeBC(t):
+    metric_data = nn.MSELoss()
+
+
+
     out = model(t).to(device)
     f1 = pde(out, t)
 
@@ -96,27 +128,18 @@ def pdeBC(t):
 
     loss = 1e3*loss_bc + loss_pde
 
-    # metric_x = metric_data(out, x0_true * torch.sin(omega*t + torch.pi / 2))
-    # metric_x0 = metric_data(x0, x0_true)
-    # metric_dx0dt = metric_data(dx0dt, dx0dt_true.to(device))
-
-    # acc_metrics = {'metric_x': metric_x,
-    #             'metric_x0': metric_x0,
-    #             'metric_dx0dt': metric_dx0dt,
-    #             }
-
-    # metrics = {'loss': loss,
-    #             'loss_bc': loss_bc,
-    #             'loss_pde': loss_pde,
-    #             }
-
     return loss
 
 
-
-
 def train():
-
+    global isTrained
+    global isTraining
+    isTraining = True
+    steps = 10
+    pbar = tqdm(range(steps), desc='Training Progress')
+    optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
+    t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
+    t.requires_grad = True
 
     for step in pbar:
         def closure():
@@ -130,19 +153,19 @@ def train():
             current_loss = closure().item()
             pbar.set_description("Step: %d | Loss: %.6f" %
                                  (step, current_loss))
-            writer.add_scalar('Loss/train', current_loss, step)
-
-
-
+    isTrained = True
 
 
 def predict():
+    nu = 2
+    omega = 2 * torch.pi * nu
+
+
     t = torch.linspace(0, 1, 100).unsqueeze(-1).unsqueeze(0).to(device)
     t.requires_grad = True
     x_pred = model(t.float())
 
     x_true = x0_true * torch.cos(omega*t)
-    # x_true = C/6 *(L**3 - t**3) - T_star*(t+L) + u_star
 
     fs = 13
     plt.scatter(t[0].cpu().detach().numpy(), x_pred[0].cpu().detach().numpy(), label='pred',
@@ -158,12 +181,55 @@ def predict():
     plt.yticks(fontsize=fs)
     plt.legend()
     plt.title('x(t)')
-    plt.savefig('x.png')
-    plt.show()
+    # plt.savefig('x.png')
+    # plt.show()
+
+    my_stringIObytes = io.BytesIO()
+    plt.savefig(my_stringIObytes, format='jpg')
+    my_stringIObytes.seek(0)
+    my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
+    return my_base64_jpgData
+
+async def pinn() :
+    global mtemplate
+    global isTrained
 
 
+
+    base64_encoded_image = b''
+
+
+    loader = jinja2.FileSystemLoader("./templates")
+    env = jinja2.Environment(loader=loader,autoescape = False)
+    table_templ = env.get_template("index.html")
+
+    if isTrained:
+        base64_encoded_image = predict()
+
+    table_templ = table_templ.render(myImage=base64_encoded_image)
+
+    return HTMLResponse(mtemplate('<script></script>', table_templ))
+
+
+async def train_pinn(background_tasks: BackgroundTasks, N:Optional[int] = None):
+    global isTrained
+    global isTraining
+
+    if (not isTrained) and (not isTraining):
+        background_tasks.add_task(train)
+    return {"ok" : isTrained , 'training' : isTraining}
 
 if __name__ == '__main__':
-    train()
-    writer.close()
-    predict()
+
+    @asynccontextmanager
+    async def lifespan(app: jsonrpc.API):
+        yield
+
+
+    app = jsonrpc.API(lifespan=lifespan)
+    app.bind_entrypoint(api_v1)
+    app.add_api_route("/pinn", pinn, methods=["GET"])
+    app.add_api_route("/train", train_pinn, methods=["GET"])
+
+    import uvicorn
+    uvicorn.run(app, host=cur_host, port=8010)
