@@ -130,11 +130,11 @@ def pdeBC(t):
     return loss
 
 
-def train():
+def train(in_steps):
     global isTrained
     global isTraining
     isTraining = True
-    steps = 10
+    steps = in_steps
     pbar = tqdm(range(steps), desc='Training Progress')
     optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
     t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
@@ -216,9 +216,13 @@ async def pinn() :
 async def train_pinn(background_tasks: BackgroundTasks, N:Optional[int] = None):
     global isTrained
     global isTraining
-
+    steps = 10
+    if (N is not None) and (not isTraining):
+        isTrained = False
+        steps = N
+        
     if (not isTrained) and (not isTraining):
-        background_tasks.add_task(train)
+        background_tasks.add_task(train, steps)
     return {"ok" : isTrained , 'training' : isTraining}
 
 if __name__ == '__main__':
