@@ -153,6 +153,7 @@ def train():
             pbar.set_description("Step: %d | Loss: %.6f" %
                                  (step, current_loss))
     isTrained = True
+    isTraining = False
 
 
 def predict():
