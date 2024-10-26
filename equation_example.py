@@ -12,6 +12,8 @@ dx_dt0_bc = 0
 
 import torch
 import numpy as np
+from tqdm import tqdm
+import neural_network
 
 def lossPDE(t, nu = 2):
     
@@ -58,5 +60,20 @@ def loss(input_t):
     loss = 1e3*loss_bc + loss_pde
     
     return loss
+
+def train(steps = 100):
+
+    model = init_nn();
+
+    pbar = tqdm(range(steps), desc='Training Progress')
+    input_t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
+    input_t.requires_grad = True
+
+    optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
+
+    for step in pbar:
+
+
+
     
     
