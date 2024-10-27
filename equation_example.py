@@ -10,15 +10,15 @@ dx_dt0_bc = 0
 
 '''
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 import torch
 import torch.nn as nn
 import numpy as np
-from tqdm import tqdm
-import neural_network
+import matplotlib.pyplot as plt
 
-metric_data = nn.MSELoss
+import neural_network as nene
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 def lossPDE(t, nu = 2):
     
@@ -35,9 +35,9 @@ def lossPDE(t, nu = 2):
     f = dx_dt + d2x_dwt + (w**2) * x
     
     
-    loss(f, torch.zeros_like(f))
+    lossPDE = model.loss(f, torch.zeros_like(f))
     
-    return loss
+    return lossPDE
 
 def lossBC(input_t):
     #устанавливаю граничные условия
@@ -53,7 +53,7 @@ def lossBC(input_t):
     x0 = model(t0).to(device)
     dx0_dt0 = torch.autograd.grad(x0, t0, torch.ones_like(t0), create_graph=True, retain_graph=True)[0]
     
-    loss = metric_data(x0, x0_bc) + metric_data(dx0_dt0, dx_dt0_bc)
+    loss = model.loss(x0, x0_bc) + model.loss(dx0_dt0, dx_dt0_bc)
     
     return loss
     
@@ -66,19 +66,41 @@ def complete_loss(input_t):
     
     return loss
 
-def train(steps = 100):
-
-    model = init_nn(loss1=lossBC, loss2=lossPDE).to(DEVICE)
-
-    pbar = tqdm(range(steps), desc='Training Progress')
-    input_t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(DEVICE)
+def train(epochs = 100):
+    input_t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
     input_t.requires_grad = True
 
-    optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
-
-    for step in pbar:
-
-
-
+    losses = model.fit(input_t)
     
-    
+
+model = nene.init_nn(1, 1, 20, 500, loss1=lossBC, loss2=lossPDE).to(device)
+
+train()
+
+
+t = torch.linspace(0, 1, 100).unsqueeze(-1).unsqueeze(0).to(device)
+t.requires_grad=True
+x_pred = model(t.float())    
+
+x0_true = torch.tensor([1], dtype=float).float().to(device)
+nu=2
+omega = 2 * torch.pi * nu
+
+x_true = x0_true * torch.cos(omega*t)
+
+fs=13
+plt.scatter(t[0].cpu().detach().numpy(), x_pred[0].cpu().detach().numpy(), label='pred',
+            marker='o',
+            alpha=.7,
+            s=50)
+plt.plot(t[0].cpu().detach().numpy(),x_true[0].cpu().detach().numpy(),
+         color='blue',
+         label='analytical')
+plt.xlabel('t', fontsize=fs)
+plt.ylabel('x(t)', fontsize=fs)
+plt.xticks(fontsize=fs)
+plt.yticks(fontsize=fs)
+plt.legend()
+plt.title('x(t)')
+plt.savefig('x.png')
+plt.show()
