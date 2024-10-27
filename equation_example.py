@@ -10,17 +10,22 @@ dx_dt0_bc = 0
 
 '''
 
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 import torch
+import torch.nn as nn
 import numpy as np
 from tqdm import tqdm
 import neural_network
+
+metric_data = nn.MSELoss
 
 def lossPDE(t, nu = 2):
     
     #вычисляю выходное значение
     out_x = model(t).to(device)
     
-    #для упращения
+    #для упрощения
     x = out_x
     
     #вычисляю диф уравнение
@@ -53,7 +58,7 @@ def lossBC(input_t):
     return loss
     
 
-def loss(input_t):
+def complete_loss(input_t):
     loss_bc = lossBC(input_t)
     loss_pde = lossPDE(input_t, 2)
     
@@ -63,10 +68,10 @@ def loss(input_t):
 
 def train(steps = 100):
 
-    model = init_nn();
+    model = init_nn(loss1=lossBC, loss2=lossPDE).to(DEVICE)
 
     pbar = tqdm(range(steps), desc='Training Progress')
-    input_t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
+    input_t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(DEVICE)
     input_t.requires_grad = True
 
     optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
