@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import pandas as pd
+import functools
 import matplotlib.pyplot as plt
 import torch.optim as optim
 import random
@@ -9,16 +10,34 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def np_to_th(x):
+    n_samples = len(x)
+    return torch.from_numpy(x).to(torch.float).to(device).reshape(n_samples, -1)
+
+def func(x, x0, omega, nu):
+    x_true = x0 * np.cos(omega*x)
+    return x_true
+
+def ret():
+    nu=2
+    omega = 2 * torch.pi * nu
+    times = np.linspace(0, 2, 100)
+    eq = functools.partial(func,x0=1,omega=omega,nu=nu)
+    temps = eq(times)
+
+    x = np.linspace(0, 3, 30)
+    y = eq(t) +  0.8 *np.random.rand()
+    return x, y
 
 
 class simpleModel(nn.Module):
     def __init__(self,
                 input_size=1,
                 output_size=1,
-                hidden_size=20,
-                epoch=500,
+                hidden_size=12,
+                epoch=900,
                 loss=nn.MSELoss(),
                 loss_func=None,  # <- обновлено, чтобы loss_func работала корректно
                 lr=0.01):
@@ -50,6 +69,11 @@ class simpleModel(nn.Module):
         return self.layers_stack(x)
     
     def training_a(self, t):
+        X, y = ret()
+
+        Xt = np_to_th(X)
+        yt = np_to_th(y)
+
         steps = self.epoch
         pbar = tqdm(range(steps), desc='Training Progress')
         writer = SummaryWriter()
@@ -57,7 +81,9 @@ class simpleModel(nn.Module):
         for step in pbar:
             def closure():
                 optimizer.zero_grad()
-                loss = self.loss_func(t)  # <- используем loss_func корректно
+                outputs = self.forward(Xt)
+                loss = self.loss(yt, outputs)
+                loss += self.loss_func(t)  # <- используем loss_func корректно
                 loss.backward()
                 return loss
 

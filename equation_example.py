@@ -32,6 +32,9 @@ def lossBC(t):
                 model.loss(dx0dt, dx0dt_true.to(device))
     return loss_bс
 
+def lossData(t):
+    loss_data = model.loss()
+
 def lossPDE(t, nu = 2):
     out = model(t).to(device)
 
@@ -78,10 +81,10 @@ def print_value():
     plt.savefig('x.png')
     plt.show()
 
-model = net.simpleModel(1, 1, 20, 500, loss_func=fullLoss, lr=0.1).to(device)
+model = net.simpleModel(1, 1, 20, 1250, loss_func=fullLoss, lr=0.1).to(device)
 
 
-t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
+t = (torch.linspace(0, 2, 100).unsqueeze(1)).to(device)
 t.requires_grad = True
 
 model.training_a(t)
