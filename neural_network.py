@@ -1,96 +1,74 @@
-"""
-
-
-    metric_data - это тип вычисления лосс функции тип metric_data = nn.MSELoss() (хз правильно ли сказал, но думаю понятно)
-    device - это девайс
-    model - модель
-    устанавливает оптимизатор
-
-    сделай функцию тип init_nn(типо интерфейса), где она инициализируется и устанавливает значения выше
-"""
-
 import torch
 import torch.nn as nn
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 import torch.optim as optim
+import random
+from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def np_to_th(x):
-    n_samples = len(x)
-    return torch.from_numpy(x).to(torch.float).to(DEVICE).reshape(n_samples, -1)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class init_nn(nn.Module):
-    def __init__(
-            self,
-            input_dim=1,
-            output_dim=1,
-            n_units=100,
-            epochs=1000,
-            loss=nn.MSELoss(),  # лосс функция для экспериментальных данных
-            loss1=None,  # лосс функция для граничных условий
-            lr=0.1,
-            loss2=None,  # лосс функция для дифф. уравнения
-            loss2_weight=1,
-    ) -> None:
+
+class simpleModel(nn.Module):
+    def __init__(self,
+                input_size=1,
+                output_size=1,
+                hidden_size=20,
+                epoch=500,
+                loss=nn.MSELoss(),
+                loss_func=None,  # <- обновлено, чтобы loss_func работала корректно
+                lr=0.01):
         super().__init__()
-
-        self.epochs = epochs
+        self.input_size = input_size
+        self.output_size = output_size
+        self.hidden_size = hidden_size
+        self.epoch = epoch
         self.loss = loss
-        self.loss1 = loss1
-        self.loss2 = loss2
-        self.loss2_weight = loss2_weight
+        self.loss_func = loss_func  # <- сохраняем loss_func для использования
         self.lr = lr
-        self.n_units = n_units
 
-        self.layers = nn.Sequential(
-            nn.Linear(input_dim, self.n_units),
+        self.layers_stack = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
             nn.Tanh(),
-            nn.Linear(self.n_units, self.n_units),
+            nn.Linear(hidden_size, hidden_size), #1
             nn.Tanh(),
-            nn.Linear(self.n_units, self.n_units),
+            nn.Linear(hidden_size, hidden_size), #2
             nn.Tanh(),
-            nn.Linear(self.n_units, self.n_units),
+            nn.Linear(hidden_size, hidden_size), #3
             nn.Tanh(),
-            nn.Linear(self.n_units, self.n_units),
+            nn.Linear(hidden_size, hidden_size), #4
+            nn.Tanh(),
+            nn.Linear(hidden_size, output_size),
             nn.Tanh(),
         )
-        self.out = nn.Linear(self.n_units, output_dim)
 
     def forward(self, x):
-        h = self.layers(x)
-        out = self.out(h)
-
-        return out
-
-    def fit(self, X):
-        # Xt = np_to_th(X)
-        pbar = tqdm(range(self.epochs), desc='Training Progress')
+        return self.layers_stack(x)
+    
+    def training_a(self, t):
+        steps = self.epoch
+        pbar = tqdm(range(steps), desc='Training Progress')
         writer = SummaryWriter()
-        optimiser = optim.LBFGS(self.parameters(), lr=self.lr)
-        self.train()
-        losses = []
-        for step in range(self.epochs):
-            # optimiser.zero_grad()
-            # outputs = self.forward(X)
-            # loss = self.loss2_weight * (self.loss2(X) + self.loss1(X))
-            # loss.backward()
+        optimizer = torch.optim.LBFGS(self.parameters(), self.lr)
+        for step in pbar:
             def closure():
-                optimiser.zero_grad()
-                loss = self.loss2_weight * (self.loss2(X) + 1e3*self.loss1(X))
+                optimizer.zero_grad()
+                loss = self.loss_func(t)  # <- используем loss_func корректно
                 loss.backward()
                 return loss
-            optimiser.step(closure)
-            loss = closure()
+
+            optimizer.step(closure)
             if step % 2 == 0:
                 current_loss = closure().item()
                 pbar.set_description("Step: %d | Loss: %.6f" %
-                                    (step, current_loss))
+                                     (step, current_loss))
                 writer.add_scalar('Loss/train', current_loss, step)
-        return losses
+        writer.close()
 
-    def predict(self, X):
-        self.eval()
-        out = self.forward(np_to_th(X))
-        return out.detach().cpu().numpy()
+
+
+

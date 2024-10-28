@@ -10,97 +10,80 @@ dx_dt0_bc = 0
 
 '''
 
-import torch
-import torch.nn as nn
-import numpy as np
+import neural_network as net
 import matplotlib.pyplot as plt
+from neural_network import torch
+from neural_network import device
 
-import neural_network as nene
+# torch.manual_seed(44)
+# np.random.seed(44)
+# random.seed(44)
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def lossBC(t):
+    x0_true=torch.tensor([1], dtype=float).float().to(device)
+    dx0dt_true=torch.tensor([0], dtype=float).float().to(device)
+    inlet_mask = (t[:, 0] == 0)
+    t0 = t[inlet_mask]
+    x0 = model(t0).to(device)
+    dx0dt = torch.autograd.grad(x0, t0, torch.ones_like(t0), create_graph=True, \
+                        retain_graph=True)[0]
 
+    loss_bс = model.loss(x0, x0_true) + \
+                model.loss(dx0dt, dx0dt_true.to(device))
+    return loss_bс
 
 def lossPDE(t, nu = 2):
-    
-    #вычисляю выходное значение
-    out_x = model(t).to(device)
-    
-    #для упрощения
-    x = out_x
-    
-    #вычисляю диф уравнение
-    w = 2 * torch.pi * nu
-    dx_dt = torch.autograd.grad(x, t, torch.ones_like(t), create_graph=True, retain_graph=True)[0]
-    d2x_dwt = torch.autograd.grad(dx_dt, t, torch.ones_like(t), create_graph=True, retain_graph=True)[0]
-    f = dx_dt + d2x_dwt + (w**2) * x
-    
-    
-    lossPDE = model.loss(f, torch.zeros_like(f))
-    
-    return lossPDE
+    out = model(t).to(device)
 
-def lossBC(input_t):
-    #устанавливаю граничные условия
-    x0_bc = torch.tensor([1], dtype=float).float().to(device)
-    dx_dt0_bc = torch.tensor([0], dtype=float).float().to(device)
+    omega = 2 * torch.pi * nu
+    dxdt = torch.autograd.grad(out, t, torch.ones_like(t), create_graph=True, \
+                            retain_graph=True)[0]
+    d2xdt2 = torch.autograd.grad(dxdt, t, torch.ones_like(t), create_graph=True, \
+                            retain_graph=True)[0]
+    f1 = d2xdt2 + (omega ** 2) * out
     
-    #маска, где true только на 0 значении
-    mask = (input_t[:,0] == 0)
+    loss_pde = model.loss(f1, torch.zeros_like(f1))
     
-    t0 = input_t[mask] # = 0.000
-    
-    #вычисляем x0 на граничных условиях и производную
-    x0 = model(t0).to(device)
-    dx0_dt0 = torch.autograd.grad(x0, t0, torch.ones_like(t0), create_graph=True, retain_graph=True)[0]
-    
-    loss = model.loss(x0, x0_bc) + model.loss(dx0_dt0, dx_dt0_bc)
-    
-    return loss
-    
+    return loss_pde
 
-def complete_loss(input_t):
-    loss_bc = lossBC(input_t)
-    loss_pde = lossPDE(input_t, 2)
-    
-    loss = 1e3*loss_bc + loss_pde
-    
+def fullLoss(t):
+    loss = lossPDE(t) + 1e3*lossBC(t)
     return loss
 
-def train(epochs = 100):
-    input_t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
-    input_t.requires_grad = True
+def print_value():
+    nu=2
+    omega = 2 * torch.pi * nu
+    x0_true=torch.tensor([1], dtype=float).float().to(device)
+    dx0dt_true=torch.tensor([0], dtype=float).float().to(device)
 
-    losses = model.fit(input_t)
-    
+    t = torch.linspace(0, 2, 100).unsqueeze(-1).unsqueeze(0).to(device)
+    t.requires_grad=True
+    x_pred = model(t.float())
+    x_true = x0_true * torch.cos(omega*t)
 
-model = nene.init_nn(1, 1, 20, 500, loss1=lossBC, loss2=lossPDE).to(device)
+    fs=13
+    plt.scatter(t[0].cpu().detach().numpy(), x_pred[0].cpu().detach().numpy(), label='pred',
+                marker='o',
+                alpha=.7,
+                s=50)
+    plt.plot(t[0].cpu().detach().numpy(),x_true[0].cpu().detach().numpy(),
+            color='blue',
+            label='analytical')
+    plt.xlabel('t', fontsize=fs)
+    plt.ylabel('x(t)', fontsize=fs)
+    plt.xticks(fontsize=fs)
+    plt.yticks(fontsize=fs)
+    plt.legend()
+    plt.title('x(t)')
+    plt.savefig('x.png')
+    plt.show()
 
-train()
+model = net.simpleModel(1, 1, 20, 500, loss_func=fullLoss, lr=0.1).to(device)
 
 
-t = torch.linspace(0, 1, 100).unsqueeze(-1).unsqueeze(0).to(device)
-t.requires_grad=True
-x_pred = model(t.float())    
+t = (torch.linspace(0, 1, 100).unsqueeze(1)).to(device)
+t.requires_grad = True
 
-x0_true = torch.tensor([1], dtype=float).float().to(device)
-nu=2
-omega = 2 * torch.pi * nu
+model.training_a(t)
 
-x_true = x0_true * torch.cos(omega*t)
-
-fs=13
-plt.scatter(t[0].cpu().detach().numpy(), x_pred[0].cpu().detach().numpy(), label='pred',
-            marker='o',
-            alpha=.7,
-            s=50)
-plt.plot(t[0].cpu().detach().numpy(),x_true[0].cpu().detach().numpy(),
-         color='blue',
-         label='analytical')
-plt.xlabel('t', fontsize=fs)
-plt.ylabel('x(t)', fontsize=fs)
-plt.xticks(fontsize=fs)
-plt.yticks(fontsize=fs)
-plt.legend()
-plt.title('x(t)')
-plt.savefig('x.png')
-plt.show()
+print_value()
