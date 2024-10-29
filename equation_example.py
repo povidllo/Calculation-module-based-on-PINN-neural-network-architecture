@@ -19,6 +19,8 @@ from neural_network import device
 # np.random.seed(44)
 # random.seed(44)
 
+
+
 def lossBC(t):
     x0_true=torch.tensor([1], dtype=float).float().to(device)
     dx0dt_true=torch.tensor([0], dtype=float).float().to(device)
@@ -53,40 +55,56 @@ def fullLoss(t):
     loss = lossPDE(t) + 1e3*lossBC(t)
     return loss
 
-def print_value():
-    nu=2
+def printValue():
+    nu = 2
     omega = 2 * torch.pi * nu
-    x0_true=torch.tensor([1], dtype=float).float().to(device)
-    dx0dt_true=torch.tensor([0], dtype=float).float().to(device)
+    x0_true = torch.tensor([1], dtype=float).float().to(device)
+    dx0dt_true = torch.tensor([0], dtype=float).float().to(device)
 
     t = torch.linspace(0, 2, 100).unsqueeze(-1).unsqueeze(0).to(device)
-    t.requires_grad=True
+    t.requires_grad = True
     x_pred = model(t.float())
-    x_true = x0_true * torch.cos(omega*t)
 
-    fs=13
-    plt.scatter(t[0].cpu().detach().numpy(), x_pred[0].cpu().detach().numpy(), label='pred',
-                marker='o',
-                alpha=.7,
-                s=50)
-    plt.plot(t[0].cpu().detach().numpy(),x_true[0].cpu().detach().numpy(),
-            color='blue',
-            label='analytical')
-    plt.xlabel('t', fontsize=fs)
-    plt.ylabel('x(t)', fontsize=fs)
-    plt.xticks(fontsize=fs)
-    plt.yticks(fontsize=fs)
-    plt.legend()
-    plt.title('x(t)')
-    plt.savefig('x.png')
-    plt.show()
+    x_true = x0_true * torch.cos(omega * t)
+    
+    x_pred_move = x_pred.detach().cpu().numpy().flatten().tolist()
+    x_true_move = x_true.detach().cpu().numpy().flatten().tolist()
+    t_move = t.detach().cpu().numpy().flatten().tolist()
+    print(x_pred_move)
+    print("-------------------------------")
+    print(t_move)
 
-model = net.simpleModel(1, 1, 20, 1250, loss_func=fullLoss, lr=0.1).to(device)
+    # Any further processing or printing with x_pred_np
+
+    # fs=13
+    # plt.scatter(t[0].cpu().detach().numpy(), x_pred[0].cpu().detach().numpy(), label='pred',
+    #             marker='o',
+    #             alpha=.7,
+    #             s=50)
+    # plt.plot(t[0].cpu().detach().numpy(),x_true[0].cpu().detach().numpy(),
+    #         color='blue',
+    #         label='analytical')
+    # plt.xlabel('t', fontsize=fs)
+    # plt.ylabel('x(t)', fontsize=fs)
+    # plt.xticks(fontsize=fs)
+    # plt.yticks(fontsize=fs)
+    # plt.legend()
+    # plt.title('x(t)')
+    # plt.savefig('x.png')
+    # plt.show()
+    return t_move, x_true_move, x_pred_move
 
 
-t = (torch.linspace(0, 2, 100).unsqueeze(1)).to(device)
-t.requires_grad = True
+def startTraining():
+    global model 
+    model = net.simpleModel(1, 1, 20, 2, loss_func=fullLoss, lr=0.1).to(device)
 
-model.training_a(t)
 
-print_value()
+    t = (torch.linspace(0, 2, 100).unsqueeze(1)).to(device)
+    t.requires_grad = True
+
+    model.training_a(t)
+
+if __name__ == "__main__":
+    startTraining()
+    printValue()

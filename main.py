@@ -5,6 +5,9 @@ from bokeh.models.widgets import Select
 import numpy as np
 import time
 import random
+import torch
+from equation_example import *
+
 
 # Инициализация данных
 button = Button(label="Обучить модель")  # Кнопка запуска обучения
@@ -34,22 +37,26 @@ def generate_fractional_value():
 def add_graph():
     global current_plot
 
+    startTraining()
+
     # Получаем новые данные и случайное дробное значение
-    x, y = long_running_function()
+    x, y1, y2 = printValue()
     fractional_value = generate_fractional_value()
 
     # Создаем новый источник данных
-    source = ColumnDataSource(data=dict(x=x, y=y))
+    source1 = ColumnDataSource(data=dict(x=x, y=y1))
+    source2 = ColumnDataSource(data=dict(x=x, y=y2))
 
     # Создаем новый график
     plot_number = len(graphs) + 1
     plot = figure(title=f"Обучение {plot_number}", x_axis_label="x", y_axis_label="y")
-    plot.line('x', 'y', source=source)
+    plot.line('x', 'y', source=source1)
+    plot.scatter('x', 'y', source=source2)
 
     # Сохраняем график и источник в словари
     graph_name = f"Обучение {plot_number}"
     graphs[graph_name] = (plot, fractional_value)  # Сохраняем график и его значение
-    sources[graph_name] = source
+    sources[graph_name] = [source1, source2]
 
     # Обновляем список графиков в виджете select
     select.options = list(graphs.keys())

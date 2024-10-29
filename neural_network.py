@@ -28,7 +28,7 @@ def ret():
     temps = eq(times)
 
     x = np.linspace(0, 3, 30)
-    y = eq(t) +  0.8 *np.random.rand()
+    y = eq(x) +  0.8 *np.random.rand()
     return x, y
 
 
