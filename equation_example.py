@@ -61,7 +61,7 @@ def printValue():
     x0_true = torch.tensor([1], dtype=float).float().to(device)
     dx0dt_true = torch.tensor([0], dtype=float).float().to(device)
 
-    t = torch.linspace(0, 2, 100).unsqueeze(-1).unsqueeze(0).to(device)
+    t = torch.linspace(0, 3, 100).unsqueeze(-1).unsqueeze(0).to(device)
     t.requires_grad = True
     x_pred = model(t.float())
 
@@ -73,22 +73,22 @@ def printValue():
 
     # Any further processing or printing with x_pred_np
 
-    # fs=13
-    # plt.scatter(t[0].cpu().detach().numpy(), x_pred[0].cpu().detach().numpy(), label='pred',
-    #             marker='o',
-    #             alpha=.7,
-    #             s=50)
-    # plt.plot(t[0].cpu().detach().numpy(),x_true[0].cpu().detach().numpy(),
-    #         color='blue',
-    #         label='analytical')
-    # plt.xlabel('t', fontsize=fs)
-    # plt.ylabel('x(t)', fontsize=fs)
-    # plt.xticks(fontsize=fs)
-    # plt.yticks(fontsize=fs)
-    # plt.legend()
-    # plt.title('x(t)')
-    # plt.savefig('x.png')
-    # plt.show()
+    fs=13
+    plt.scatter(t[0].cpu().detach().numpy(), x_pred[0].cpu().detach().numpy(), label='pred',
+                marker='o',
+                alpha=.7,
+                s=50)
+    plt.plot(t[0].cpu().detach().numpy(),x_true[0].cpu().detach().numpy(),
+            color='blue',
+            label='analytical')
+    plt.xlabel('t', fontsize=fs)
+    plt.ylabel('x(t)', fontsize=fs)
+    plt.xticks(fontsize=fs)
+    plt.yticks(fontsize=fs)
+    plt.legend()
+    plt.title('x(t)')
+    plt.savefig('x.png')
+    plt.show()
     return t_move, x_true_move, x_pred_move
 
 
@@ -100,11 +100,14 @@ def startTraining(input_size=1,
                   lr = 0.1,
                   left_brdr=0,
                   right_brdr=1,
-                  dot_cnt=100):
+                  dot_cnt=100,
+                  fourie=False,
+                  mapped_fourie=256):
     global model 
     # model = net.simpleModel(1, 1, 20, 100, loss_func=fullLoss, lr=0.1).to(device)
     model = net.simpleModel(input_size, output_size, hidden_size, 
-                            epoch=epoch, loss_func=fullLoss, lr=lr, loss=loss).to(device)
+                            epoch=epoch, loss_func=fullLoss, lr=lr, loss=loss,
+                            fourie=fourie, mapped_fourie=mapped_fourie).to(device)
 
 
     # t = (torch.linspace(0, 2, 100).unsqueeze(1)).to(device)
@@ -114,5 +117,5 @@ def startTraining(input_size=1,
     model.training_a(t)
 
 if __name__ == "__main__":
-    startTraining(right_brdr=2)
+    startTraining(right_brdr=2, fourie=True)
     printValue()
