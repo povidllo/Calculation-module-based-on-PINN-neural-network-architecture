@@ -12,10 +12,10 @@ dx_dt0_bc = 0
 
 import neural_network as net
 import matplotlib.pyplot as plt
-from neural_network import torch
+from neural_network import torch, nn
 from neural_network import device
 
-# torch.manual_seed(44)
+torch.manual_seed(44)
 # np.random.seed(44)
 # random.seed(44)
 
@@ -70,9 +70,6 @@ def printValue():
     x_pred_move = x_pred.detach().cpu().numpy().flatten().tolist()
     x_true_move = x_true.detach().cpu().numpy().flatten().tolist()
     t_move = t.detach().cpu().numpy().flatten().tolist()
-    print(x_pred_move)
-    print("-------------------------------")
-    print(t_move)
 
     # Any further processing or printing with x_pred_np
 
@@ -95,16 +92,27 @@ def printValue():
     return t_move, x_true_move, x_pred_move
 
 
-def startTraining():
+def startTraining(input_size=1,
+                  output_size=1,
+                  hidden_size=20,
+                  epoch=100,
+                  loss=nn.MSELoss(),
+                  lr = 0.1,
+                  left_brdr=0,
+                  right_brdr=1,
+                  dot_cnt=100):
     global model 
-    model = net.simpleModel(1, 1, 20, 2, loss_func=fullLoss, lr=0.1).to(device)
+    # model = net.simpleModel(1, 1, 20, 100, loss_func=fullLoss, lr=0.1).to(device)
+    model = net.simpleModel(input_size, output_size, hidden_size, 
+                            epoch=epoch, loss_func=fullLoss, lr=lr, loss=loss).to(device)
 
 
-    t = (torch.linspace(0, 2, 100).unsqueeze(1)).to(device)
+    # t = (torch.linspace(0, 2, 100).unsqueeze(1)).to(device)
+    t = (torch.linspace(left_brdr, right_brdr, dot_cnt).unsqueeze(1)).to(device)
     t.requires_grad = True
 
     model.training_a(t)
 
 if __name__ == "__main__":
-    startTraining()
+    startTraining(right_brdr=2)
     printValue()
