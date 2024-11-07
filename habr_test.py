@@ -9,7 +9,7 @@ import fastapi_jsonrpc as jsonrpc
 import jinja2
 import io
 import base64
-
+from mongo_schemas import *
 import torch
 import torch.nn as nn
 
@@ -25,16 +25,19 @@ from torch.utils.tensorboard import SummaryWriter
 # from google.colab import files as filescolab
 
 
+import motor.motor_asyncio
+from motor.motor_asyncio import AsyncIOMotorClient
 
+
+client = AsyncIOMotorClient("mongodb://"+database_ulr+":27017")
+
+async def init():
+    await init_beanie(database=client[database_name], document_models=[mongo_Estimate, mongo_Record])
+
+torch.manual_seed(20)
 cur_host = 'localhost'
 api_v1 = jsonrpc.Entrypoint('/api/v1/jsonrpc')
 
-class MyError(jsonrpc.BaseError):
-    CODE = 5000
-    MESSAGE = 'My error'
-
-    class DataModel(BaseModel):
-        details: str
 
 
 mtemplate = lambda gscripts, gdivs: """
@@ -155,8 +158,14 @@ def train(in_steps):
     isTrained = True
     isTraining = False
 
+from torchviz import make_dot
 
-def predict():
+from torchvision import models
+from torchsummary import summary
+import hiddenlayer as hl
+
+
+async def predict():
     nu = 2
     omega = 2 * torch.pi * nu
 
@@ -164,7 +173,16 @@ def predict():
     t = torch.linspace(0, 1, 100).unsqueeze(-1).unsqueeze(0).to(device)
     t.requires_grad = True
     x_pred = model(t.float())
+    print('x_pred ', type(x_pred.tolist()), x_pred.tolist())
 
+
+
+    est = mongo_Estimate(records=[mongo_Record(record=x_pred.tolist())])
+    await mongo_Estimate.m_insert(est)
+
+
+
+    print('est ', type(est), est)
     x_true = x0_true * torch.cos(omega*t)
 
     fs = 13
@@ -189,8 +207,25 @@ def predict():
     my_stringIObytes.seek(0)
     my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
 
+
     plt.clf()
+
+    # transforms = [hl.transforms.Prune('Constant')]
+    # graph = hl.build_graph(model, batch.text, transforms=transforms)
+    # graph.theme = hl.graph.THEMES['blue'].copy()
+    # graph.save('rnn_hiddenlayer', format='png')
+
+    # vizNN = make_dot(x_pred.mean(), params=dict(model.named_parameters()))
+    # print('vizNN', vizNN)
+    # print('model', model)
+    # my_base64_jpgData = np.concatenate((my_base64_jpgData, vizNN), axis=1)
+
+
+
+
     return my_base64_jpgData
+
+
 
 async def pinn() :
     global mtemplate
@@ -206,7 +241,7 @@ async def pinn() :
     table_templ = env.get_template("index.html")
 
     if isTrained:
-        base64_encoded_image = predict()
+        base64_encoded_image = await predict()
 
     table_templ = table_templ.render(myImage=base64_encoded_image)
 
@@ -221,14 +256,20 @@ async def train_pinn(background_tasks: BackgroundTasks, N:Optional[int] = None):
         isTrained = False
         steps = N
 
+
+    all_est = await mongo_Estimate.find_entries_all()
+    # print('all_est', all_est[0].id)
+    ret_all_est = [str(el.id) for el in all_est]
+    print('ret_all_est', ret_all_est)
     if (not isTrained) and (not isTraining):
         background_tasks.add_task(train, steps)
-    return {"ok" : isTrained , 'training' : isTraining}
+    return {"ok" : isTrained , 'training' : isTraining, 'ests': ret_all_est}
 
 if __name__ == '__main__':
 
     @asynccontextmanager
     async def lifespan(app: jsonrpc.API):
+        await init()
         yield
 
 
