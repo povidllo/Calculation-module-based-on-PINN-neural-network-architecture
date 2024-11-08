@@ -260,7 +260,7 @@ async def train_pinn(background_tasks: BackgroundTasks, N:Optional[int] = None):
     all_est = await mongo_Estimate.find_entries_all()
     # print('all_est', all_est[0].id)
     ret_all_est = [str(el.id) for el in all_est]
-    print('ret_all_est', ret_all_est)
+    # print('ret_all_est', ret_all_est)
     if (not isTrained) and (not isTraining):
         background_tasks.add_task(train, steps)
     return {"ok" : isTrained , 'training' : isTraining, 'ests': ret_all_est}

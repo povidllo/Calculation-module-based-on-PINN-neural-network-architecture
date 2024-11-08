@@ -7,6 +7,7 @@ import fastapi_jsonrpc as jsonrpc
 database_ulr = 'localhost'
 database_name = "testDB"
 pinn_mongo_database = "PINN"
+rec_mongo_database = "REC"
 
 
 class MyError(jsonrpc.BaseError):
@@ -22,7 +23,7 @@ class mRecord(BaseModel):
 
 class mongo_Record(mRecord, Document):
     class Settings:
-        name = pinn_mongo_database
+        name = rec_mongo_database
 
     class Config:
         arbitrary_types_allowed = True
@@ -42,8 +43,9 @@ class mongo_Estimate(mEstimate, Document):
 
     @staticmethod
     async def find_entries_all():
-        ret = await mongo_Estimate.find_all().to_list()
-        return ret
+        all = await mongo_Estimate.find( {}, fetch_links=True).to_list()
+        print(all)
+        return all
 
     class Settings:
         name = pinn_mongo_database
