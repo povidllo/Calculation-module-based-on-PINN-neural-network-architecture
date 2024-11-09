@@ -61,7 +61,7 @@ def printValue():
     x0_true = torch.tensor([1], dtype=float).float().to(device)
     dx0dt_true = torch.tensor([0], dtype=float).float().to(device)
 
-    t = torch.linspace(0, 3, 100).unsqueeze(-1).unsqueeze(0).to(device)
+    t = torch.linspace(0, 7, 300).unsqueeze(-1).unsqueeze(0).to(device)
     t.requires_grad = True
     x_pred = model(t.float())
 
@@ -117,5 +117,5 @@ def startTraining(input_size=1,
     model.training_a(t)
 
 if __name__ == "__main__":
-    startTraining(right_brdr=2, fourie=True)
+    startTraining(right_brdr=1, fourie=True, mapped_fourie=256, hidden_size=64)
     printValue()

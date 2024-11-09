@@ -33,6 +33,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #     y = eq(x) +  0.8 *np.random.rand()
 #     return x, y
 
+def fourier_feature(x, in_dim, map):
+        freqs = nn.Parameter(torch.randn(map, in_dim))  # Размерность частот
+        scale = nn.Parameter(torch.randn(map))  # Масштабирование
+        sinusoid = torch.cat([torch.sin(x @ freqs.T + scale), torch.cos(x @ freqs.T + scale)], dim=-1)
+        return sinusoid
+
 
 class simpleModel(nn.Module):
     def __init__(self,
@@ -68,14 +74,17 @@ class simpleModel(nn.Module):
             nn.Linear(hidden_size, hidden_size), #4
             nn.Tanh(),
             nn.Linear(hidden_size, output_size),
-            nn.Tanh(),
         )
 
     def forward(self, x):
         if(self.fourie):
-            encoding = rff.layers.PositionalEncoding(sigma=1.0, m=self.mapped_fourie)
+            # encoding = rff.layers.PositionalEncoding(sigma=1.0, m=self.mapped_fourie)
+            # encoding = rff.layers.BasicEncoding()
+            encoding = rff.layers.GaussianEncoding(sigma=5.0, input_size=self.input_size, encoded_size=self.mapped_fourie)         
             xf = encoding(x)
             return self.layers_stack(xf)
+            # xf = fourier_feature(x, self.input_size, self.mapped_fourie)
+            # return self.layers_stack(xf)
         return self.layers_stack(x)
     
     def training_a(self, t):
