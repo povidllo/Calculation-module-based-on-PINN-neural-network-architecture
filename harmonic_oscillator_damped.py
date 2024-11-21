@@ -63,11 +63,31 @@ def fullLoss(t):
     loss = lossPDE(t) + 1e3*lossBC(t)
     return loss
 
+def l2_metric(predicted, target):
+    """
+    Вычисление L2-нормы ошибки между предсказанными и целевыми значениями.
+
+    Параметры:
+        predicted (torch.Tensor): Предсказанные значения нейросети.
+        target (torch.Tensor): Истинные значения.
+
+    Возвращает:
+        torch.Tensor: L2-норма ошибки.
+    """
+    # Вычисляем квадрат разности
+    diff = predicted - target
+    # L2-норма: берем квадрат и усредняем по всем точкам, затем извлекаем корень
+    l2_norm = torch.sqrt(torch.mean(diff ** 2))
+    return l2_norm
+
 def printValue():
     t = torch.linspace(0, 2, 100).unsqueeze(-1).unsqueeze(0).to(device)
     t.requires_grad = True
     x_true = exact_solution(t)
     x_pred = model(t.float())
+
+    l2_error = l2_metric(x_pred,t)
+    print("L2 metric:", l2_error.item())
     
     x_pred_move = x_pred.detach().cpu().numpy().flatten().tolist()
     x_true_move = x_true.detach().cpu().numpy().flatten().tolist()
@@ -107,9 +127,8 @@ def startTraining(input_size=1,
                   mapped_fourie=256):
     global model 
     # model = net.simpleModel(1, 1, 20, 100, loss_func=fullLoss, lr=0.1).to(device)
-    model = net.simpleModel(input_size, output_size, hidden_size, 
-                            epoch=epoch, loss_func=fullLoss, lr=lr, loss=loss,
-                            fourie=fourie, mapped_fourie=mapped_fourie).to(device)
+    model = net.simpleModel(
+                            epoch=epoch, loss_func=fullLoss).to(device)
 
 
     # t = (torch.linspace(0, 2, 100).unsqueeze(1)).to(device)
@@ -119,7 +138,7 @@ def startTraining(input_size=1,
     model.training_a(t)
 
 if __name__ == "__main__":
-    startTraining(right_brdr=1.5, hidden_size=64, epoch=500, dot_cnt=100)
+    startTraining(epoch=900)
     printValue()
 
 #adam, 3 слоя спрятанных

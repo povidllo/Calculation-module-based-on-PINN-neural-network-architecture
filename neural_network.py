@@ -43,7 +43,7 @@ class simpleModel(nn.Module):
                 epoch=900,
                 loss=nn.MSELoss(),
                 loss_func=None,  # <- обновлено, чтобы loss_func работала корректно
-                lr=0.01,
+                lr=0.1,
                 fourie=False,
                 mapped_fourie=256):
         super().__init__()
@@ -89,10 +89,33 @@ class simpleModel(nn.Module):
         # yt = np_to_th(y)
 
         steps = self.epoch
-        pbar = tqdm(range(steps), desc='Training Progress')
+        pbar = tqdm(range(600), desc='Training Progress')
         writer = SummaryWriter()
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        for step in pbar:
+            optimizer.zero_grad()
+            loss = self.loss_func(t)
+            loss.backward()
+            optimizer.step()
+            # def closure():
+            #     optimizer.zero_grad()
+            #     # outputs = self.forward(Xt)
+            #     # loss = self.loss(yt, outputs)
+            #     # loss += self.loss_func(t)  # <- используем loss_func корректно
+            #     loss = self.loss_func(t)
+            #     loss.backward()
+            #     return loss
+
+            # optimizer.step(closure)
+            if step % 2 == 0:
+                # current_loss = closure().item()
+                current_loss = loss.item()
+                pbar.set_description("Step: %d | Loss: %.6f" %
+                                     (step, current_loss))
+                writer.add_scalar('Loss/train', current_loss, step)
+            
+        pbar = tqdm(range(601,steps), desc='Training Progress')
         optimizer = torch.optim.LBFGS(self.parameters(), self.lr)
-        # optimizer = torch.optim.Adam(self.parameters, self.lr)
         for step in pbar:
             def closure():
                 optimizer.zero_grad()
