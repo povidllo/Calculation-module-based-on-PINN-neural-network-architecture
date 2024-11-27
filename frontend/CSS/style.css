@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');
+
+html {
+  width: 100%;
+  background: #D9D9D9;
+  padding: 82px 90px;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.72px;
+  color: #444;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dropdown {
+  background: #D9D9D9;
+  color: #444;
+  height: 37px;
+  width: 306px;
+  font-size: 16px;
+  padding-left: 14px;
+  border: 2.5px solid #616161;
+  border-radius: 5px;
+}
+
+button {
+  transition: 0.05s ease-in;
+}
+
+button:hover {
+  background: #656565;
+}
+
+button:active {
+  background: #dfdfdf;
+  color: #656565;
+  border: 1px solid #656565;
+}
+
+
+/*-------------------SELECTIONS--------------------*/
+.model-select,
+.bc-select {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.model-select__label,
+.bc-select__label {
+  font-weight: medium;
+  font-size: 36px;
+  margin-right: 28px;
+}
+
+.bc-select__dropdown {
+  height: 40px;
+  width: 252px;
+}
+
+/*----------------------BOX------------------------*/
+
+.box {
+  width: 40%;
+}
+
+.box__button {
+  margin: 10px 0px 0px 0px;
+}
+
+.box__boundary {}
+
+.box__label {
+  margin-right: 10px;
+}
+
+.box__initial-data {
+  margin-bottom: 10px;
+}
+
+.box__input {
+  border: 1px solid black;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+
+.box__dropdown {
+  border: 1px solid black;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.box__button {
+  width: 119px;
+  height: 36px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  background: #444;
+  color: #D9D9D9;
+  font-size: 20px;
+}
+
+/*---------------------METHOD PARAMETERS-------------------------*/
+
+.method-parameters {
+  margin: 0px 0px 0px 20px;
+}
+
+.method-parameters__variants {
+  margin: 20px 0px 10px 0px;
+}
+
+.method-parameters__types {
+  margin-bottom: 10px;
+}
+
+.method-parameters__n-value {}
+
+
+
+
+/*--------------------TABLE------------------*/
+
+.result-box {
+  width: 40%;
+}
+
+.result-box__label {
+  margin-bottom: 2px
+}
+
+table {
+  padding-left: 10px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table,
+th,
+td {
+  border: 1px solid black;
+}
+
+th,
+td {
+  padding: 8px;
+  text-align: left;
+}
+
+.actions {
+  display: flex;
+  gap: 17px;
+}
+
+.actions__button {
+  display: flex;
+  width: 107px;
+  height: 24px;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  background: #444;
+  color: #dfdfdf;
+}
