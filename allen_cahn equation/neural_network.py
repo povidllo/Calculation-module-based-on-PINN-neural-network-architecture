@@ -42,6 +42,7 @@ def fourier_feature(x, in_dim, map):
 
 class simpleModel(nn.Module):
     def __init__(self,
+                true,
                 input_size=1,
                 output_size=1,
                 hidden_size=12,
@@ -50,8 +51,10 @@ class simpleModel(nn.Module):
                 loss_func=None,  # <- обновлено, чтобы loss_func работала корректно
                 lr=0.01,
                 fourie=False,
-                mapped_fourie=256):
+                mapped_fourie=256,
+                ):
         super().__init__()
+        self.true = true
         self.input_size = input_size
         self.output_size = output_size
         self.hidden_size = hidden_size
@@ -87,6 +90,14 @@ class simpleModel(nn.Module):
             # return self.layers_stack(xf)
         return self.layers_stack(x)
     
+    def myl2Loss(self, input, true):
+        out = self.forward(input)
+        
+        true_new = torch.tensor(true.flatten()).unsqueeze(-1)
+        diff = out - true_new
+        l2_norm = torch.sqrt(torch.mean(diff**2))
+        return l2_norm.item()
+    
     def training_a(self, t):
         # X, y = ret()
 
@@ -96,23 +107,25 @@ class simpleModel(nn.Module):
         steps = self.epoch
         pbar = tqdm(range(steps), desc='Training Progress')
         writer = SummaryWriter()
-        optimizer = torch.optim.LBFGS(self.parameters(), self.lr)
+        optimizer = torch.optim.Adam(self.parameters(), self.lr)
         for step in pbar:
             def closure():
                 optimizer.zero_grad()
                 # outputs = self.forward(Xt)
                 # loss = self.loss(yt, outputs)
                 # loss += self.loss_func(t)  # <- используем loss_func корректно
-                loss = self.loss_func(t)
+                loss = self.loss_func(t, self.true)
                 loss.backward()
                 return loss
 
             optimizer.step(closure)
             if step % 2 == 0:
                 current_loss = closure().item()
-                pbar.set_description("Step: %d | Loss: %.6f" %
-                                     (step, current_loss))
+                l2 = self.myl2Loss(t, self.true)
+                pbar.set_description("Step: %d | Loss: %.6f | L2: %.6f" %
+                                     (step, current_loss, l2))
                 writer.add_scalar('Loss/train', current_loss, step)
+                writer.add_scalar('L2/train', l2, step)
         writer.close()
 
 
