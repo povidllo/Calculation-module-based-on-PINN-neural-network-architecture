@@ -1,81 +1,161 @@
+import neural_network as net
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.io
+import rff.layers
 import torch
 import torch.nn as nn
 import numpy as np
-from scipy.io import loadmat
+import pandas as pd
+import functools
+import matplotlib.pyplot as plt
+import torch.optim as optim
+import random
+import rff
+from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
 
-# Параметры задачи
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+'''
+du_dt - ε * d2u_d2x + λ * u(t,x)^3 - λ * u = 0
+
+u(0,x) = x^2 * cos(πx)
+u(t,-1) = u(t,1)
+du_dx(t,-1) = du_dx(t,1)
+
 ε = 0.0001
 λ = 5
+'''
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Загрузка данных
 def get_dataset():
-    data = loadmat("./allen_cahn equation/dataset/allen_cahn.mat")
-    u_ref = data["usol"]  # настоящее решение
-    t_star = data["t"].flatten()  # временные координаты
-    x_star = data["x"].flatten()  # пространственные координаты
+    data = scipy.io.loadmat("./allen_cahn equation/dataset/allen_cahn.mat")
+    u_ref = data["usol"]
+    t_star = data["t"].flatten()
+    x_star = data["x"].flatten()
     return u_ref, t_star, x_star
 
-# Определение архитектуры PINN
-class PINN(nn.Module):
-    def __init__(self, layers):
-        super(PINN, self).__init__()
-        self.layers = nn.ModuleList()
-        for i in range(len(layers) - 1):
-            self.layers.append(nn.Linear(layers[i], layers[i + 1]))
+def print_results():
+    u_ref, t_star, x_star = get_dataset()
+    T, X = np.meshgrid(t_star, x_star)
     
-    def forward(self, t, x):
-        inputs = torch.cat((t, x), dim=1)  # Объединяем t и x
-        for i, layer in enumerate(self.layers[:-1]):
-            inputs = torch.tanh(layer(inputs))  # tanh активация
-        return self.layers[-1](inputs)  # Линейный выход
-
-# Функция потерь
-def loss_pinn(model, t, x, u_true=None):
-    t.requires_grad_(True)
-    x.requires_grad_(True)
-    u_pred = model(t, x)
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(T, X, u_ref.T, cmap='jet')
+    ax.set_xlabel('Time (t)')
+    ax.set_ylabel('Space (x)')
+    ax.set_zlabel('u(t, x)')
+    ax.set_title('Allen-Cahn Equation Solution')
     
-    # Вычисляем производные
-    u_t = torch.autograd.grad(u_pred, t, torch.ones_like(u_pred), create_graph=True)[0]
-    u_x = torch.autograd.grad(u_pred, x, torch.ones_like(u_pred), create_graph=True)[0]
-    u_xx = torch.autograd.grad(u_x, x, torch.ones_like(u_x), create_graph=True)[0]
+    plt.tight_layout()
+    plt.show()
+
+def lossPDE(input, epsilon=0.0001, lamb=5):
+
+    u = model(input).to(device)
+    du_dt = torch.autograd.grad(u, u[:,0], torch.ones_like(u[:,0]), create_graph=True, \
+                                retain_graph=True)[0]
+    du_dx = torch.autograd.grad(u, u[:,1], torch.ones_like(u[:,1]), create_graph=True, \
+                            retain_graph=True)[0]
+    d2udx2 = torch.autograd.grad(du_dx, u[:,1], torch.ones_like(du_dx), create_graph=True, \
+                            retain_graph=True)[0]
+    # du_dt - ε * d2u_d2x + λ * u(x,t)^3 - λ * u = 0
+    f1 = du_dt - epsilon*d2udx2 + lamb*u**3 - lamb * u
+    loss_pde = torch.mean(f1**2)
     
-    # Уравнение Аллена-Кана
-    f = u_t - ε * u_xx + λ * u_pred**3 - λ * u_pred
+    return loss_pde
+
+
+
+
+def lossIC(input, true_out):
+    inlet_mask = (t_tensor == 0)  # Маска для t == 0
+    input_t0 = input_data[inlet_mask.repeat(len(x_tensor), 1).view(-1)]  # Применяем маску
+    out_IC = torch.tensor(out_dataset[0, :], dtype=torch.float32).to(device)
+    # print(inlet_mask)
+    # print("input data с маской на 0:", input_t0)
+    out_nn = model(input_t0)
+    # loss_ic = model.loss(out_IC, out_nn)
+    loss_ic = torch.mean(out_IC - out_nn)**2
+    return loss_ic
+
+
+out_dataset, t, x = get_dataset()
+x_tensor = torch.tensor(x, dtype=torch.float32).to(device)
+t_tensor = torch.tensor(t, dtype=torch.float32).to(device)
+out_tensor = torch.tensor(out_dataset, dtype=torch.float32).to(device)
+x_all_t = x_tensor.repeat(len(t_tensor), 1).T.to(device)
+t_all_x = t_tensor.repeat(len(x_tensor), 1).to(device)
+
+prepared_data = torch.stack((t_all_x, x_all_t), dim=2).to(device)  #(t, x)
+
+
+# Преобразуем в одномерный массив для подачи в модель
+# Каждый элемент будет иметь форму (x, t) для подачи в модель
+# Сначала делаем данные одномерными
+input_data = prepared_data.view(-1, 2).to(device)  # Преобразуем в форму (len(x_star) * len(t_star), 2)
+input_data.requires_grad=True
+# Преобразование в нужный формат для модели (например, [batch_size, input_size])
+# print("input data:", input_data)
+
+
+
+class simpleModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.layers_stack = nn.Sequential(
+            nn.Linear(2, 256),
+            nn.Tanh(),
+            nn.Linear(256, 256), #1
+            nn.Tanh(),
+            nn.Linear(256, 256), #2
+            nn.Tanh(),
+            nn.Linear(256, 256), #3
+            nn.Tanh(),
+            nn.Linear(256, 1),
+        )
+
+    def forward(self, x):
+        return self.layers_stack(x)
     
-    # Потери по данным
-    loss_eq = torch.mean(f**2)
-    loss_ic = torch.mean((u_pred[:t_ic.shape[0]] - u_ic)**2) if u_true is not None else 0
-    loss_bc = torch.mean(u_pred[bc_mask]**2)
+
+def myl2Loss(input, true):
+    out = model(input)
     
-    return loss_eq + loss_ic + loss_bc
+    true_new = true.flatten().unsqueeze(-1)
+    diff = out - true_new
+    l2_norm = torch.sqrt(torch.mean(diff**2))
+    return l2_norm.item()
 
-# Данные и обучение
-u_ref, t_star, x_star = get_dataset()
-t_star = torch.tensor(t_star, dtype=torch.float32).unsqueeze(1)
-x_star = torch.tensor(x_star, dtype=torch.float32).unsqueeze(1)
-u_ref = torch.tensor(u_ref, dtype=torch.float32)
+model = simpleModel()
+steps = 1000
+pbar = tqdm(range(steps), desc='Training Progress')
+writer = SummaryWriter()
+optimizer = torch.optim.Adam(model.parameters(), 1e-3)
+for step in pbar:
+    def closure():
+        optimizer.zero_grad()
 
-# Подготовка данных
-t_ic = t_star[:1]  # Начальные данные
-x_ic = x_star
-u_ic = u_ref[0, :]  # Начальное значение u(t=0, x)
+        loss_ic = lossIC(input_data, out_tensor)
+        loss_pde = lossPDE(input_data)
+        loss = loss_ic + loss_pde
+        
+        loss.backward()
+        return loss
 
-# Граничные условия
-bc_mask = (x_star == -1) | (x_star == 1)
+    optimizer.step(closure)
+    if step % 2 == 0:
+        current_loss = closure().item()
+        l2 = myl2Loss(input_data, out_tensor)
+        pbar.set_description("Step: %d | Loss: %.6f | L2: %.6f" %
+                                (step, current_loss, l2))
+        writer.add_scalar('Loss/train', current_loss, step)
+        writer.add_scalar('L2/train', l2, step)
+writer.close()
 
-# Инициализация PINN
-layers = [2, 64, 64, 64, 1]  # 2 входа (t, x) -> несколько скрытых слоев -> 1 выход (u)
-model = PINN(layers)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-# Обучение
-for epoch in range(10000):
-    optimizer.zero_grad()
-    loss = loss_pinn(model, t_star, x_star, u_ref)
-    loss.backward()
-    optimizer.step()
-    if epoch % 1000 == 0:
-        print(f"Epoch {epoch}, Loss: {loss.item()}")
-
-# Предсказание и визуализация

@@ -4,161 +4,138 @@ from neural_network import torch, nn
 from neural_network import device
 import numpy as np
 import scipy.io
+import neural_network as net
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.io
+import rff.layers
+import torch
+import torch.nn as nn
+import numpy as np
+import pandas as pd
+import functools
+import matplotlib.pyplot as plt
+import torch.optim as optim
+import random
+import rff
+from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
 
 '''
-du_dt - ε * d2u_d2x + λ * u(t,x)^3 - λ * u = 0
+    Само уравнение
+    du_dt - ε * d2u_d2x + λ * u(t,x)^3 - λ * u = 0
 
-u(0,x) = x^2 * cos(πx)
-u(t,-1) = u(t,1)
-du_dx(t,-1) = du_dx(t,1)
+    u(0,x) = x^2 * cos(πx)
+    u(t,-1) = u(t,1)
+    du_dx(t,-1) = du_dx(t,1)
 
-ε = 0.0001
-λ = 5
+
+    например
+    ε = 0.0001
+    λ = 5
+    t ∊ [0,1]
+    x ∊ [-1,1]
 '''
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Загрузка данных
-def get_dataset():
-    data = scipy.io.loadmat("./allen_cahn equation/dataset/allen_cahn.mat")
-    u_ref = data["usol"]
-    t_star = data["t"].flatten()
-    x_star = data["x"].flatten()
-    return u_ref, t_star, x_star
+'''
+    Составляем данные для обучения
+'''
 
-def print_results():
-    u_ref, t_star, x_star = get_dataset()
-    T, X = np.meshgrid(t_star, x_star)
+t_left_border = 0
+t_right_border = 1
+t_count = 100
+t = torch.linspace(t_left_border, t_right_border, t_count).reshape(-1, 1)
+
+x_left_border = -1
+x_right_border = 1
+x_count = 256
+x = torch.linspace(x_left_border, x_right_border, x_count).reshape(-1, 1)
+
+
+t_in = np.tile(t, (1, x_count)).T.flatten()[:, None]
+x_in = np.tile(x, (1, t_count)).flatten()[:, None]
+
+#реализовать рандомную выборку
+#убедиться с тем, как идет (x,t) или (t,x)
+
+input = torch.tensor(np.concatenate((t_in, x_in),1), dtype=torch.float32)
+input.requires_grad=True
+'''
+    Реализация функций потерь
+'''
+#реализовать для граничных условий
+def lossPDE(input,ε=0.0001,λ=5):
+    u = model(input)
+    du = torch.autograd.grad(u, input, torch.ones_like(u), create_graph=True, \
+                                retain_graph=True)[0]
+    du_dt = du[:,0]
+    du_dx = du[:,1]
+    d2u_d2x = torch.autograd.grad(du_dx, input, torch.ones_like(du_dx), create_graph=True, \
+                                retain_graph=True)[0][:,1]
+    f = du_dt - ε * d2u_d2x + λ * u**3 - λ * u
+    return torch.mean(f**2)
     
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot_surface(T, X, u_ref.T, cmap='jet')
-    ax.set_xlabel('Time (t)')
-    ax.set_ylabel('Space (x)')
-    ax.set_zlabel('u(t, x)')
-    ax.set_title('Allen-Cahn Equation Solution')
-    
-    plt.tight_layout()
-    plt.show()
-
-# def lossPDE(input, epsilon=0.0001, lamb=5):
-#     t = input[:, 0].unsqueeze(1)
-#     x = input[:, 1].unsqueeze(1)
-#     u = model(input).to(device)
-#     du_dt = torch.autograd.grad(u, input[:, 0].unsqueeze(1), torch.ones_like(t), create_graph=True, \
-#                                 retain_graph=True)[0]
-#     dx_dx = torch.autograd.grad(u, x, torch.ones_like(t), create_graph=True, \
-#                             retain_graph=True)[0]
-#     d2xdt2 = torch.autograd.grad(dx_dx, t, torch.ones_like(t), create_graph=True, \
-#                             retain_graph=True)[0]
-#     # du_dt - ε * d2u_d2x + λ * u(x,t)^3 - λ * u = 0
-#     f1 = du_dt - epsilon*d2xdt2 + lamb*u**3 - lamb * u
-#     loss_pde = model.loss(f1, torch.zeros_like(f1))
-    
-#     return loss_pde
-def lossPDE(input, epsilon=0.0001, lamb=5):
-    """
-    Вычисляет потери для уравнения Аллена-Кана.
-    """
-    # Убедимся, что входные данные требуют градиента
-    input = input.clone().detach().requires_grad_(True).to(device)
-    
-    t = input[:, 0].unsqueeze(1)  # Вытаскиваем t
-    x = input[:, 1].unsqueeze(1)  # Вытаскиваем x
-
-    # Вычисляем u(t, x)
-    u = model(input)  # Предсказание модели
-
-    # Проверка, что u имеет связь с input
-    if not u.requires_grad:
-        raise RuntimeError("Output u does not require gradients. Ensure input requires_grad=True.")
-    
-    # Первая производная по времени du/dt
-    du_dt = torch.autograd.grad(
-        u, t, grad_outputs=torch.ones_like(u), 
-        create_graph=True, retain_graph=True, allow_unused=True
-    )[0]
-
-    # Первая производная по пространству du/dx
-    du_dx = torch.autograd.grad(
-        u, x, grad_outputs=torch.ones_like(u), 
-        create_graph=True, retain_graph=True, allow_unused=True
-    )[0]
-
-    # Вторая производная по пространству d²u/dx²
-    if du_dx is not None:
-        d2u_dx2 = torch.autograd.grad(
-            du_dx, x, grad_outputs=torch.ones_like(du_dx), 
-            create_graph=True, retain_graph=True, allow_unused=True
-        )[0]
-    else:
-        d2u_dx2 = torch.zeros_like(u)
-
-    # Проверка на None
-    if du_dt is None:
-        du_dt = torch.zeros_like(u)
-
-    # Остаток уравнения
-    residual = du_dt - epsilon * d2u_dx2 + lamb * u**3 - lamb * u
-
-    # Среднеквадратичные потери
-    loss_pde = torch.mean(residual**2)
-    return loss_pde
-
-
-
-def lossIC(input, true_out):
-    inlet_mask = (t_tensor == 0)  # Маска для t == 0
-    input_t0 = input_data[inlet_mask.repeat(len(x_tensor), 1).view(-1)]  # Применяем маску
-    out_IC = torch.tensor(out_dataset[0, :], dtype=torch.float32).to(device)
-    # print(inlet_mask)
-    # print("input data с маской на 0:", input_t0)
-    out_nn = model(input_t0)
-    loss_ic = model.loss(out_IC, out_nn)
+def lossIC(input):
+    initial_mask = input[:, 0] == 0
+    initial_points = input[initial_mask]
+    x_initial = initial_points[:, 1]  # Координаты x при t=0
+    u_initial_pred = model(initial_points)  # Предсказание модели для начального условия
+    u_initial_true = x_initial**2 * torch.cos(np.pi * x_initial)  # Истинное значение
+    loss_ic = torch.mean((u_initial_pred - u_initial_true)**2)  # Потеря для начального условия
     return loss_ic
 
-def fullLoss(input, true):
-    return lossIC(input, true) + lossPDE(input)
+'''
+    Реализация нейронной сети
+'''
+#надо посмотреть про инициализацию слоев, какую использовать и надо ли
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-out_dataset, t, x = get_dataset()
-# print(len(out_dataset[0]))
-# print(len(x))
-# print(len(t))
+class AllenCahnModel(nn.Module):
+    def __init__(self,
+                 input_size=2,
+                 hidden_size=256,
+                 output_size=1):
+        super().__init__()
 
-x_tensor = torch.tensor(x, dtype=torch.float32).to(device)
-t_tensor = torch.tensor(t, dtype=torch.float32).to(device)
+        self.layers_stack = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.Tanh(),
+            nn.Linear(hidden_size, hidden_size), #1
+            nn.Tanh(),
+            nn.Linear(hidden_size, hidden_size), #2
+            nn.Tanh(),
+            nn.Linear(hidden_size, hidden_size), #3
+            nn.Tanh(),
+            nn.Linear(hidden_size, hidden_size), #4
+            nn.Tanh(),
+            nn.Linear(hidden_size, output_size),
+        )
+    def forward(self, x):
+        return self.layers_stack(x)
 
-# print("x: ", x_tensor.shape, " ", x_tensor)
-# print("\n\n\n---------------")
-# print("t: ", t_tensor.shape, " ", t_tensor)
+model = AllenCahnModel().to(device)
+optimizer = torch.optim.Adam(model.parameters(), 1e-3)
+steps = 1000
+pbar = tqdm(range(steps), desc='Training Progress')
+writer = SummaryWriter()
 
-x_all_t = x_tensor.repeat(len(t_tensor), 1).T.to(device)
-t_all_x = t_tensor.repeat(len(x_tensor), 1).to(device)
-# print("Shape of x_all_t:", x_all_t.shape)
-# print("Shape of t_all_x:", t_all_x.shape)
+for step in pbar:
+    def closure():
+        optimizer.zero_grad()
 
-# prepared_data = torch.stack((x_all_t, t_all_x), dim=2) #(x, t)
-prepared_data = torch.stack((t_all_x, x_all_t), dim=2).to(device)  #(t, x)
-# print(prepared_data.shape)
+        loss_ic = lossIC(input)
+        loss_pde = lossPDE(input)
+        loss = loss_ic + loss_pde
+        
+        loss.backward()
+        return loss
 
-
-
-# Преобразуем в одномерный массив для подачи в модель
-# Каждый элемент будет иметь форму (x, t) для подачи в модель
-# Сначала делаем данные одномерными
-input_data = prepared_data.view(-1, 2).to(device)  # Преобразуем в форму (len(x_star) * len(t_star), 2)
-input_data.requires_grad=True
-# Преобразование в нужный формат для модели (например, [batch_size, input_size])
-# print("input data:", input_data)
-
-
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-global model
-model = net.simpleModel(input_size=2, 
-                        output_size=1,
-                        hidden_size=256,
-                        epoch=1000,
-                        true=out_dataset,
-                        lr=1e-3,
-                        loss_func=fullLoss).to(device)
-model.training_a(input_data)
-
+    optimizer.step(closure)
+    if step % 2 == 0:
+        current_loss = closure().item()
+        pbar.set_description("Step: %d | Loss: %.6f | " %
+                                (step, current_loss))
+        writer.add_scalar('Loss/train', current_loss, step)
+        
+writer.close()
