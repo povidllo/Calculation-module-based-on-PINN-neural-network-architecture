@@ -72,7 +72,6 @@ button:active {
 }
 
 .box__button {
-  margin: 10px 0px 0px 0px;
 }
 
 .box__boundary {}
@@ -87,14 +86,14 @@ button:active {
 
 .box__input {
   border: 1px solid black;
-  border-radius: 4px;
+  border-radius: 5px;
   padding: 2px 4px;
 }
 
 
 .box__dropdown {
   border: 1px solid black;
-  border-radius: 4px;
+  border-radius: 5px;
   background-color: white;
 }
 
@@ -107,23 +106,72 @@ button:active {
   background: #444;
   color: #D9D9D9;
   font-size: 20px;
+  margin-bottom: 20px;
 }
 
 /*---------------------METHOD PARAMETERS-------------------------*/
 
-.method-parameters {
-  margin: 0px 0px 0px 20px;
+.parameters-container {
+  font-size: 14px;
+  letter-spacing: -0.28px;
+  width: 647px;
+  border-radius: 10px;
+  border: 3px solid #7A7A7A;
+  background-color: #dadada;
+  padding: 20px;
 }
 
-.method-parameters__variants {
-  margin: 20px 0px 10px 0px;
+.check-wrapper{
+  display: flex;
+  gap: 50px;
+  margin-bottom: 26px;
 }
 
-.method-parameters__types {
+.header {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.method-type,
+.options {
+  display: flex;
+}
+
+.method-type label{
+  margin-right: 20px;
+}
+
+.options label{
+  margin-right: 20px;
+}
+.inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   margin-bottom: 10px;
 }
 
-.method-parameters__n-value {}
+input[type="number"] {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  width: 40%;
+  border-radius: 5.103px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  margin-right: 2px;
+}
 
 
 

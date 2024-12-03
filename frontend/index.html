@@ -39,31 +39,34 @@
             </select>
             <br>
         </div>
-
-        <div class="method-parameters">
-            <label class="method-parameters__label">Параметры численного метода:</label>
-            <div class="method-parameters__variants">
-                <input type="checkbox" id="variant1" name="variant" value="1" class="method-parameters__checkbox">
-                <label for="variant1" class="method-parameters__label">Вариант 1</label>
-                <input type="checkbox" id="variant2" name="variant" value="2" class="method-parameters__checkbox">
-                <label for="variant2" class="method-parameters__label">Вариант 2</label>
-            </div>
-            <div class="method-parameters__types">
-                <input type="radio" id="linear" name="method-type" value="linear" class="method-parameters__radio">
-                <label for="linear" class="method-parameters__label">Линейный</label>
-                <input type="radio" id="nonlinear" name="method-type" value="nonlinear"
-                    class="method-parameters__radio">
-                <label for="nonlinear" class="method-parameters__label">Нелинейный</label>
-            </div>
-            <div class="method-parameters__n-value">
-                <label for="n-value" class="method-parameters__label">N</label>
-                <input type="text" id="n-value" class="method-parameters__input" placeholder="Введите N">
-            </div>
-            <div class="method-parameters__dt-value">
-                <label for="dt-value" class="method-parameters__label">dT</label>
-                <input type="text" id="dt-value" class="method-parameters__input" placeholder="Введите dT">
+        
+        <div class="parameters-container">
+            <div class="header">Параметры численного метода</div>
+            <div>
+                <div class="check-wrapper">
+                    <div class="method-type">
+                        <label><input type="radio" name="method" value="linear" checked> Линейный</label>
+                        <label><input type="radio" name="method" value="nonlinear"> Нелинейный</label>
+                    </div>
+                    <div class="options">
+                        <label><input type="checkbox" name="variant1"> Вариант №1</label>
+                        <label><input type="checkbox" name="variant2"> Вариант №2</label>
+                    </div>
+                </div>
+                <div class="inputs">
+                    <label>
+                        Введите N
+                        <input type="number" name="N">
+                    </label>
+                    <label>
+                        Введите dT
+                        <input type="number" name="dT">
+                    </label>
+                </div>
+            </form>
             </div>
         </div>
+        
         <button id="start" class="box__button">Старт</button>
         <div class="result-box">
             <label class="result-box__label">Результаты:</label>
@@ -111,6 +114,11 @@
             <button class="actions__button actions__button-5">Запустить</button>
         </div>
     </div>
+    
+
+
+
+    <script src="js/client.js"></script>
 </body>
 
 </html>
