@@ -1,0 +1,55 @@
+  0%|          | 0/1000 [00:00<?, ?it/s]/usr/local/lib/python3.10/dist-packages/torch/autograd/graph.py:825: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at ../aten/src/ATen/cuda/CublasHandlePool.cpp:135.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+  0%|          | 4/1000 [00:00<01:54,  8.74it/s]
+Train loss: 0.5459659099578857
+ 10%|█         | 103/1000 [00:04<00:35, 25.55it/s]
+Train loss: 0.401441752910614
+ 21%|██        | 207/1000 [00:08<00:23, 34.08it/s]
+Train loss: 0.39670252799987793
+ 31%|███       | 307/1000 [00:11<00:19, 35.25it/s]
+Train loss: 0.3816157579421997
+ 41%|████      | 407/1000 [00:14<00:17, 34.63it/s]
+Train loss: 0.3777335286140442
+ 51%|█████     | 507/1000 [00:16<00:14, 34.57it/s]
+Train loss: 0.3663606345653534
+ 61%|██████    | 607/1000 [00:19<00:11, 34.45it/s]
+Train loss: 0.36966201663017273
+ 71%|███████   | 707/1000 [00:22<00:08, 35.19it/s]
+Train loss: 0.36374565958976746
+ 81%|████████  | 807/1000 [00:25<00:05, 35.32it/s]
+Train loss: 0.3644941449165344
+ 91%|█████████ | 907/1000 [00:28<00:02, 35.09it/s]
+Train loss: 0.3613971769809723
+100%|██████████| 1000/1000 [00:31<00:00, 32.05it/s]
+[Best][Epoch: 935] Train loss: 0.3585985004901886
+
+L2 Relative Error: 0.9602695351488277
+
+
+                Убрал ксавье
+
+  0%|          | 0/1000 [00:00<?, ?it/s]/usr/local/lib/python3.10/dist-packages/torch/autograd/graph.py:825: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at ../aten/src/ATen/cuda/CublasHandlePool.cpp:135.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+  0%|          | 4/1000 [00:00<02:06,  7.87it/s]
+Train loss: 0.5675163269042969
+ 10%|█         | 104/1000 [00:04<00:33, 26.47it/s]
+Train loss: 0.3802351653575897
+ 21%|██        | 206/1000 [00:07<00:25, 30.60it/s]
+Train loss: 0.37970468401908875
+ 30%|███       | 305/1000 [00:11<00:21, 32.79it/s]
+Train loss: 0.36731842160224915
+ 40%|████      | 405/1000 [00:14<00:17, 34.90it/s]
+Train loss: 0.36238357424736023
+ 50%|█████     | 505/1000 [00:17<00:14, 35.07it/s]
+Train loss: 0.36405280232429504
+ 60%|██████    | 605/1000 [00:20<00:11, 33.95it/s]
+Train loss: 0.36065036058425903
+ 70%|███████   | 704/1000 [00:23<00:09, 30.07it/s]
+Train loss: 0.35702088475227356
+ 80%|████████  | 804/1000 [00:25<00:05, 33.84it/s]
+Train loss: 0.3589412569999695
+ 90%|█████████ | 905/1000 [00:29<00:02, 34.80it/s]
+Train loss: 0.35628071427345276
+100%|██████████| 1000/1000 [00:32<00:00, 31.25it/s]
+[Best][Epoch: 997] Train loss: 0.3527347147464752
+L2 Relative Error: 0.9513794764247949
