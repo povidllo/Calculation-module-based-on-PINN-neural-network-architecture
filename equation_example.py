@@ -16,8 +16,8 @@ from neural_network import torch, nn
 from neural_network import device
 
 torch.manual_seed(44)
-# np.random.seed(44)
-# random.seed(44)
+np.random.seed(44)
+random.seed(44)
 
 
 

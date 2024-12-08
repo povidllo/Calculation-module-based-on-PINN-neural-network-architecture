@@ -11,3 +11,5 @@ pandas==2.2.3
 tqdm==4.66.5
 tensorboard==2.18.0
 random-fourier-features-pytorch
+wandb -qU
+ml_collections
