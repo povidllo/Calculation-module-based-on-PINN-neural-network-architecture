@@ -21,8 +21,11 @@ def get_config():
 
     #data
     cfg.data_path= "./data/AC.mat"    
-
+    
     #Fourier
-    cfg.Fourier = False
+    cfg.Fourier = True
+    cfg.FourierType = "basic"
+    cfg.FinputDim = 256
+    cfg.FourierScale = 1
 
     return cfg  # Убедитесь, что возвращаете cfg
