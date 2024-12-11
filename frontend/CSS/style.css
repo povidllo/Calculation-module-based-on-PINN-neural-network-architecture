@@ -50,7 +50,7 @@ button:active {
 .bc-select {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .model-select__label,
@@ -69,12 +69,8 @@ button:active {
 
 .box {
   width: 40%;
+  margin-bottom: 15px
 }
-
-.box__button {
-}
-
-.box__boundary {}
 
 .box__label {
   margin-right: 10px;
@@ -85,16 +81,19 @@ button:active {
 }
 
 .box__input {
-  border: 1px solid black;
+  border: 2px solid var(--grey, #616161);
   border-radius: 5px;
   padding: 2px 4px;
+  background-color: #D9D9D9;
 }
 
 
 .box__dropdown {
-  border: 1px solid black;
+  height: 24px;
+  width: 132px;
+  border: 2px solid #616161;
   border-radius: 5px;
-  background-color: white;
+  background-color: #D9D9D9;
 }
 
 .box__button {
@@ -114,7 +113,7 @@ button:active {
 .parameters-container {
   font-size: 14px;
   letter-spacing: -0.28px;
-  width: 647px;
+  width: 640px;
   border-radius: 10px;
   border: 3px solid #7A7A7A;
   background-color: #dadada;
@@ -124,13 +123,13 @@ button:active {
 .check-wrapper{
   display: flex;
   gap: 50px;
-  margin-bottom: 26px;
+  margin-bottom: 20px;
 }
 
 .header {
   font-size: 18px;
   font-weight: 500;
-  margin-bottom: 15px;
+  margin-bottom: 24px;
   text-align: center;
 }
 
@@ -161,7 +160,7 @@ form {
 
 input[type="number"] {
   padding: 5px;
-  border: 1px solid #ccc;
+  border: 2px solid var(--grey, #616161);
   border-radius: 5px;
   font-size: 14px;
   width: 40%;
@@ -171,15 +170,19 @@ input[type="number"] {
 input[type="radio"],
 input[type="checkbox"] {
   margin-right: 2px;
+  accent-color: #616161;
 }
-
-
-
 
 /*--------------------TABLE------------------*/
 
 .result-box {
-  width: 637px;
+  width: 640px;
+}
+
+.result-box {
+  max-height: 314px;
+  overflow-y: auto;
+  scrollbar-color: #7a7a7a #d9d9d9;
 }
 
 .result-box__label {
@@ -205,14 +208,15 @@ td {
 }
 
 .actions {
+  width: 640px;
   display: flex;
-  gap: 17px;
+  justify-content: space-between;
 }
 
 .actions__button {
   display: flex;
   width: 107px;
-  height: 24px;
+  height: 30px;
   padding: 10px;
   justify-content: center;
   align-items: center;
