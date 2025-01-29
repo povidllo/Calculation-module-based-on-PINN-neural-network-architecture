@@ -15,9 +15,13 @@ def get_config():
     cfg.left_x = -1
     cfg.right_x = 1
     cfg.num_x = 256
-    cfg.epochs = 5
+    cfg.epochs = 11
     cfg.hidden_count = 128
     cfg.lr = 1e-3
+
+    cfg.input_dim = 2
+    cfg.output_dim = 1
+    cfg.hidden_sizes = [128, 128, 128, 128]
 
     #data
     cfg.data_path= "./data/AC.mat"    
@@ -25,4 +29,4 @@ def get_config():
     #Fourier
     cfg.Fourier = False
 
-    return cfg  # Убедитесь, что возвращаете cfg
+    return cfg 

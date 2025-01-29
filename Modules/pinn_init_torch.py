@@ -98,4 +98,6 @@ def pinn(cfg):
         fourier_scale=cfg.FourierScale if cfg.Fourier else 1.0
     )
     pytorch_model.apply(weights_init)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    pytorch_model.to(device)
     return pytorch_model
