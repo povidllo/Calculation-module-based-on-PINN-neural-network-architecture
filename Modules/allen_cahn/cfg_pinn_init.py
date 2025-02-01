@@ -12,5 +12,7 @@ def get_config():
 
     #Fourier
     cfg.Fourier = False
+    cfg.FinputDim = None
+    cfg.FourierScale = None
 
-    return cfg  # Убедитесь, что возвращаете cfg
+    return cfg

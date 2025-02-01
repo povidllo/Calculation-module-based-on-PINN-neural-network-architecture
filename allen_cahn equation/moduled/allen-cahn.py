@@ -206,6 +206,8 @@ class TrainClass:
       plt.clim(-1, 1)
       plt.ylim(-1,1)
       plt.xlim(0,1)
+      print(u_pred.shape)
+      print(self.x_data.shape)
       plt.scatter(self.t_data, self.x_data)
       plt.xlabel('t')
       plt.ylabel('x')
@@ -262,7 +264,7 @@ class TrainClass:
 
 
 a = TrainClass(default.get_config())
-a.train()
+# a.train()
 # a.printLossGraph()
 a.printEval()
 # a.train()

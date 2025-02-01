@@ -1,13 +1,8 @@
 from tqdm import tqdm
 import torch
-
-def ac_equation(u, tx):
-    u_tx = torch.autograd.grad(u, tx, torch.ones_like(u), create_graph= True)[0]
-    u_t = u_tx[:, 0:1]
-    u_x = u_tx[:, 1:2]
-    u_xx = torch.autograd.grad(u_x, tx, torch.ones_like(u_x), create_graph= True)[0][:, 1:2]
-    e = u_t -0.0001*u_xx + 5*u**3 - 5*u
-    return e
+import matplotlib.pyplot as plt
+import sys
+import numpy as np
 
 class Train_torch:
     def __init__(self,
@@ -16,9 +11,9 @@ class Train_torch:
                  optimizer,
                  data_generator,
                  loss_calculator,
-                 vizualizer = None,
-                 error_metric = None,
-                 calculate_l2_error=None):
+                 test_data_generator=None,
+                 calculate_l2_error=None,
+                 vizualizer = None):
         
         # Привязка основной
         self.config = cfg
@@ -33,8 +28,8 @@ class Train_torch:
         self.data_generator = data_generator
         self.loss_calculator = loss_calculator
         self.vizualizer = vizualizer
-        self.error_metric = error_metric
         self.calculate_l2_error = calculate_l2_error
+        self.test_data_generator = test_data_generator
         # Подготовка данных
         self.__prepare_data()
         
@@ -45,11 +40,29 @@ class Train_torch:
         self.best_epoch = 0    
 
     def __prepare_data(self):
-        """Загрузка и подготовка данных через внешний модуль"""
+        '''
+        Загрузка и подготовка данных через внешний модуль
+        main - данные для обучения физического аспекта модели
+        secondary - данные для обучения, путем сравнения с правильными данными
+        secondary_true - правильные данные для secondary
+        '''
         data = self.data_generator(self.config)
-        self.variables_f = data['train'].to(self.device)
-        self.u_data = data['boundary_true'].to(self.device)
-        self.variables = data['boundary'].to(self.device)
+        self.variables_f = data['main'].to(self.device)
+        self.u_data = data['secondary_true'].to(self.device)
+        self.variables = data['secondary'].to(self.device)
+    
+    def printLossGraph(self):
+        '''
+        Выводит график функции потерь, а также эпоху с наименьшей величиной потерь
+        '''
+        print(f"[Best][Epoch: {self.best_epoch}] Train loss: {self.best_loss}")
+        plt.figure(figsize=(10, 5))
+        plt.plot(self.loss_history)
+        plt.show()
+        
+        plt.figure(figsize=(10, 5))
+        plt.plot(self.l2_history)
+        plt.show()
 
     def save_model(self, path):
         """Сохранение модели"""
@@ -81,17 +94,22 @@ class Train_torch:
             current_loss = loss.item()
             self.loss_history.append(current_loss)
             if self.calculate_l2_error:
-                l2_error = self.calculate_l2_error()
+                l2_error = self.calculate_l2_error(self.config.path_true_data, self.model, self.device, self.test_data_generator)
                 self.l2_history.append(l2_error)            
             
             # Сохранение лучшей модели
             if current_loss < self.best_loss:
                 self.best_loss = current_loss
                 self.best_epoch = epoch
-                self.save_model(f'./ac_1d.pth')
+                
+                self.save_model(sys.path[0] + self.config.save_weights_path)
                 
             
             # Логирование
-            if epoch:
-                print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {123}")
+            if(epoch % 400 == 0):
+                print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.calculate_l2_error else 0}")
 
+    def printEval(self):
+        #Загружаем лучшие веса
+        self.model.load_state_dict(torch.load(sys.path[0] + self.config.save_weights_path))
+        self.vizualizer(self.config.path_true_data, self.model, self.device, self.test_data_generator)

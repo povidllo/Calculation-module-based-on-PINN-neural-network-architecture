@@ -40,9 +40,10 @@ def ac_generator(num_t, num_x, typ='train'):
         return t_data_f, x_data_f
 
 def data_generator(cfg):
-    t_data, x_data, u_data, t_data_f, x_data_f = ac_generator(cfg.num_t, cfg.num_x)
+    t_data, x_data, u_data, t_data_f, x_data_f = ac_generator(cfg.num_dots[0], cfg.num_dots[1])
     variables = torch.FloatTensor(np.concatenate((t_data, x_data), axis=1)).to(cfg.device)
     variables_f = torch.FloatTensor(np.concatenate((t_data_f, x_data_f), axis=1)).to(cfg.device)
     variables_f.requires_grad = True
     u_data = torch.FloatTensor(u_data).to(cfg.device)
-    return {'train': variables_f, 'boundary': variables, 'boundary_true': u_data}
+    # return {'train': variables_f, 'boundary': variables, 'boundary_true': u_data}
+    return {'main': variables_f, 'secondary': variables, 'secondary_true': u_data}

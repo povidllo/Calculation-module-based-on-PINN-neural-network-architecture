@@ -15,8 +15,8 @@ def get_config():
     cfg.left_x = -1
     cfg.right_x = 1
     cfg.num_x = 256
-    cfg.epochs = 10
-    cfg.hidden_count = 128
+    cfg.epochs = 5
+    cfg.hidden_sizes = [128, 128, 128, 128]
     cfg.lr = 1e-3
 
     #data
