@@ -36,6 +36,6 @@ class Optimizer(Document):
   data_set_id: int
   neural_network_id: int
   train: Callable
-  dotrain: Callable
+  finetune: Callable
   save_weights: Callable
   show_res: Callable
