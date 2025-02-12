@@ -27,5 +27,6 @@ class Weights(Document):
 
 class NeuralNetwork(Document):
   name: str
-  neural_network: str
+  equation: str
   weights: Weights
+  hyper_params: HyperParam

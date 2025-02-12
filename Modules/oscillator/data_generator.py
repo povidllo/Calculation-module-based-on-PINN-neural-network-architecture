@@ -35,7 +35,7 @@ def data_generator(cfg):
     y = oscillator(x).view(-1,1)
     y_data = y[0:len(x)//2:len(x)//20]
 
-    np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
+    np.save(sys.path[0] + '/oscillator/data/OSC.npy', y.cpu().detach().numpy())
     
     plt.figure()
     plt.plot(x, y, label="Exact solution")

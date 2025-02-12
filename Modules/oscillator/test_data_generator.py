@@ -1,5 +1,5 @@
 import numpy as np
-from cfg_test_data_gen import get_config
+from Modules.oscillator.cfg_test_data_gen import get_config
 import torch
 def generator():
     '''
