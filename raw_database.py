@@ -26,5 +26,6 @@ class Weights(Document):
 
 
 class NeuralNetwork(Document):
+  name: str
   neural_network: str
   weights: Weights
