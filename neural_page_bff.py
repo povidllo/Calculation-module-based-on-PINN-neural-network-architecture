@@ -34,10 +34,25 @@ async def create_neural_model(model_type : Optional[str] = None, desc : Optional
 
     return {"resp" : "OK"}
 
-async def run_neural_net():
-    res = neural_net_manager.run_model()
+async def train_neural_net():
+    res = await neural_net_manager.train_model()
 
     return {"result": res}
+
+
+async def run_neural_net():
+ 
+
+
+    base64_encoded_image = neural_net_manager.run_model()
+
+    loader = jinja2.FileSystemLoader("./templates")
+    env = jinja2.Environment(loader=loader, autoescape=False)
+    table_templ = env.get_template("index.html")
+
+    table_templ = table_templ.render(myImage=base64_encoded_image)
+
+    return HTMLResponse(mTemplate.mtemplate('<script></script>', table_templ))
 
 router = APIRouter()
 
@@ -55,6 +70,7 @@ def main(loop):
 
     app.add_api_route("/create_model", create_neural_model, methods=["GET"])
     app.add_api_route("/run", run_neural_net, methods=["GET"])
+    app.add_api_route("/train", train_neural_net, methods=["GET"])
 
 
     app.include_router(router)
@@ -130,6 +146,7 @@ if __name__ == '__main__':
 #
 # x0_true=torch.tensor([1], dtype=float).float().to(device)
 # dx0dt_true = torch.tensor([0], dtype=float).float().to(device)
+
 # model = simpleModel().to(device)
 #
 # def pde(out, t, nu=3):

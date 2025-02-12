@@ -93,6 +93,7 @@ class mNeuralNet_mongo(mNeuralNet, Document):
     async def m_insert(el:Document):
         await el.save(link_rule=WriteRules.WRITE)
 
+
     class Settings:
         name = neural_net_mongo_database
 
