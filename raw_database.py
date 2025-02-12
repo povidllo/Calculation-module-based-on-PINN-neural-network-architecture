@@ -2,19 +2,24 @@ from typing import Optional, List
 from beanie import Document
 
 class HyperParam(Document):
-  id: int
-  power_time_vector: int
-  power_dom_vector: int
-  layers_count: int
+  hidden_count: int
+  input_dim: int
+  output_dim: int
   hidden_sizes: List[int]
-  out_power: int
-  batch_size: int
+  Fourier: bool
+  FinputDim: Optional[int]
+  FourierScale: Optional[int]
+  
+  lr: float
+  betas: tuple[float, float]
+  
   epochs: int
-  fourier: int
-  fourier_type: Optional[str]
-  fourier_dim: Optional[int]
-  fourier_scale: Optional[int]
+  device: str
+  num_dots: List[int]
+  path_true_data: str
+  save_weights_path: str
 
 
 class Weight(Document):
-  file_path: str
+  save_weights_path: str
+#можно добавить loss
