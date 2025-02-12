@@ -20,6 +20,11 @@ class HyperParam(Document):
   save_weights_path: str
 
 
-class Weight(Document):
+class Weights(Document):
   save_weights_path: str
-#можно добавить loss
+  #можно добавить loss
+
+
+class NeuralNetwork(Document):
+  neural_network: str
+  weights: Weights
