@@ -14,6 +14,8 @@ import neural_network as net
 import matplotlib.pyplot as plt
 from neural_network import torch, nn
 from neural_network import device
+import numpy as np
+import random
 
 torch.manual_seed(44)
 np.random.seed(44)
