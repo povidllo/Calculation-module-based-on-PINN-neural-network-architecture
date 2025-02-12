@@ -29,7 +29,7 @@ import abc
 class abs_neural_net(abc.ABC):
 
     @abc.abstractmethod
-    def construct_model(self, params : mHyperParams, desc : str): pass
+    def construct_model(self, params : mHyperParams): pass
 
     @abc.abstractmethod
     def set_optimizer(self, opti : mOptimizer): pass
@@ -58,8 +58,8 @@ class my_oscil_net(abs_neural_net):
 
     def set_optimizer(self, opti : mOptimizer): pass
 
-    def construct_model(self, params : mHyperParams, desc : str):
-        self.my_desc = desc
+    def construct_model(self, params : mHyperParams):
+        self.my_desc = params.mymodel_desc
 
     def train(self): pass
 
@@ -71,11 +71,11 @@ class neural_net_microservice():
     inner_model : abs_neural_net = None
     models_list = {'oscil': my_oscil_net}
 
-    def create_model(self, params : mHyperParams, desc=None):
+    def create_model(self, params : mHyperParams):
         if (params.mymodel_type is not None):
             if (params.mymodel_type in self.models_list):
                 self.inner_model = (self.models_list[params.mymodel_type])()
-                self.inner_model.construct_model(params, desc)
+                self.inner_model.construct_model(params)
 
                 print('inner model', self.inner_model)
 

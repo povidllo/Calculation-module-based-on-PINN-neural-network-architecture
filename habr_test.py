@@ -27,11 +27,11 @@ import motor.motor_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 import asyncio
 
-async def create_neural_model(model_type : Optional[str] = None):
+async def create_neural_model(model_type : Optional[str] = None, desc : Optional[str] = 'hello world'):
     if (model_type is not None):
-        params = mHyperParams(mymodel_type=model_type)
+        params = mHyperParams(mymodel_type=model_type, mymodel_desc=desc)
         print('params', params)
-        neural_net_manager.create_model(params, 'hello world')
+        neural_net_manager.create_model(params)
 
     return {"resp" : "OK"}
 

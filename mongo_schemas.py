@@ -40,14 +40,15 @@ class mDataSet(BaseModel):
 
 class mHyperParams(BaseModel):
     mymodel_type : Optional[str] = None
+    mymodel_desc: Optional[str] = None
+
     hidden_size : Optional[int] = 20
     power_time_vector : Optional[int] = 100
     epochs : Optional[int] = 50
     
 class mNeuralNet(BaseModel):
     stored_item_id : Optional[str] = None
-    mymodel_desc: Optional[str] = None
-
+    
 
 class mongo_Record(mRecord, Document):
     class Settings:
