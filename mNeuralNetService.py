@@ -24,12 +24,16 @@ import abc
 # import hiddenlayer as hl
 
 
-
-
 class abs_neural_net(abc.ABC):
+    neural_model : mNeuralNet_mongo = None
+
+
+    async def createModel(self,params : mHyperParams):
+        self.neural_model = mNeuralNet_mongo(hyper_param=mHyperParams_mongo(**params.model_dump()))
+        await mNeuralNet_mongo.m_insert(self.neural_model)
 
     @abc.abstractmethod
-    def construct_model(self, params : mHyperParams): pass
+    async def construct_model(self, params : mHyperParams): pass
 
     @abc.abstractmethod
     def set_optimizer(self, opti : mOptimizer): pass
@@ -47,7 +51,6 @@ class abs_neural_net(abc.ABC):
     def calc(self): pass
 
 class my_oscil_net(abs_neural_net):
-    my_desc = ''
 
     def __init__(self):
         pass
@@ -58,24 +61,27 @@ class my_oscil_net(abs_neural_net):
 
     def set_optimizer(self, opti : mOptimizer): pass
 
-    def construct_model(self, params : mHyperParams):
-        self.my_desc = params.mymodel_desc
+    async def construct_model(self, params : mHyperParams):
+        await self.createModel(params)
+
+
+
 
     def train(self): pass
 
     def calc(self):
-        return self.my_desc
+        return self.neural_model.model_dump()
 
 
 class neural_net_microservice():
     inner_model : abs_neural_net = None
     models_list = {'oscil': my_oscil_net}
 
-    def create_model(self, params : mHyperParams):
+    async def create_model(self, params : mHyperParams):
         if (params.mymodel_type is not None):
             if (params.mymodel_type in self.models_list):
                 self.inner_model = (self.models_list[params.mymodel_type])()
-                self.inner_model.construct_model(params)
+                await self.inner_model.construct_model(params)
 
                 print('inner model', self.inner_model)
 

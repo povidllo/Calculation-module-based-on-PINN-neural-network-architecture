@@ -48,7 +48,8 @@ class mHyperParams(BaseModel):
     
 class mNeuralNet(BaseModel):
     stored_item_id : Optional[str] = None
-    
+    status : Optional[str] = None
+
 
 class mongo_Record(mRecord, Document):
     class Settings:
@@ -74,6 +75,7 @@ class mDataSet_mongo(mDataSet, Document):
         arbitrary_types_allowed = True
 
 class mHyperParams_mongo(mHyperParams, Document):
+
     class Settings:
         name = hyper_params_mongo_database
 
@@ -85,6 +87,11 @@ class mNeuralNet_mongo(mNeuralNet, Document):
     data_set : Optional[list[Link[mDataSet_mongo]]] = None
     optimizer :  Optional[list[Link[mOptimizer_mongo]]] = None
     records: Optional[list[Link[mongo_Record]]] = None
+
+
+    @staticmethod
+    async def m_insert(el:Document):
+        await el.save(link_rule=WriteRules.WRITE)
 
     class Settings:
         name = neural_net_mongo_database

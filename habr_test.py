@@ -30,22 +30,21 @@ import asyncio
 async def create_neural_model(model_type : Optional[str] = None, desc : Optional[str] = 'hello world'):
     if (model_type is not None):
         params = mHyperParams(mymodel_type=model_type, mymodel_desc=desc)
-        print('params', params)
-        neural_net_manager.create_model(params)
+        await neural_net_manager.create_model(params)
 
     return {"resp" : "OK"}
 
 async def run_neural_net():
     res = neural_net_manager.run_model()
 
-    return {"result", res}
+    return {"result": res}
 
 router = APIRouter()
 
 def main(loop):
 
     async def init():
-        await init_beanie(database=client[database_name], document_models=[mongo_Estimate, mongo_Record])
+        await init_beanie(database=client[database_name], document_models=[mongo_Estimate, mongo_Record, mOptimizer_mongo, mDataSet_mongo, mHyperParams_mongo, mNeuralNet_mongo])
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
