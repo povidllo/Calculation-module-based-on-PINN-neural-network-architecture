@@ -3,12 +3,20 @@ from fastapi import Body, UploadFile
 from pydantic import BaseModel, ConfigDict
 from beanie import Document, Indexed, init_beanie, Link, WriteRules
 import fastapi_jsonrpc as jsonrpc
+from collections.abc import Callable, Awaitable
+import abc
+
+cur_host = 'localhost'
 
 database_ulr = 'localhost'
 database_name = "testDB"
 pinn_mongo_database = "PINN"
 rec_mongo_database = "REC"
 
+opti_mongo_database = "OPTI"
+dataset_mongo_database = "DATASET"
+hyper_params_mongo_database = "HYPER_PARAMS"
+neural_net_mongo_database = "NEURAL_NET"
 
 class MyError(jsonrpc.BaseError):
     CODE = 5000
@@ -18,8 +26,28 @@ class MyError(jsonrpc.BaseError):
         details: str
 
 
+
 class mRecord(BaseModel):
-    record: Optional[list] = None
+    record: Optional[dict] = None
+
+class mOptimizer(BaseModel):
+    method: Optional[str] = None
+    params : Optional[dict] = None
+
+class mDataSet(BaseModel):
+    power_time_vector : Optional[int] = 100
+    params: Optional[dict] = None
+
+class mHyperParams(BaseModel):
+    mymodel_type : Optional[str] = None
+    hidden_size : Optional[int] = 20
+    power_time_vector : Optional[int] = 100
+    epochs : Optional[int] = 50
+    
+class mNeuralNet(BaseModel):
+    stored_item_id : Optional[str] = None
+    mymodel_desc: Optional[str] = None
+
 
 class mongo_Record(mRecord, Document):
     class Settings:
@@ -28,6 +56,47 @@ class mongo_Record(mRecord, Document):
     class Config:
         arbitrary_types_allowed = True
         # json_encoders = {bytes: lambda s: str(s, errors='ignore') }
+
+class mOptimizer_mongo(mOptimizer,Document):
+    class Settings:
+        name = opti_mongo_database
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class mDataSet_mongo(mDataSet, Document):
+    class Settings:
+        name = dataset_mongo_database
+
+    class Config:
+        arbitrary_types_allowed = True
+
+class mHyperParams_mongo(mHyperParams, Document):
+    class Settings:
+        name = hyper_params_mongo_database
+
+    class Config:
+        arbitrary_types_allowed = True
+
+class mNeuralNet_mongo(mNeuralNet, Document):
+    hyper_param : Optional[Link[mHyperParams_mongo]] = None
+    data_set : Optional[list[Link[mDataSet_mongo]]] = None
+    optimizer :  Optional[list[Link[mOptimizer_mongo]]] = None
+    records: Optional[list[Link[mongo_Record]]] = None
+
+    class Settings:
+        name = neural_net_mongo_database
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+
+
+
+
+
 
 class mEstimate(BaseModel):
     file_id : Optional[str] = None
