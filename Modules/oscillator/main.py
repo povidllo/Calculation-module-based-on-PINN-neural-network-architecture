@@ -22,24 +22,25 @@ import cfg_main as cfg_main
 torch.manual_seed(123)
 # np.random.seed(44)
 # torch.cuda.manual_seed(44)
+def init():
+    model = pinn(cfg_main.get_config())
+    # Вывод весов при инициализации
+    # for name, param in model.named_parameters():
+    #     print(f"\nLayer: {name}")
+    #     print(f"Shape: {param.shape}")
+    #     print(f"Values:\n{param.data}")
+    # exit()
 
-model = pinn(cfg_main.get_config())
-# Вывод весов при инициализации
-# for name, param in model.named_parameters():
-#     print(f"\nLayer: {name}")
-#     print(f"Shape: {param.shape}")
-#     print(f"Values:\n{param.data}")
-# exit()
+    optimizer = create_optim(model, cfg_main.get_config()) 
 
-optimizer = create_optim(model, cfg_main.get_config()) 
-
-trainer = Train_torch(cfg_main.get_config(),
-                      model, 
-                      optimizer, 
-                      data_generator, 
-                      loss_calculator,
-                      test_data_generator,
-                      calculate_l2_error,
-                      vizualize)
+    trainer = Train_torch(cfg_main.get_config(),
+                        model, 
+                        optimizer, 
+                        data_generator, 
+                        loss_calculator,
+                        test_data_generator,
+                        calculate_l2_error,
+                        vizualize)
+    return trainer
 # trainer.train()
-trainer.printEval()
+# trainer.printEval()

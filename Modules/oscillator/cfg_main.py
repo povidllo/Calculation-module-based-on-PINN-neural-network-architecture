@@ -1,4 +1,5 @@
 import ml_collections
+import torch
 
 def get_config():
     cfg = ml_collections.ConfigDict()
