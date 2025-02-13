@@ -54,9 +54,13 @@ class abs_neural_net(abc.ABC):
 
     async def createModel(self, params : mHyperParams):
         self.neural_model = mNeuralNet_mongo(hyper_param=mHyperParams_mongo(**params.model_dump()))
+        self.neural_model.records = []
         await self.set_dataset()
 
         await mNeuralNet_mongo.m_insert(self.neural_model)
+
+    async def update_neural_model(self):
+        await mNeuralNet_mongo.m_save(self.neural_model)
 
 
     @abc.abstractmethod
@@ -75,7 +79,7 @@ class abs_neural_net(abc.ABC):
     def train(self): pass
 
     @abc.abstractmethod
-    def calc(self): pass
+    async def calc(self): pass
 
 class my_oscil_net(abs_neural_net):
 
@@ -142,7 +146,7 @@ class my_oscil_net(abs_neural_net):
             self.neural_model.data_set = [new_dataset]
             # self.neural_model.data_set[0].params = dataset.params
 
-            await mNeuralNet_mongo.m_save(self.neural_model)
+            await self.update_neural_model()
 
 
 
@@ -192,8 +196,8 @@ class my_oscil_net(abs_neural_net):
 
 
 
-    def calc(self):
-        print('calc', self.neural_model.model_dump() )
+    async def calc(self):
+        # print('calc', self.neural_model.model_dump() )
 
         power_of_input = self.neural_model.data_set[0].power_time_vector
 
@@ -234,6 +238,11 @@ class my_oscil_net(abs_neural_net):
         my_stringIObytes.seek(0)
         my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
 
+        new_rec = mongo_Record(record={'raw' : my_base64_jpgData})
+        self.neural_model.records.append(new_rec)
+
+        await self.update_neural_model()
+
 
         plt.clf()
 
@@ -254,8 +263,6 @@ class neural_net_microservice():
                 self.inner_model = (self.models_list[params.mymodel_type])()
                 await self.inner_model.construct_model(params, self.device)
 
-                print('inner model', self.inner_model)
-
     async def train_model(self):
         if (self.inner_model is not None):
             self.inner_model.train()
@@ -264,9 +271,9 @@ class neural_net_microservice():
         if (dataset is not None):
             await self.inner_model.set_dataset(dataset)
 
-    def run_model(self):
+    async def run_model(self):
         base64_encoded_image = b''
         if (self.inner_model is not None):
-            base64_encoded_image = self.inner_model.calc()
+            base64_encoded_image = await self.inner_model.calc()
 
         return base64_encoded_image

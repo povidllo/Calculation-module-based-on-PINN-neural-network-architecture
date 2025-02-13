@@ -47,7 +47,7 @@ async def run_neural_net():
  
 
 
-    base64_encoded_image = neural_net_manager.run_model()
+    base64_encoded_image = await neural_net_manager.run_model()
 
     loader = jinja2.FileSystemLoader("./templates")
     env = jinja2.Environment(loader=loader, autoescape=False)
