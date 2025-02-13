@@ -54,9 +54,9 @@ class abs_neural_net(abc.ABC):
 
     async def createModel(self, params : mHyperParams):
         self.neural_model = mNeuralNet_mongo(hyper_param=mHyperParams_mongo(**params.model_dump()))
-        self.set_dataset()
+        await self.set_dataset()
 
-        # await mNeuralNet_mongo.m_insert(self.neural_model)
+        await mNeuralNet_mongo.m_insert(self.neural_model)
 
 
     @abc.abstractmethod
@@ -66,7 +66,7 @@ class abs_neural_net(abc.ABC):
     def set_optimizer(self, opti : mOptimizer = None): pass
 
     @abc.abstractmethod
-    def set_dataset(self, dataset : mDataSet = None): pass
+    async def set_dataset(self, dataset : mDataSet = None): pass
 
     @abc.abstractmethod
     def load_model(self, in_model : mNeuralNet): pass
@@ -85,6 +85,7 @@ class my_oscil_net(abs_neural_net):
 
     x0_true = None
     dx0dt_true = None
+
 
 
     class mySpecialDataSet(mDataSet_mongo):
@@ -123,13 +124,27 @@ class my_oscil_net(abs_neural_net):
 
 
 
-    def set_dataset(self, dataset : mDataSet = None):
+    async def set_dataset(self, dataset : mDataSet = None):
         if dataset is None:
             self.neural_model.data_set = [self.mySpecialDataSet(
                                                                 power_time_vector=self.neural_model.hyper_param.power_time_vector,
                                                                 params={'nu': 3}
                                                                 )
                                           ]
+        else:
+            # print('id', self.neural_model.data_set[0])
+
+            new_dataset = self.mySpecialDataSet(
+                power_time_vector=self.neural_model.hyper_param.power_time_vector,
+                params=dataset.params
+            )
+            await self.neural_model.data_set[0].delete()
+            self.neural_model.data_set = [new_dataset]
+            # self.neural_model.data_set[0].params = dataset.params
+
+            await mNeuralNet_mongo.m_save(self.neural_model)
+
+
 
     def set_optimizer(self, opti : mOptimizer = None):
         if opti is None:
@@ -181,7 +196,9 @@ class my_oscil_net(abs_neural_net):
         print('calc', self.neural_model.model_dump() )
 
         power_of_input = self.neural_model.data_set[0].power_time_vector
+
         nu = self.neural_model.data_set[0].params['nu']
+
         print('nu', nu)
         print('power_of_input calc', type(power_of_input), power_of_input)
         t = torch.linspace(0, 1, power_of_input).unsqueeze(-1).unsqueeze(0).to(self.mydevice)
@@ -191,6 +208,7 @@ class my_oscil_net(abs_neural_net):
 
         omega = 2 * torch.pi * nu
         x_true = self.x0_true * torch.cos(omega*t)
+
         # print('x_pred', x_pred[0].cpu().detach().numpy())
         # print('x_true', x_true[0].cpu().detach().numpy())
 
@@ -242,6 +260,9 @@ class neural_net_microservice():
         if (self.inner_model is not None):
             self.inner_model.train()
 
+    async def set_dataset(self, dataset : mDataSet = None):
+        if (dataset is not None):
+            await self.inner_model.set_dataset(dataset)
 
     def run_model(self):
         base64_encoded_image = b''

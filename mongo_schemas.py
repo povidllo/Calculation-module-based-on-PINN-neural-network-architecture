@@ -91,8 +91,13 @@ class mNeuralNet_mongo(mNeuralNet, Document):
 
     @staticmethod
     async def m_insert(el:Document):
-        await el.save(link_rule=WriteRules.WRITE)
+        # await el.save(link_rule=WriteRules.WRITE)
+        await el.insert(link_rule=WriteRules.WRITE)
 
+    @staticmethod
+    async def m_save(el:Document):
+        await el.save(link_rule=WriteRules.WRITE)
+        # await el.insert(link_rule=WriteRules.WRITE)
 
     class Settings:
         name = neural_net_mongo_database

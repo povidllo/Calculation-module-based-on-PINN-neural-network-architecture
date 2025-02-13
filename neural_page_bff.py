@@ -27,10 +27,13 @@ import motor.motor_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 import asyncio
 
-async def create_neural_model(model_type : Optional[str] = None, desc : Optional[str] = 'hello world'):
+async def create_neural_model(model_type : Optional[str] = None, inNu : Optional[int] = None, desc : Optional[str] = 'hello world'):
     if (model_type is not None):
         params = mHyperParams(mymodel_type=model_type, mymodel_desc=desc)
         await neural_net_manager.create_model(params)
+        if (inNu is not None):
+            mdataset = mDataSet(params={'nu':inNu})
+            await neural_net_manager.set_dataset(mdataset)
 
     return {"resp" : "OK"}
 
