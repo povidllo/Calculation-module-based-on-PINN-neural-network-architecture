@@ -114,8 +114,6 @@ class my_oscil_net(abs_neural_net):
             # self.neural_model.data_set = [new_dataset]
             await self.update_dataset_for_nn(new_dataset)
 
-            await self.update_neural_model()
-
 
 
     def set_optimizer(self, opti : mOptimizer = None):
@@ -207,9 +205,8 @@ class my_oscil_net(abs_neural_net):
         my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
 
         new_rec = mongo_Record(record={'raw' : my_base64_jpgData})
-        self.neural_model.records.append(new_rec)
-
-        await self.update_neural_model()
+        # self.neural_model.records.append(new_rec)
+        await self.append_rec_to_nn(new_rec)
 
 
         plt.clf()

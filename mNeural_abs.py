@@ -13,12 +13,14 @@ class abs_neural_net(abc.ABC):
 
         await mNeuralNet_mongo.m_insert(self.neural_model)
 
-    async def update_neural_model(self):
+    async def append_rec_to_nn(self, new_rec : mongo_Record):
+        self.neural_model.records.append(new_rec)
         await mNeuralNet_mongo.m_save(self.neural_model)
 
     async def update_dataset_for_nn(self, new_dataset : mDataSet_mongo):
         await self.neural_model.data_set[0].delete()
         self.neural_model.data_set = [new_dataset]
+        await mNeuralNet_mongo.m_save(self.neural_model)
 
 
     @abc.abstractmethod
