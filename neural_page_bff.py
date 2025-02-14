@@ -2,7 +2,9 @@ from contextlib import asynccontextmanager
 from fastapi import Body
 import json
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi import FastAPI, BackgroundTasks, Request, Depends,WebSocket, WebSocketDisconnect, Query, Response, APIRouter
+from fastapi import FastAPI, BackgroundTasks, Request, Depends,WebSocket, Query, Response, APIRouter
+from fastapi.websockets import WebSocketState, WebSocketDisconnect
+
 from typing import List, Dict, Optional, Union
 from pydantic import BaseModel
 import fastapi_jsonrpc as jsonrpc
@@ -32,6 +34,26 @@ router = APIRouter()
 
 
 
+
+
+@router.websocket("/ws_ping")
+async def websocket_endpoint(websocket: WebSocket):
+    try:
+        await neural_net_manager.ws_manager.connect(websocket, glob_user)
+    except Exception as err:
+        print('ws_ping exception', err)
+
+    while True:
+        try:
+            data = await websocket.receive_text()
+            await asyncio.sleep(2e-3)
+        except WebSocketDisconnect:
+            print('WebSocketDisconnect ' , type(websocket))
+            neural_net_manager.ws_manager.disconnect(websocket, lusr)
+        except Exception as err:
+            print('cant recive text', err)
+            return
+
 async def create_neural_model(model_type : Optional[str] = None, inNu : Optional[int] = None, desc : Optional[str] = 'hello world'):
     if (model_type is not None):
         params = mHyperParams(mymodel_type=model_type, mymodel_desc=desc)
@@ -42,7 +64,22 @@ async def create_neural_model(model_type : Optional[str] = None, inNu : Optional
 
     return {"resp" : "OK"}
 
+async def create_neural_model_post(params : Optional[mHyperParams] = None):
+    # print('create_neural_model', params)
+    await neural_net_manager.create_model(params)
 
+
+    neural_list = await mNeuralNet_mongo.get_all()
+    loader = jinja2.FileSystemLoader("./templates")
+    env = jinja2.Environment(loader=loader, autoescape = False)
+    neural_table_templ = env.get_template("table_template.html")
+    neural_table_templ = neural_table_templ.render(items=neural_list)
+
+
+    letter = chatMessage(user=glob_user, msg_type='jinja_tmpl', data=['neural_table', neural_table_templ])
+    await neural_net_manager.ws_manager.send_personal_message_json(letter)
+
+    return {"resp" : "OK"}
 
 async def train_neural_net():
     res = await neural_net_manager.train_model()
@@ -50,9 +87,27 @@ async def train_neural_net():
     return {"result": res}
 
 
+async def root():
+    base64_encoded_image = b''
+    neural_list = []
+
+    loader = jinja2.FileSystemLoader("./templates")
+    env = jinja2.Environment(loader=loader,autoescape = False)
+
+    img_view_templ = env.get_template("img_tmpl.html")
+    neural_table_templ = env.get_template("table_template.html")
+
+    neural_list = await mNeuralNet_mongo.get_all()
+    # print('entries', mnl)
+
+
+    img_view_templ = img_view_templ.render(myImage=base64_encoded_image)
+    neural_table_templ = neural_table_templ.render(items=neural_list)
+
+    return HTMLResponse(mTemplate.mtemplate('<script></script>', neural_table_templ, img_view_templ))
+
 async def run_neural_net():
  
-
 
     base64_encoded_image = await neural_net_manager.run_model()
 
@@ -62,7 +117,7 @@ async def run_neural_net():
 
     table_templ = table_templ.render(myImage=base64_encoded_image)
 
-    return HTMLResponse(mTemplate.mtemplate('<script></script>', table_templ))
+    return HTMLResponse(mTemplate.mtemplate('<script></script>', table_templ, ''))
 
 
 
@@ -79,8 +134,10 @@ def main(loop):
     app = FastAPI(lifespan=lifespan)
 
     app.add_api_route("/create_model", create_neural_model, methods=["GET"])
+    app.add_api_route("/create_model", create_neural_model_post, methods=["POST"])
     app.add_api_route("/run", run_neural_net, methods=["GET"])
     app.add_api_route("/train", train_neural_net, methods=["GET"])
+    app.add_api_route("/", root, methods=["GET"])
 
 
     app.include_router(router)

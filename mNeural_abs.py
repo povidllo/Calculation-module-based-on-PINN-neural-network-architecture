@@ -4,7 +4,7 @@ import abc
 
 class abs_neural_net(abc.ABC):
     neural_model : mNeuralNet_mongo = None
-
+    
 
     async def createModel(self, params : mHyperParams):
         self.neural_model = mNeuralNet_mongo(hyper_param=mHyperParams_mongo(**params.model_dump()))
@@ -15,11 +15,13 @@ class abs_neural_net(abc.ABC):
 
     async def append_rec_to_nn(self, new_rec : mongo_Record):
         self.neural_model.records.append(new_rec)
+
         await mNeuralNet_mongo.m_save(self.neural_model)
 
     async def update_dataset_for_nn(self, new_dataset : mDataSet_mongo):
         await self.neural_model.data_set[0].delete()
         self.neural_model.data_set = [new_dataset]
+
         await mNeuralNet_mongo.m_save(self.neural_model)
 
 

@@ -92,8 +92,9 @@ class my_oscil_net(abs_neural_net):
 
             return loss
 
-    def load_model(self, in_model : mNeuralNet): pass
 
+
+    def load_model(self, in_model : mNeuralNet): pass
 
 
     async def set_dataset(self, dataset : mDataSet = None):
@@ -104,14 +105,12 @@ class my_oscil_net(abs_neural_net):
                                                                 )
                                           ]
         else:
-            # print('id', self.neural_model.data_set[0])
 
             new_dataset = self.mySpecialDataSet(
                 power_time_vector=self.neural_model.hyper_param.power_time_vector,
                 params=dataset.params
             )
-            # await self.neural_model.data_set[0].delete()
-            # self.neural_model.data_set = [new_dataset]
+
             await self.update_dataset_for_nn(new_dataset)
 
 
@@ -169,8 +168,6 @@ class my_oscil_net(abs_neural_net):
 
         nu = self.neural_model.data_set[0].params['nu']
 
-        print('nu', nu)
-        print('power_of_input calc', type(power_of_input), power_of_input)
         t = torch.linspace(0, 1, power_of_input).unsqueeze(-1).unsqueeze(0).to(self.mydevice)
         t.requires_grad = True
 
@@ -205,7 +202,6 @@ class my_oscil_net(abs_neural_net):
         my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
 
         new_rec = mongo_Record(record={'raw' : my_base64_jpgData})
-        # self.neural_model.records.append(new_rec)
         await self.append_rec_to_nn(new_rec)
 
 

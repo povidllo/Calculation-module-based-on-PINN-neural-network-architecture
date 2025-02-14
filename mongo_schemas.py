@@ -7,7 +7,7 @@ from collections.abc import Callable, Awaitable
 import abc
 
 cur_host = 'localhost'
-
+glob_user = 'test'
 database_ulr = 'localhost'
 database_name = "testDB"
 pinn_mongo_database = "PINN"
@@ -26,6 +26,11 @@ class MyError(jsonrpc.BaseError):
         details: str
 
 
+class chatMessage(BaseModel):
+    msg_id: Optional[str] = None
+    msg_type: Optional[str] = None
+    data : Optional[list] = None
+    user: Optional[str] = None
 
 class mRecord(BaseModel):
     record: Optional[dict] = None
@@ -88,6 +93,12 @@ class mNeuralNet_mongo(mNeuralNet, Document):
     optimizer :  Optional[list[Link[mOptimizer_mongo]]] = None
     records: Optional[list[Link[mongo_Record]]] = None
 
+
+
+    @staticmethod
+    async def get_all():
+        entries = await mNeuralNet_mongo.find_all(fetch_links=True).to_list()
+        return entries
 
     @staticmethod
     async def m_insert(el:Document):

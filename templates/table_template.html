@@ -1,0 +1,19 @@
+<div id="neural_table" style="display:table; width:100%; ">
+<h3> Exchange </h3>
+{% if items %}
+<table style="width:100%; table-layout: fixed;">
+{% set ns = namespace(i=1) %}
+{% for item in items %}
+<TR>
+   <TD > <div>{{ns.i}}</div></TD>
+   <TD >{{item.hyper_param.mymodel_type}}</TD>
+   <TD >{{item.hyper_param.mymodel_desc}}</TD>
+   <!--<TD class="c7">
+   <input type=button value="X"  onclick="del_entries_from_db_dialog('{{item.id}}','{{item.Number}}')"></input>
+   </TD> -->
+</TR>
+{% set ns.i = ns.i + 1 %}
+{% endfor %}
+</table>
+{% endif %}
+</div>
