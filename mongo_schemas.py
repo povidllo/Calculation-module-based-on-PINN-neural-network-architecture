@@ -7,7 +7,7 @@ from collections.abc import Callable, Awaitable
 import abc
 
 cur_host = 'localhost'
-glob_user = 'test'
+glob_user = 'andy'
 database_ulr = 'localhost'
 database_name = "testDB"
 pinn_mongo_database = "PINN"
