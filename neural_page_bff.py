@@ -49,7 +49,7 @@ async def websocket_endpoint(websocket: WebSocket):
             await asyncio.sleep(2e-3)
         except WebSocketDisconnect:
             print('WebSocketDisconnect ' , type(websocket))
-            neural_net_manager.ws_manager.disconnect(websocket, lusr)
+            neural_net_manager.ws_manager.disconnect(websocket, glob_user)
         except Exception as err:
             print('cant recive text', err)
             return
