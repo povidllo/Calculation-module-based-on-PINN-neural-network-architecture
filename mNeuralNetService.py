@@ -6,6 +6,7 @@ from fastapi.websockets import WebSocketState, WebSocketDisconnect
 from mongo_schemas import *
 from mNeural_abs import *
 from mHabr_neural_exmp import my_oscil_net
+from oscillator import oscillator_nn
 
 import asyncio
 import abc
@@ -39,7 +40,8 @@ class ConnectionManager:
 
 class neural_net_microservice():
     inner_model : abs_neural_net = None
-    models_list = {'oscil': my_oscil_net}
+    # models_list = {'oscil': my_oscil_net}
+    models_list = {'oscil': oscillator_nn}
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ws_manager = ConnectionManager()
 
