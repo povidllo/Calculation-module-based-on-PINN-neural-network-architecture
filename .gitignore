@@ -1,7 +1,3 @@
-.idea/
-runs/
-temp/
-wandb/
-./"allen_cahn equation"/wandb/
-/__pycache__/
-/.venv/
+/*
+
+!*.py
