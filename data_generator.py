@@ -2,6 +2,9 @@ import numpy as np
 import torch
 import sys
 import matplotlib.pyplot as plt
+from mongo_schemas import *
+
+
 def oscillator(x, d=2, w0=20):
     assert d < w0
     w = np.sqrt(w0**2-d**2)
@@ -27,8 +30,8 @@ def generator(num_t, num_ph, typ='train'):
     t_phys = np.linspace(0, 1, num_ph).reshape(-1, 1)
     return t, t_data, t_phys
 
-def data_generator(cfg):
-    x, x_data, x_physics = generator(cfg.num_dots[0], cfg.num_dots[1])
+def data_generator(dataset : mDataSet):
+    x, x_data, x_physics = generator(dataset[0].num_dots[0], dataset[0].num_dots[1])
     x = torch.FloatTensor(x)
     x_data = torch.FloatTensor(x_data)
     x_physics = torch.FloatTensor(x_physics).requires_grad_(True)

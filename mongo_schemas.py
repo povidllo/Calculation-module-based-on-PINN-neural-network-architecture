@@ -42,14 +42,29 @@ class mOptimizer(BaseModel):
 class mDataSet(BaseModel):
     power_time_vector : Optional[int] = 100
     params: Optional[dict] = None
+    num_dots : Optional[List[int]] = [400, 50]
 
 class mHyperParams(BaseModel):
     mymodel_type : Optional[str] = None
     mymodel_desc: Optional[str] = None
 
-    hidden_size : Optional[int] = 20
+    # hidden_size : Optional[int] = 20
     power_time_vector : Optional[int] = 100
-    epochs : Optional[int] = 50
+    # epochs : Optional[int] = 50
+    
+    hidden_count : Optional[int] = 32
+    input_dim : Optional[int] = 1
+    output_dim : Optional[int] = 1
+    hidden_sizes : Optional[List[int]] = [32, 32, 32]
+    
+    Fourier : Optional[bool] = False
+    FinputDim : Optional[bool] = None
+    FourierScale : Optional[bool] = None
+    
+    epochs : Optional[int] = 10000
+    num_dots : Optional[List[int]] = [400, 50]
+    path_true_data : Optional[str] = "/data/OSC.npy"
+    save_weights_path : Optional[str] = "/osc_1d.pth"
     
 class mNeuralNet(BaseModel):
     stored_item_id : Optional[str] = None

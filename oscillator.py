@@ -94,7 +94,8 @@ class oscillator_nn(abs_neural_net):
         if dataset is None:
             self.neural_model.data_set = [self.mySpecialDataSet(
                                                                 power_time_vector=self.neural_model.hyper_param.power_time_vector,
-                                                                params={'nu': 3}
+                                                                params={'nu': 3},
+                                                                num_dots=self.neural_model.hyper_param.num_dots
                                                                 )
                                           ]
         else:
@@ -106,7 +107,7 @@ class oscillator_nn(abs_neural_net):
 
             await self.update_dataset_for_nn(new_dataset)
         
-        data = data_generator(get_config())
+        data = data_generator(self.neural_model.data_set)
         self.variables_f = data['main'].to(self.mydevice)
         self.u_data = data['secondary_true'].to(self.mydevice)
         self.variables = data['secondary'].to(self.mydevice)
@@ -121,7 +122,7 @@ class oscillator_nn(abs_neural_net):
         await self.createModel(params)
 
         self.mydevice = in_device
-        self.mymodel = pinn(get_config()).to(self.mydevice)
+        self.mymodel = pinn(params).to(self.mydevice)
         self.set_optimizer()
     
     # def item_closure(self, t):
@@ -133,9 +134,9 @@ class oscillator_nn(abs_neural_net):
 
     
     def train(self):
-        cfg = get_config()
+        cfg = self.neural_model.hyper_param
         epochs = cfg.epochs
-        self.config = get_config()
+        self.config = self.neural_model.hyper_param
 
         for epoch in tqdm(range(epochs)):
             self.myoptimizer.zero_grad()
@@ -165,4 +166,48 @@ class oscillator_nn(abs_neural_net):
 
 
     async def calc(self):
-        ...
+        self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
+        
+        x, _, _ = test_data_generator()
+        y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)
+        u_pred = self.mymodel(x)
+        u_pred = u_pred.cpu().detach().numpy()
+        true= y
+
+        plt.figure(figsize=(10, 6))
+        
+        # Преобразуем x в numpy array если это тензор
+        x_plot = x.cpu().numpy() if torch.is_tensor(x) else x
+        
+        # Строим оба графика
+        plt.plot(x_plot, true, 'b-', linewidth=2, label='Истинное решение')
+        plt.plot(x_plot, u_pred, 'r--', linewidth=2, label='Предсказание модели')
+        
+        # Настройки графика
+        plt.xlabel('Временная координата (t)', fontsize=12)
+        plt.ylabel('Значение y', fontsize=12)
+        plt.title('Сравнение предсказаний модели с эталонным решением', fontsize=14)
+        plt.legend(loc='upper right', fontsize=12)
+        plt.grid(True, linestyle='--', alpha=0.7)
+        
+        # Рассчитываем и выводим ошибку
+        error = np.linalg.norm(u_pred - true, 2) / np.linalg.norm(true, 2)
+        plt.text(0.05, 0.95, f'Средняя абсолютная ошибка: {error:.4f}', 
+                transform=plt.gca().transAxes, fontsize=12,
+                verticalalignment='top', bbox=dict(facecolor='white', alpha=0.9))
+        
+        plt.tight_layout()
+        
+        my_stringIObytes = io.BytesIO()
+        plt.savefig(my_stringIObytes, format='jpg')
+        my_stringIObytes.seek(0)
+        my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
+
+        new_rec = mongo_Record(record={'raw' : my_base64_jpgData})
+        await self.append_rec_to_nn(new_rec)
+
+
+        plt.clf()
+
+        return my_base64_jpgData
+        # plt.show()
