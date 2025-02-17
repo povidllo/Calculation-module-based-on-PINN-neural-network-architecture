@@ -39,12 +39,13 @@ def data_generator(dataset : mDataSet):
     y_data = y[0:len(x)//2:len(x)//20]
 
     np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
+    dataset[0].params['OSC'] = y.cpu().detach().numpy().tolist()
     
-    plt.figure()
-    plt.plot(x, y, label="Exact solution")
-    plt.scatter(x_data, y_data, color="tab:orange", label="Training data")
-    plt.legend()
-    plt.show()
+    # plt.figure()
+    # plt.plot(x, y, label="Exact solution")
+    # plt.scatter(x_data, y_data, color="tab:orange", label="Training data")
+    # plt.legend()
+    # plt.show()
     
     return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 

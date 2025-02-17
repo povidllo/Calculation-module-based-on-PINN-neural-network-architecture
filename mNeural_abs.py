@@ -35,7 +35,7 @@ class abs_neural_net(abc.ABC):
     async def set_dataset(self, dataset : mDataSet = None): pass
 
     @abc.abstractmethod
-    def load_model(self, in_model : mNeuralNet): pass
+    async def load_model(self, in_model : mNeuralNet, in_device): pass
 
     @abc.abstractmethod
     def train(self): pass

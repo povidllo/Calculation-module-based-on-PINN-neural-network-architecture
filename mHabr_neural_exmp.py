@@ -94,8 +94,22 @@ class my_oscil_net(abs_neural_net):
 
 
 
-    def load_model(self, in_model : mNeuralNet): pass
+    async def load_model(self, in_model : mNeuralNet, in_device):
+        
+        load_nn = await mNeuralNet_mongo.get(in_model.stored_item_id, fetch_links=True)
+        print('load_nn-', load_nn)
+        self.neural_model = load_nn
 
+        self.neural_model.records = []
+        await self.set_dataset()
+        
+        self.mydevice = in_device
+
+        self.x0_true = torch.tensor([1], dtype=float).float().to(self.mydevice)
+        self.dx0dt_true = torch.tensor([0], dtype=float).float().to(self.mydevice)
+
+        self.mymodel = simpleModel(hidden_size=self.neural_model.hyper_param.hidden_size).to(self.mydevice)
+        self.set_optimizer()
 
     async def set_dataset(self, dataset : mDataSet = None):
         if dataset is None:

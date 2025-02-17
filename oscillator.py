@@ -87,7 +87,9 @@ class oscillator_nn(abs_neural_net):
                 
                 
         
-    def load_model(self, in_model : mNeuralNet): pass
+    async def load_model(self, in_model : mNeuralNet):
+        
+        pass
 
 
     async def set_dataset(self, dataset : mDataSet = None):

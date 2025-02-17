@@ -25,6 +25,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 width:70%;
                 height: auto;
                 float: right;
+                overflow: scroll;
             }
             .right{
                 width:50%;
@@ -48,7 +49,27 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     body: JSON.stringify(body_item)
                 }).then((response) => response.json())
             }
+            
+            async function call_bff_get(path){
+                return await fetch(base_url+path, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }).then((response) => response.json())
+            }                
                 
+            const handle_load_button = async (nn_id) => {
+                const a = await call_bff('POST', 'load_model', {'stored_item_id' : nn_id})
+            }
+            const handle_train_button = async (nn_id) => {
+                const a = await call_bff_get('train')
+            }
+            const handle_run_button = async (nn_id) => {
+                const a = await call_bff('POST', 'run', {})
+            }
         </script>    
         """ + str(gscripts) + """
     </head>
@@ -86,6 +107,9 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
              console.log('pass: ' , a );
              
        };
+       
+
+       
        create_btn.addEventListener('click', callback_ok_create_btn);   
     </script>
 </html>
