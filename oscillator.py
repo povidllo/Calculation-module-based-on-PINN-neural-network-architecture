@@ -183,7 +183,7 @@ class oscillator_nn(abs_neural_net):
         # Пытаемся загрузить веса, если они есть
         try:
             self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
-            print("Weights loaded successfully")
+            print("Weights loaded successfully" + self.neural_model.hyper_param.save_weights_path)
         except:
             print("No saved weights found, using initialized weights")
 
