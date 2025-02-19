@@ -87,9 +87,18 @@ class oscillator_nn(abs_neural_net):
                 
                 
         
-    async def load_model(self, in_model : mNeuralNet):
+    async def load_model(self, in_model : mNeuralNet, in_device):
         
-        pass
+        load_nn = await mNeuralNet_mongo.get(in_model.stored_item_id, fetch_links=True)
+        print('load_nn-', load_nn)
+        self.neural_model = load_nn
+        
+        self.neural_model.records = []
+        await self.set_dataset()
+        
+        self.mydevice = in_device
+        self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
+        self.set_optimizer()
 
 
     async def set_dataset(self, dataset : mDataSet = None):
@@ -127,8 +136,6 @@ class oscillator_nn(abs_neural_net):
         self.mymodel = pinn(params).to(self.mydevice)
         self.set_optimizer()
     
-    # def item_closure(self, t):
-    #     ...
 
     def save_model(self, path):
         """Сохранение модели"""
