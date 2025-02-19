@@ -41,8 +41,8 @@ class ConnectionManager:
 class neural_net_microservice():
     inner_model : abs_neural_net = None
     # inner_model -> {'id_nn' : abs_neural_net}
-    models_list = {'oscil': my_oscil_net}
-    # models_list = {'oscil': oscillator_nn}
+    # models_list = {'oscil': my_oscil_net}
+    models_list = {'oscil': oscillator_nn}
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ws_manager = ConnectionManager()
 

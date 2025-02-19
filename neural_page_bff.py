@@ -65,16 +65,17 @@ async def create_neural_model(model_type : Optional[str] = None, inNu : Optional
     return {"resp" : "OK"}
 
 async def create_neural_model_post(params : Optional[mHyperParams] = None):
-    # print('create_neural_model', params)
+    # Если путь к весам не указан, используем значение по умолчанию
+    if not params.save_weights_path:
+        params.save_weights_path = "/osc_1d.pth"
+        
     await neural_net_manager.create_model(params)
-
 
     neural_list = await mNeuralNet_mongo.get_all()
     loader = jinja2.FileSystemLoader("./templates")
     env = jinja2.Environment(loader=loader, autoescape = False)
     neural_table_templ = env.get_template("table_template.html")
     neural_table_templ = neural_table_templ.render(items=neural_list)
-
 
     letter = chatMessage(user=glob_user, msg_type='jinja_tmpl', data=['neural_table', neural_table_templ])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)

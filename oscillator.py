@@ -33,7 +33,6 @@ import numpy as np
 
 from optim_Adam_torch import create_optim
 from pinn_init_torch import pinn
-from data_generator import data_generator
 from test_data_generator import generator as test_data_generator
 
 from cfg_main import get_config
@@ -53,6 +52,77 @@ class oscillator_nn(abs_neural_net):
     best_epoch = 0    
     
     class mySpecialDataSet(mDataSet_mongo):
+        def oscillator(self, x, d=2, w0=20):
+            assert d < w0
+            w = np.sqrt(w0**2-d**2)
+            phi = np.arctan(-d/w)
+            A = 1/(2*np.cos(phi))
+            cos = torch.cos(phi+w*x)
+            sin = torch.sin(phi+w*x)
+            exp = torch.exp(-d*x)
+            y = exp*2*A*cos
+            return y
+
+        def generator(self, num_t, num_ph, typ='train'):
+            '''
+            Генерирует данные для осцилятора
+            t - вся выборка
+            t_phys - выборка для обучения физического аспекта модели
+            t_data - выборка для обучения путем сравнения с правильными данными
+            '''
+            t = np.linspace(0, 1, num_t).reshape(-1, 1)
+            l = len(t)//2
+            t_data = t[0:l:l//10]
+            
+            t_phys = np.linspace(0, 1, num_ph).reshape(-1, 1)
+            return t, t_data, t_phys
+
+        def data_generator(self):
+            x, x_data, x_physics = self.generator(self.num_dots[0], self.num_dots[1])
+            x = torch.FloatTensor(x)
+            x_data = torch.FloatTensor(x_data)
+            x_physics = torch.FloatTensor(x_physics).requires_grad_(True)
+            y = self.oscillator(x).view(-1,1)
+            y_data = y[0:len(x)//2:len(x)//20]
+
+            # Сохраняем данные в base64
+            buffer = io.BytesIO()
+            np.savez_compressed(buffer, 
+                x=x.cpu().detach().numpy(),
+                x_data=x_data.cpu().detach().numpy(),
+                x_physics=x_physics.cpu().detach().numpy(),
+                y=y.cpu().detach().numpy(),
+                y_data=y_data.cpu().detach().numpy()
+            )
+            encoded_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            
+            # Сохраняем в базу данных
+            self.params['points_data'] = encoded_data
+            
+            # Для обратной совместимости пока оставляем и старое сохранение
+            np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
+            
+            return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
+
+        def load_data_from_params(self):
+            """Загрузка данных из base64 в params"""
+            if 'points_data' not in self.params:
+                return None
+                
+            # Декодируем данные из base64
+            decoded_data = base64.b64decode(self.params['points_data'])
+            buffer = io.BytesIO(decoded_data)
+            data = np.load(buffer)
+            
+            # Преобразуем обратно в тензоры
+            x = torch.FloatTensor(data['x'])
+            x_data = torch.FloatTensor(data['x_data'])
+            x_physics = torch.FloatTensor(data['x_physics']).requires_grad_(True)
+            y = torch.FloatTensor(data['y'])
+            y_data = torch.FloatTensor(data['y_data'])
+            
+            return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
+
         def equation(self,yhp, x_physics, d=2, w0=20):
             mu = d * 2
             k = w0 ** 2
@@ -77,10 +147,21 @@ class oscillator_nn(abs_neural_net):
         
         def calculate_l2_error(self, path_true_data, model, device, test_data_generator):
             x, _, _ = test_data_generator()
-            y = np.load(sys.path[0] + path_true_data)
+            
+            # Загружаем данные из базы вместо файла
+            if 'points_data' not in self.params:
+                print("Warning: No data found in database, using file")
+                y = np.load(sys.path[0] + path_true_data)
+            else:
+                # Декодируем данные из base64
+                decoded_data = base64.b64decode(self.params['points_data'])
+                buffer = io.BytesIO(decoded_data)
+                data = np.load(buffer)
+                y = data['y']
+            
             u_pred = model(x)
             u_pred = u_pred.cpu().detach().numpy()
-            true= y
+            true = y
             # Сравнение с эталоном
             error = np.linalg.norm(u_pred - true, 2) / np.linalg.norm(true, 2)
             return error
@@ -88,17 +169,23 @@ class oscillator_nn(abs_neural_net):
                 
         
     async def load_model(self, in_model : mNeuralNet, in_device):
-        
         load_nn = await mNeuralNet_mongo.get(in_model.stored_item_id, fetch_links=True)
-        print('load_nn-', load_nn)
-        self.neural_model = load_nn
         
+        # Всегда создаем новую модель
+        self.neural_model = load_nn
         self.neural_model.records = []
         await self.set_dataset()
         
         self.mydevice = in_device
         self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
         self.set_optimizer()
+        
+        # Пытаемся загрузить веса, если они есть
+        try:
+            self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
+            print("Weights loaded successfully")
+        except:
+            print("No saved weights found, using initialized weights")
 
 
     async def set_dataset(self, dataset : mDataSet = None):
@@ -110,15 +197,23 @@ class oscillator_nn(abs_neural_net):
                                                                 )
                                           ]
         else:
-
             new_dataset = self.mySpecialDataSet(
                 power_time_vector=self.neural_model.hyper_param.power_time_vector,
                 params=dataset.params
             )
-
             await self.update_dataset_for_nn(new_dataset)
         
-        data = data_generator(self.neural_model.data_set)
+        # Пробуем загрузить данные из базы
+        loaded_data = self.neural_model.data_set[0].load_data_from_params()
+        
+        if loaded_data is None:
+            # Если данных в базе нет, генерируем новые
+            data = self.neural_model.data_set[0].data_generator()
+            print("loaded_data is none")
+        else:
+            data = loaded_data
+            print("loaded_data is not none")
+            
         self.variables_f = data['main'].to(self.mydevice)
         self.u_data = data['secondary_true'].to(self.mydevice)
         self.variables = data['secondary'].to(self.mydevice)
@@ -156,12 +251,15 @@ class oscillator_nn(abs_neural_net):
             loss.backward()
             self.myoptimizer.step()
 
-
             current_loss = loss.item()
             self.loss_history.append(current_loss)
+            
             if self.neural_model.data_set[0].calculate_l2_error:
                 l2_error = self.neural_model.data_set[0].calculate_l2_error(
-                            self.config.path_true_data, self.mymodel, self.mydevice, test_data_generator)
+                            self.config.path_true_data, 
+                            self.mymodel, 
+                            self.mydevice, 
+                            test_data_generator)
                 self.l2_history.append(l2_error)            
 
             if current_loss < self.best_loss:
@@ -178,10 +276,20 @@ class oscillator_nn(abs_neural_net):
         self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
         
         x, _, _ = test_data_generator()
-        y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)
+        
+        # Загружаем данные из базы вместо файла
+        if 'points_data' not in self.neural_model.data_set[0].params:
+            print("Warning: No data found in database, using file")
+            y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)
+        else:
+            decoded_data = base64.b64decode(self.neural_model.data_set[0].params['points_data'])
+            buffer = io.BytesIO(decoded_data)
+            data = np.load(buffer)
+            y = data['y']
+            
         u_pred = self.mymodel(x)
         u_pred = u_pred.cpu().detach().numpy()
-        true= y
+        true = y
 
         plt.figure(figsize=(10, 6))
         
