@@ -115,7 +115,7 @@ class my_oscil_net(abs_neural_net):
         if dataset is None:
             self.neural_model.data_set = [self.mySpecialDataSet(
                                                                 power_time_vector=self.neural_model.hyper_param.power_time_vector,
-                                                                params={'nu': 3}
+                                                                params={'nu': 2}
                                                                 )
                                           ]
         else:
@@ -152,7 +152,7 @@ class my_oscil_net(abs_neural_net):
         loss.backward()
         return loss
 
-    def train(self):
+    async def train(self):
         steps = self.neural_model.hyper_param.epochs
         power_of_input = self.neural_model.data_set[0].power_time_vector
 

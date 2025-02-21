@@ -41,6 +41,9 @@ np.random.seed(44)
 torch.cuda.manual_seed(44)
 # print(get_config().epochs)
 
+
+
+
 class oscillator_nn(abs_neural_net):
     mymodel = None
     mydevice = None
@@ -49,7 +52,9 @@ class oscillator_nn(abs_neural_net):
     loss_history = []
     l2_history = []
     best_loss = float('inf')
-    best_epoch = 0    
+    best_epoch = 0
+
+
     
     class mySpecialDataSet(mDataSet_mongo):
         def oscillator(self, x, d=2, w0=20):
@@ -94,13 +99,14 @@ class oscillator_nn(abs_neural_net):
                 y=y.cpu().detach().numpy(),
                 y_data=y_data.cpu().detach().numpy()
             )
+
             encoded_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
             
             # Сохраняем в базу данных
             self.params['points_data'] = encoded_data
             
-            # Для обратной совместимости пока оставляем и старое сохранение
-            np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
+            # # Для обратной совместимости пока оставляем и старое сохранение
+            # np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
             
             return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 
@@ -173,18 +179,26 @@ class oscillator_nn(abs_neural_net):
         
         # Всегда создаем новую модель
         self.neural_model = load_nn
-        self.neural_model.records = []
+        # self.neural_model.records = []
         await self.set_dataset()
         
         self.mydevice = in_device
         self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
         self.set_optimizer()
         
-        # Пытаемся загрузить веса, если они есть
-        try:
-            self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
-            print("Weights loaded successfully" + self.neural_model.hyper_param.save_weights_path)
-        except:
+        # # Пытаемся загрузить веса, если они есть
+        # try:
+        #     self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
+        #
+        #
+        #     print("Weights loaded successfully" + self.neural_model.hyper_param.save_weights_path)
+        # except:
+        #     print("No saved weights found, using initialized weights")
+
+        cur_state = await self.abs_load_weights()
+        if (cur_state is not None):
+            self.mymodel.load_state_dict(cur_state)
+        else:
             print("No saved weights found, using initialized weights")
 
 
@@ -232,12 +246,16 @@ class oscillator_nn(abs_neural_net):
         self.set_optimizer()
     
 
-    def save_model(self, path):
-        """Сохранение модели"""
-        torch.save(self.mymodel.state_dict(), path)
+    async def save_model(self, path):
+
+        print('run saving')
+        weights = self.mymodel.state_dict()
+        await self.abs_save_weights(weights)
+        print('save complited')
+
 
     
-    def train(self):
+    async def train(self):
         cfg = self.neural_model.hyper_param
         epochs = cfg.epochs
         self.config = self.neural_model.hyper_param
@@ -265,22 +283,23 @@ class oscillator_nn(abs_neural_net):
             if current_loss < self.best_loss:
                 self.best_loss = current_loss
                 self.best_epoch = epoch
-                
-                self.save_model(sys.path[0] + self.config.save_weights_path)
-            
-            if(epoch % 400 == 0):
-                print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
+
+            print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
+            # if(epoch % 400 == 0):
+            #     print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
+
+        await self.save_model(sys.path[0] + self.config.save_weights_path)
 
 
     async def calc(self):
-        self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
+        # self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
         
         x, _, _ = test_data_generator()
         
         # Загружаем данные из базы вместо файла
         if 'points_data' not in self.neural_model.data_set[0].params:
             print("Warning: No data found in database, using file")
-            y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)
+            # y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)
         else:
             decoded_data = base64.b64decode(self.neural_model.data_set[0].params['points_data'])
             buffer = io.BytesIO(decoded_data)

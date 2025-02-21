@@ -55,7 +55,7 @@ class neural_net_microservice():
 
     async def train_model(self):
         if (self.inner_model is not None):
-            self.inner_model.train()
+            await self.inner_model.train()
 
     async def set_dataset(self, dataset : mDataSet = None):
         if (dataset is not None):
