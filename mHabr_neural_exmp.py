@@ -97,10 +97,10 @@ class my_oscil_net(abs_neural_net):
     async def load_model(self, in_model : mNeuralNet, in_device):
         
         load_nn = await mNeuralNet_mongo.get(in_model.stored_item_id, fetch_links=True)
-        print('load_nn-', load_nn)
+        # print('load_nn-', load_nn)
         self.neural_model = load_nn
 
-        self.neural_model.records = []
+        # self.neural_model.records = []
         await self.set_dataset()
         
         self.mydevice = in_device
@@ -110,6 +110,12 @@ class my_oscil_net(abs_neural_net):
 
         self.mymodel = simpleModel(hidden_size=self.neural_model.hyper_param.hidden_size).to(self.mydevice)
         self.set_optimizer()
+
+        cur_state = await self.abs_load_weights()
+        if (cur_state is not None):
+            self.mymodel.load_state_dict(cur_state)
+        else:
+            print("No saved weights found, using initialized weights")
 
     async def set_dataset(self, dataset : mDataSet = None):
         if dataset is None:
@@ -152,6 +158,13 @@ class my_oscil_net(abs_neural_net):
         loss.backward()
         return loss
 
+    async def save_model(self):
+
+        print('run saving')
+        weights = self.mymodel.state_dict()
+        await self.abs_save_weights(weights)
+        print('save complited')
+
     async def train(self):
         steps = self.neural_model.hyper_param.epochs
         power_of_input = self.neural_model.data_set[0].power_time_vector
@@ -172,6 +185,8 @@ class my_oscil_net(abs_neural_net):
                 current_loss = closure().item()
                 pbar.set_description("Step: %d | Loss: %.6f" %
                                      (step, current_loss))
+
+        await self.save_model()
 
 
 
