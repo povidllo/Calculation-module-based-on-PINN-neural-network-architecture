@@ -94,12 +94,12 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 const optimizer_lr = document.getElementById('optimizer_lr').value || 0.001;
                 
                 const train_params = {
-                    'epochs': epochs
+                    'epochs': epochs,
                     'optimizer': optimizer,
                     'optimizer_lr': optimizer_lr
                 };
                 
-                const a = await call_bff_get('train', train_params)
+                const a = await call_bff_get('GET', 'train', train_params)
             }
             const handle_run_button = async (nn_id) => {
                 const a = await call_bff('POST', 'run', {})

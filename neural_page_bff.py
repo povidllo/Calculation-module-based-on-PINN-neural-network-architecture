@@ -83,8 +83,6 @@ async def create_neural_model_post(params : Optional[mHyperParams] = None):
     return {"resp" : "OK"}
 
 async def train_neural_net(train_params : Optional[mTrainParams] = None):
-    train_params = mTrainParams()
-    # await neural_net_manager.create_model(params)
     res = await neural_net_manager.train_model(train_params)
 
     return {"result": res}
