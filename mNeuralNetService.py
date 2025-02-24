@@ -53,9 +53,11 @@ class neural_net_microservice():
                 self.inner_model = (self.models_list[params.mymodel_type])()
                 await self.inner_model.construct_model(params, self.device)
 
-    async def train_model(self):
+    async def train_model(self, train_params : mTrainParams):
+        print('train_params', train_params)
         if (self.inner_model is not None):
-            self.inner_model.train()
+            self.inner_model
+            self.inner_model.train(train_params)
 
     async def set_dataset(self, dataset : mDataSet = None):
         if (dataset is not None):

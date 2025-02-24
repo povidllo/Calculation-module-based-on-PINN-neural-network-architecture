@@ -67,7 +67,7 @@ async def create_neural_model(model_type : Optional[str] = None, inNu : Optional
 async def create_neural_model_post(params : Optional[mHyperParams] = None):
     # Если путь к весам не указан, используем значение по умолчанию
     if not params.save_weights_path:
-        params.save_weights_path = "/osc_1d.pth"
+        params.save_weights_path = "weights/osc_1d.pth"
         
     await neural_net_manager.create_model(params)
 
@@ -82,8 +82,10 @@ async def create_neural_model_post(params : Optional[mHyperParams] = None):
 
     return {"resp" : "OK"}
 
-async def train_neural_net():
-    res = await neural_net_manager.train_model()
+async def train_neural_net(train_params : Optional[mTrainParams] = None):
+    train_params = mTrainParams()
+    # await neural_net_manager.create_model(params)
+    res = await neural_net_manager.train_model(train_params)
 
     return {"result": res}
 
@@ -143,7 +145,7 @@ async def run_neural_net_pict():
 def main(loop):
 
     async def init():
-        await init_beanie(database=client[database_name], document_models=[mongo_Estimate, mongo_Record, mOptimizer_mongo, mDataSet_mongo, mHyperParams_mongo, mNeuralNet_mongo])
+        await init_beanie(database=client[database_name], document_models=[mongo_Estimate, mongo_Record, mOptimizer_mongo, mDataSet_mongo, mHyperParams_mongo, mTrainParams_mongo, mNeuralNet_mongo])
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):

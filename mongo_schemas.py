@@ -16,6 +16,7 @@ rec_mongo_database = "REC"
 opti_mongo_database = "OPTI"
 dataset_mongo_database = "DATASET"
 hyper_params_mongo_database = "HYPER_PARAMS"
+train_params_mongo_database = "TRAIN_PARAMS"
 neural_net_mongo_database = "NEURAL_NET"
 
 class MyError(jsonrpc.BaseError):
@@ -62,10 +63,16 @@ class mHyperParams(BaseModel):
     FinputDim : Optional[bool] = None
     FourierScale : Optional[bool] = None
     
-    epochs : Optional[int] = 100
+    # epochs : Optional[int] = 100
     num_dots : Optional[List[int]] = [400, 50]
     path_true_data : Optional[str] = "/data/OSC.npy"
     save_weights_path : Optional[str] = "/osc_1d.pth"
+
+
+class mTrainParams(BaseModel):
+    epochs : Optional[int] = 100
+    optimizer : Optional[str] = "Adam"
+    optimizer_lr : Optional[float] = 0.001
     
 class mNeuralNet(BaseModel):
     stored_item_id : Optional[str] = None
@@ -103,8 +110,16 @@ class mHyperParams_mongo(mHyperParams, Document):
     class Config:
         arbitrary_types_allowed = True
 
+class mTrainParams_mongo(mTrainParams, Document):
+    class Settings:
+        name = train_params_mongo_database
+
+    class Config:
+        arbitrary_types_allowed = True
+
 class mNeuralNet_mongo(mNeuralNet, Document):
     hyper_param : Optional[Link[mHyperParams_mongo]] = None
+    train_param : Optional[Link[mTrainParams_mongo]] = None
     data_set : Optional[list[Link[mDataSet_mongo]]] = None
     optimizer :  Optional[list[Link[mOptimizer_mongo]]] = None
     records: Optional[list[Link[mongo_Record]]] = None

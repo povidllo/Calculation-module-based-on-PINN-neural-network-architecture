@@ -1,8 +1,5 @@
 from mongo_schemas import *
 
-
-
-
 mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 <!DOCTYPE html>
 <html lang="en">
@@ -32,12 +29,39 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 height: auto;
                 overflow: scroll;
             }
+            .train-parameters {
+                border: 2px solid #000;
+                padding: 15px;
+                width: 250px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+                background-color: #f8f8f8;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
             
+            .train-parameters h3 {
+                margin-top: 0;
+                font-size: 18px;
+                text-align: center;
+            }
+            
+            .train-parameters label {
+                font-weight: bold;
+            }
+            
+            .train-parameters input {
+                width: 100%;
+                height: 30px;
+                font-size: 16px;
+            }
+
         </style>
 
         <script>
             var base_url = "http://""" + str(cur_host) + """:8010/"
-            
+
             async function call_bff(method, path, body_item){
                 return await fetch(base_url+path, {
                     method: method,
@@ -49,7 +73,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     body: JSON.stringify(body_item)
                 }).then((response) => response.json())
             }
-            
+
             async function call_bff_get(path){
                 return await fetch(base_url+path, {
                     method: 'GET',
@@ -60,12 +84,22 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     },
                 }).then((response) => response.json())
             }                
-                
+
             const handle_load_button = async (nn_id) => {
                 const a = await call_bff('POST', 'load_model', {'stored_item_id' : nn_id})
             }
             const handle_train_button = async (nn_id) => {
-                const a = await call_bff_get('train')
+                const epochs = document.getElementById('epochs').value || 100;
+                const optimizer = document.getElementById('optimizer').value || "Adam";
+                const optimizer_lr = document.getElementById('optimizer_lr').value || 0.001;
+                
+                const train_params = {
+                    'epochs': epochs
+                    'optimizer': optimizer,
+                    'optimizer_lr': optimizer_lr
+                };
+                
+                const a = await call_bff_get('train', train_params)
             }
             const handle_run_button = async (nn_id) => {
                 const a = await call_bff('POST', 'run', {})
@@ -74,13 +108,13 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
             const handle_create_button = async () => {
                 const desc = document.getElementById('neural_desc').value;
                 const weights_path = document.getElementById('weights_path').value || '/osc_1d.pth';  // Значение по умолчанию
-                
+
                 const params = {
                     'mymodel_type': "oscil", 
                     'mymodel_desc': desc,
                     'save_weights_path': weights_path
                 };
-                
+
                 const a = await call_bff('POST', 'create_model', params);
                 console.log('pass: ' , a);
             };
@@ -94,6 +128,17 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     <label for="neural_desc">Описание модели:</label>
                     <input style="width: 200px; height: 30px; font-size: 16px;" 
                            type="text" id="neural_desc" placeholder="Описание модели"/>
+                </div>
+                <div class="train-parameters">
+                    <h3>Train Parameters</h3>
+                    <label for="epochs">Количество эпох:</label>
+                    <input type="text" id="epochs" placeholder="Количество эпох"/>
+                    
+                    <label for="optimizer">Оптимизатор:</label>
+                    <input type="text" id="optimizer" placeholder="Оптимизатор"/>
+                    
+                    <label for="optimizer_lr">Оптимизатор learning rate:</label>
+                    <input type="text" id="optimizer_lr" placeholder="Оптимизатор learning rate"/>
                 </div>
                 <div>
                     <label for="weights_path">Путь к весам:</label>
@@ -109,7 +154,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
         </div>
     </body>
     <script>
-    
+
         var ws_ping = new WebSocket(`ws://""" + str(cur_host) + """:8010/ws_ping`);
         ws_ping.onmessage = function(event) 
         {
@@ -124,8 +169,8 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                         document.getElementById(res.data[0]).innerHTML = res.data[1]
             }
         }
-        
-        
+
+
         create_btn.addEventListener('click', handle_create_button);   
     </script>
 </html>
