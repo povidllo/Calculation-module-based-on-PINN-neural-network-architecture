@@ -25,6 +25,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 width:70%;
                 height: auto;
                 float: right;
+                overflow: scroll;
             }
             .right{
                 width:50%;
@@ -48,18 +49,63 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     body: JSON.stringify(body_item)
                 }).then((response) => response.json())
             }
+            
+            async function call_bff_get(path){
+                return await fetch(base_url+path, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }).then((response) => response.json())
+            }                
                 
+            const handle_load_button = async (nn_id) => {
+                const a = await call_bff('POST', 'load_model', {'stored_item_id' : nn_id})
+            }
+            const handle_train_button = async (nn_id) => {
+                const a = await call_bff_get('train')
+            }
+            const handle_run_button = async (nn_id) => {
+                const a = await call_bff('POST', 'run', {})
+            }
+
+            const handle_create_button = async () => {
+                const desc = document.getElementById('neural_desc').value;
+                const weights_path = document.getElementById('weights_path').value || '/osc_1d.pth';  // Значение по умолчанию
+                
+                const params = {
+                    'mymodel_type': "oscil", 
+                    'mymodel_desc': desc,
+                    'save_weights_path': weights_path
+                };
+                
+                const a = await call_bff('POST', 'create_model', params);
+                console.log('pass: ' , a);
+            };
         </script>    
         """ + str(gscripts) + """
     </head>
     <body>
         <div class="row">
-        <input style= "width: 200px; height: 60px; font-size: 24px;" type="text" id="neural_desc"  />
-        <input style= "width: 80px; height: 60px" type=button value="Create"  id="create_btn") />
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <div>
+                    <label for="neural_desc">Описание модели:</label>
+                    <input style="width: 200px; height: 30px; font-size: 16px;" 
+                           type="text" id="neural_desc" placeholder="Описание модели"/>
+                </div>
+                <div>
+                    <label for="weights_path">Путь к весам:</label>
+                    <input style="width: 200px; height: 30px; font-size: 16px;" 
+                           type="text" id="weights_path" placeholder="/osc_1d.pth"/>
+                </div>
+                <input style="width: 80px; height: 40px" type="button" value="Create" id="create_btn"/>
+            </div>
         </div>
         <div class="row">
-        <div class="left">""" + str(gdivs_left) + """</div>
-        <div class="right">""" + str(gdivs_right) + """</div>
+            <div class="left">""" + str(gdivs_left) + """</div>
+            <div class="right">""" + str(gdivs_right) + """</div>
         </div>
     </body>
     <script>
@@ -80,13 +126,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
         }
         
         
-        const callback_ok_create_btn = async () => {
-        
-             const a = await call_bff('POST', 'create_model', {'mymodel_type': "oscil", 'mymodel_desc': neural_desc.value} );
-             console.log('pass: ' , a );
-             
-       };
-       create_btn.addEventListener('click', callback_ok_create_btn);   
+        create_btn.addEventListener('click', handle_create_button);   
     </script>
 </html>
 """

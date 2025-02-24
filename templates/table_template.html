@@ -8,6 +8,9 @@
    <TD > <div>{{ns.i}}</div></TD>
    <TD >{{item.hyper_param.mymodel_type}}</TD>
    <TD >{{item.hyper_param.mymodel_desc}}</TD>
+   <TD ><input type=button value="LOAD"  onclick="handle_load_button('{{item.id}}')"></input></TD>
+   <TD ><input type=button value="TRAIN"  onclick="handle_train_button('{{item.id}}')"></input></TD>
+   <TD ><input type=button value="RUN"  onclick="handle_run_button('{{item.id}}')"></input></TD>
    <!--<TD class="c7">
    <input type=button value="X"  onclick="del_entries_from_db_dialog('{{item.id}}','{{item.Number}}')"></input>
    </TD> -->

@@ -42,6 +42,7 @@ class mOptimizer(BaseModel):
 class mDataSet(BaseModel):
     power_time_vector : Optional[int] = 100
     params: Optional[dict] = None
+    num_dots : Optional[List[int]] = [400, 50]
 
 class mHyperParams(BaseModel):
     mymodel_type : Optional[str] = None
@@ -49,7 +50,22 @@ class mHyperParams(BaseModel):
 
     hidden_size : Optional[int] = 20
     power_time_vector : Optional[int] = 100
-    epochs : Optional[int] = 50
+    # epochs : Optional[int] = 50
+    
+    hidden_count : Optional[int] = 32
+    input_dim : Optional[int] = 1
+    output_dim : Optional[int] = 1
+    hidden_sizes : Optional[List[int]] = [32, 32, 32]
+
+
+    Fourier : Optional[bool] = False
+    FinputDim : Optional[bool] = None
+    FourierScale : Optional[bool] = None
+    
+    epochs : Optional[int] = 100
+    num_dots : Optional[List[int]] = [400, 50]
+    path_true_data : Optional[str] = "/data/OSC.npy"
+    save_weights_path : Optional[str] = "/osc_1d.pth"
     
 class mNeuralNet(BaseModel):
     stored_item_id : Optional[str] = None
@@ -104,6 +120,12 @@ class mNeuralNet_mongo(mNeuralNet, Document):
     async def m_insert(el:Document):
         # await el.save(link_rule=WriteRules.WRITE)
         await el.insert(link_rule=WriteRules.WRITE)
+
+    @staticmethod
+    async def get_item_by_id(el:Document):
+
+        res = await mNeuralNet_mongo.get(el.stored_item_id)
+        return res
 
     @staticmethod
     async def m_save(el:Document):

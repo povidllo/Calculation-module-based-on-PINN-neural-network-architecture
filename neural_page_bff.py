@@ -65,16 +65,17 @@ async def create_neural_model(model_type : Optional[str] = None, inNu : Optional
     return {"resp" : "OK"}
 
 async def create_neural_model_post(params : Optional[mHyperParams] = None):
-    # print('create_neural_model', params)
+    # Если путь к весам не указан, используем значение по умолчанию
+    if not params.save_weights_path:
+        params.save_weights_path = "/osc_1d.pth"
+        
     await neural_net_manager.create_model(params)
-
 
     neural_list = await mNeuralNet_mongo.get_all()
     loader = jinja2.FileSystemLoader("./templates")
     env = jinja2.Environment(loader=loader, autoescape = False)
     neural_table_templ = env.get_template("table_template.html")
     neural_table_templ = neural_table_templ.render(items=neural_list)
-
 
     letter = chatMessage(user=glob_user, msg_type='jinja_tmpl', data=['neural_table', neural_table_templ])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
@@ -85,6 +86,11 @@ async def train_neural_net():
     res = await neural_net_manager.train_model()
 
     return {"result": res}
+
+async def load_model_handler(inp_nn : Optional[mNeuralNet] = None):
+
+    res = await neural_net_manager.load_nn(inp_nn)
+    return {"result": "OK"}
 
 
 async def root():
@@ -120,6 +126,19 @@ async def run_neural_net():
     return HTMLResponse(mTemplate.mtemplate('<script></script>', table_templ, ''))
 
 
+async def run_neural_net_pict():
+    base64_encoded_image = await neural_net_manager.run_model()
+
+    loader = jinja2.FileSystemLoader("./templates")
+    env = jinja2.Environment(loader=loader, autoescape=False)
+    table_templ = env.get_template("index.html")
+
+    table_templ = table_templ.render(myImage=base64_encoded_image)
+
+    letter = chatMessage(user=glob_user, msg_type='jinja_tmpl', data=['my_img', table_templ])
+    await neural_net_manager.ws_manager.send_personal_message_json(letter)
+    
+    return {"OK"}
 
 def main(loop):
 
@@ -135,7 +154,9 @@ def main(loop):
 
     app.add_api_route("/create_model", create_neural_model, methods=["GET"])
     app.add_api_route("/create_model", create_neural_model_post, methods=["POST"])
+    app.add_api_route("/load_model", load_model_handler, methods=["POST"])
     app.add_api_route("/run", run_neural_net, methods=["GET"])
+    app.add_api_route("/run", run_neural_net_pict, methods=["POST"])
     app.add_api_route("/train", train_neural_net, methods=["GET"])
     app.add_api_route("/", root, methods=["GET"])
 

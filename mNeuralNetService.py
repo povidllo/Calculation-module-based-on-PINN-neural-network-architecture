@@ -6,6 +6,7 @@ from fastapi.websockets import WebSocketState, WebSocketDisconnect
 from mongo_schemas import *
 from mNeural_abs import *
 from mHabr_neural_exmp import my_oscil_net
+from oscillator import oscillator_nn
 
 import asyncio
 import abc
@@ -39,11 +40,14 @@ class ConnectionManager:
 
 class neural_net_microservice():
     inner_model : abs_neural_net = None
-    models_list = {'oscil': my_oscil_net}
+    # inner_model -> {'id_nn' : abs_neural_net}
+    # models_list = {'oscil': my_oscil_net}
+    models_list = {'oscil': oscillator_nn}
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ws_manager = ConnectionManager()
 
     async def create_model(self, params : mHyperParams):
+        print('params', params)
         if (params.mymodel_type is not None):
             if (params.mymodel_type in self.models_list):
                 self.inner_model = (self.models_list[params.mymodel_type])()
@@ -51,11 +55,28 @@ class neural_net_microservice():
 
     async def train_model(self):
         if (self.inner_model is not None):
-            self.inner_model.train()
+            await self.inner_model.train()
 
     async def set_dataset(self, dataset : mDataSet = None):
         if (dataset is not None):
             await self.inner_model.set_dataset(dataset)
+
+
+    async def load_nn(self, inp_nn : Optional[mNeuralNet] = None):
+
+        my_nn = await mNeuralNet_mongo.get_item_by_id(inp_nn)
+
+        print('my_nn-', type(my_nn), my_nn.model_dump())
+        print('hyper_param1 - ', type(my_nn.hyper_param), my_nn.hyper_param)
+        params = await my_nn.hyper_param.fetch()
+        print('hyper_param2 - ' , type(params), params)
+
+
+        if (params.mymodel_type is not None):
+            if (params.mymodel_type in self.models_list):
+                self.inner_model = (self.models_list[params.mymodel_type])()
+                await self.inner_model.load_model(inp_nn, self.device)
+
 
     async def run_model(self):
         base64_encoded_image = b''
