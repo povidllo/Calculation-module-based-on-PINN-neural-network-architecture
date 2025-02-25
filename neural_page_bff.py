@@ -54,15 +54,15 @@ async def websocket_endpoint(websocket: WebSocket):
             print('cant recive text', err)
             return
 
-async def create_neural_model(model_type : Optional[str] = None, inNu : Optional[int] = None, desc : Optional[str] = 'hello world'):
-    if (model_type is not None):
-        params = mHyperParams(mymodel_type=model_type, mymodel_desc=desc)
-        await neural_net_manager.create_model(params)
-        if (inNu is not None):
-            mdataset = mDataSet(params={'nu':inNu})
-            await neural_net_manager.set_dataset(mdataset)
-
-    return {"resp" : "OK"}
+# async def create_neural_model(model_type : Optional[str] = None, inNu : Optional[int] = None, desc : Optional[str] = 'hello world'):
+#     if (model_type is not None):
+#         params = mHyperParams(mymodel_type=model_type, mymodel_desc=desc)
+#         await neural_net_manager.create_model(params)
+#         if (inNu is not None):
+#             mdataset = mDataSet(params={'nu':inNu})
+#             await neural_net_manager.set_dataset(mdataset)
+#
+#     return {"resp" : "OK"}
 
 async def create_neural_model_post(params : Optional[mHyperParams] = None):
     # Если путь к весам не указан, используем значение по умолчанию
@@ -152,12 +152,12 @@ def main(loop):
 
     app = FastAPI(lifespan=lifespan)
 
-    app.add_api_route("/create_model", create_neural_model, methods=["GET"])
+    # app.add_api_route("/create_model", create_neural_model, methods=["GET"])
     app.add_api_route("/create_model", create_neural_model_post, methods=["POST"])
     app.add_api_route("/load_model", load_model_handler, methods=["POST"])
     app.add_api_route("/run", run_neural_net, methods=["GET"])
     app.add_api_route("/run", run_neural_net_pict, methods=["POST"])
-    app.add_api_route("/train", train_neural_net, methods=["GET"])
+    app.add_api_route("/train", train_neural_net, methods=["POST"])
     app.add_api_route("/", root, methods=["GET"])
 
 

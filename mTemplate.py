@@ -99,7 +99,8 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     'optimizer_lr': optimizer_lr
                 };
                 
-                const a = await call_bff_get('GET', 'train', train_params)
+                const a = await call_bff('POST', 'train', train_params)
+                console.log('train: ' , a);
             }
             const handle_run_button = async (nn_id) => {
                 const a = await call_bff('POST', 'run', {})
@@ -171,7 +172,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
         }
 
 
-        create_btn.addEventListener('click', handle_create_button);   
+        create_btn.addEventListener('click', handle_create_button);
     </script>
 </html>
 """
