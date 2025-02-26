@@ -56,7 +56,29 @@ class neural_net_microservice():
     async def train_model(self, train_params : mTrainParams):
         print('train_params', train_params)
         if (self.inner_model is not None):
-            self.inner_model
+            # Проверяем существует ли уже параметры обучения в базе данных
+            if self.inner_model.neural_model.train_param is None:
+                # Создаем новый документ с параметрами обучения
+                train_params_mongo = mTrainParams_mongo(
+                    epochs=train_params.epochs,
+                    optimizer=train_params.optimizer,
+                    optimizer_lr=train_params.optimizer_lr
+                )
+                # Сохраняем параметры в базу данных
+                await mTrainParams_mongo.insert(train_params_mongo)
+                
+                # Обновляем ссылку на параметры в модели
+                self.inner_model.neural_model.train_param = train_params_mongo
+            else:
+                # Обновляем существующие параметры
+                self.inner_model.neural_model.train_param.epochs = train_params.epochs
+                self.inner_model.neural_model.train_param.optimizer = train_params.optimizer
+                self.inner_model.neural_model.train_param.optimizer_lr = train_params.optimizer_lr
+                
+            # Сохраняем изменения в модели
+            await mNeuralNet_mongo.m_save(self.inner_model.neural_model)
+            
+            # Запускаем тренировку
             self.inner_model.train(train_params)
 
     async def set_dataset(self, dataset : mDataSet = None):

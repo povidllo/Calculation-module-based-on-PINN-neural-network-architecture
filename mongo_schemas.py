@@ -124,8 +124,6 @@ class mNeuralNet_mongo(mNeuralNet, Document):
     optimizer :  Optional[list[Link[mOptimizer_mongo]]] = None
     records: Optional[list[Link[mongo_Record]]] = None
 
-
-
     @staticmethod
     async def get_all():
         entries = await mNeuralNet_mongo.find_all(fetch_links=True).to_list()
@@ -146,6 +144,13 @@ class mNeuralNet_mongo(mNeuralNet, Document):
     async def m_save(el:Document):
         await el.save(link_rule=WriteRules.WRITE)
         # await el.insert(link_rule=WriteRules.WRITE)
+
+    @staticmethod
+    async def update_train_params(model_id: str, train_params: mTrainParams_mongo):
+        """Обновляет параметры обучения для модели"""
+        model = await mNeuralNet_mongo.get(model_id)
+        model.train_param = train_params
+        await model.save(link_rule=WriteRules.WRITE)
 
     class Settings:
         name = neural_net_mongo_database
