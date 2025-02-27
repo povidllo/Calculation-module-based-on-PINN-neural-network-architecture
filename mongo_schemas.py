@@ -16,7 +16,6 @@ rec_mongo_database = "REC"
 opti_mongo_database = "OPTI"
 dataset_mongo_database = "DATASET"
 hyper_params_mongo_database = "HYPER_PARAMS"
-train_params_mongo_database = "TRAIN_PARAMS"
 neural_net_mongo_database = "NEURAL_NET"
 
 class MyError(jsonrpc.BaseError):

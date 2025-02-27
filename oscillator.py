@@ -181,11 +181,18 @@ class oscillator_nn(abs_neural_net):
         self.set_optimizer()
         
         # Пытаемся загрузить веса, если они есть
-        try:
-            self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
-            print("Weights loaded successfully" + self.neural_model.hyper_param.save_weights_path)
-        except:
+        # try:
+        #     self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
+        #     print("Weights loaded successfully" + self.neural_model.hyper_param.save_weights_path)
+        # except:
+        #     print("No saved weights found, using initialized weights")
+        cur_state = await self.abs_load_weights()
+        if (cur_state is not None):
+            self.mymodel.load_state_dict(cur_state)
+        else:
             print("No saved weights found, using initialized weights")
+
+
 
 
     async def set_dataset(self, dataset : mDataSet = None):
@@ -232,12 +239,16 @@ class oscillator_nn(abs_neural_net):
         self.set_optimizer()
     
 
-    def save_model(self, path):
-        """Сохранение модели"""
-        torch.save(self.mymodel.state_dict(), path)
-
+    # def save_model(self, path):
+    #     """Сохранение модели"""
+    #     torch.save(self.mymodel.state_dict(), path)
+    async def save_model(self, path):
+        print('run saving')
+        weights = self.mymodel.state_dict()
+        await self.abs_save_weights(weights)
+        print('save complited')
     
-    def train(self):
+    async def train(self):
         cfg = self.neural_model.hyper_param
         epochs = cfg.epochs
         self.config = self.neural_model.hyper_param
@@ -266,10 +277,14 @@ class oscillator_nn(abs_neural_net):
                 self.best_loss = current_loss
                 self.best_epoch = epoch
                 
-                self.save_model(sys.path[0] + self.config.save_weights_path)
+                # self.save_model(sys.path[0] + self.config.save_weights_path)
             
             if(epoch % 400 == 0):
                 print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
+                
+        await self.save_model(sys.path[0] + self.config.save_weights_path)
+
+
 
 
     async def calc(self):
