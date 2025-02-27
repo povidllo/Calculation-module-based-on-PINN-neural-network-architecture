@@ -24,6 +24,14 @@ class abs_neural_net(abc.ABC):
 
         await mNeuralNet_mongo.m_save(self.neural_model)
 
+    async def update_train_params(self, train_params : mHyperParams):
+        # Обновляем параметры обучения в модели
+        self.neural_model.hyper_param.epochs = train_params.epochs
+        self.neural_model.hyper_param.optimizer = train_params.optimizer
+        self.neural_model.hyper_param.optimizer_lr = train_params.optimizer_lr
+        
+        # Сохраняем изменения в базе данных
+        await mNeuralNet_mongo.m_save(self.neural_model)
 
     @abc.abstractmethod
     async def construct_model(self, params : mHyperParams, in_device): pass

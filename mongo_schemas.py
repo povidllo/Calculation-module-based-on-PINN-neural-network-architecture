@@ -51,29 +51,26 @@ class mHyperParams(BaseModel):
 
     hidden_size : Optional[int] = 20
     power_time_vector : Optional[int] = 100
-    # epochs : Optional[int] = 50
     
     hidden_count : Optional[int] = 32
     input_dim : Optional[int] = 1
     output_dim : Optional[int] = 1
     hidden_sizes : Optional[List[int]] = [32, 32, 32]
 
+    # Параметры обучения
+    epochs : Optional[int] = 100
+    optimizer : Optional[str] = "Adam"
+    optimizer_lr : Optional[float] = 0.001
 
     Fourier : Optional[bool] = False
     FinputDim : Optional[bool] = None
     FourierScale : Optional[bool] = None
     
-    # epochs : Optional[int] = 100
     num_dots : Optional[List[int]] = [400, 50]
     path_true_data : Optional[str] = "/data/OSC.npy"
     save_weights_path : Optional[str] = "/osc_1d.pth"
 
 
-class mTrainParams(BaseModel):
-    epochs : Optional[int] = 100
-    optimizer : Optional[str] = "Adam"
-    optimizer_lr : Optional[float] = 0.001
-    
 class mNeuralNet(BaseModel):
     stored_item_id : Optional[str] = None
     status : Optional[str] = None
@@ -110,16 +107,8 @@ class mHyperParams_mongo(mHyperParams, Document):
     class Config:
         arbitrary_types_allowed = True
 
-class mTrainParams_mongo(mTrainParams, Document):
-    class Settings:
-        name = train_params_mongo_database
-
-    class Config:
-        arbitrary_types_allowed = True
-
 class mNeuralNet_mongo(mNeuralNet, Document):
     hyper_param : Optional[Link[mHyperParams_mongo]] = None
-    train_param : Optional[Link[mTrainParams_mongo]] = None
     data_set : Optional[list[Link[mDataSet_mongo]]] = None
     optimizer :  Optional[list[Link[mOptimizer_mongo]]] = None
     records: Optional[list[Link[mongo_Record]]] = None
@@ -146,10 +135,10 @@ class mNeuralNet_mongo(mNeuralNet, Document):
         # await el.insert(link_rule=WriteRules.WRITE)
 
     @staticmethod
-    async def update_train_params(model_id: str, train_params: mTrainParams_mongo):
+    async def update_train_params(model_id: str, train_params: mHyperParams_mongo):
         """Обновляет параметры обучения для модели"""
         model = await mNeuralNet_mongo.get(model_id)
-        model.train_param = train_params
+        model.hyper_param = train_params
         await model.save(link_rule=WriteRules.WRITE)
 
     class Settings:
@@ -189,3 +178,31 @@ class mongo_Estimate(mEstimate, Document):
     class Config:
         arbitrary_types_allowed = True
         # json_encoders = {bytes: lambda s: str(s, errors='ignore') }
+
+async def clear_all_collections():
+    """Очищает все коллекции в базе данных"""
+    try:
+        print("Starting database cleanup...")
+        
+        collections = [
+            mongo_Record,
+            mOptimizer_mongo,
+            mDataSet_mongo,
+            mHyperParams_mongo,
+            mNeuralNet_mongo,
+            mongo_Estimate
+        ]
+        
+        for collection in collections:
+            print(f"Clearing {collection.__name__}...")
+            try:
+                await collection.delete_all()
+            except Exception as e:
+                print(f"Error clearing {collection.__name__}: {str(e)}")
+                # Продолжаем очистку других коллекций
+                continue
+        
+        print("All collections cleared successfully")
+    except Exception as e:
+        print(f"Error during collection cleanup: {str(e)}")
+        raise e

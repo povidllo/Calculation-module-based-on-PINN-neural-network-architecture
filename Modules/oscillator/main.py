@@ -42,5 +42,5 @@ trainer = Train_torch(cfg_main.get_config(),
                     calculate_l2_error,
                     vizualize)
 
-# trainer.train()
+trainer.train()
 trainer.printEval()

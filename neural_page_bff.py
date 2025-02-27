@@ -82,9 +82,9 @@ async def create_neural_model_post(params : Optional[mHyperParams] = None):
 
     return {"resp" : "OK"}
 
-async def train_neural_net(train_params : Optional[mTrainParams] = None):
-    res = await neural_net_manager.train_model(train_params)
-
+async def train_neural_net(params : Optional[mHyperParams] = None):
+    # Теперь params не используется, так как берутся из базы
+    res = await neural_net_manager.train_model()
     return {"result": res}
 
 async def load_model_handler(inp_nn : Optional[mNeuralNet] = None):
@@ -140,10 +140,36 @@ async def run_neural_net_pict():
     
     return {"OK"}
 
+async def update_train_parameters(params : Optional[mHyperParams] = None):
+    if neural_net_manager.inner_model is not None:
+        await neural_net_manager.inner_model.update_train_params(params)
+        return {"result": "OK"}
+    return {"result": "No model loaded"}
+
+async def clear_database():
+    try:
+        print('Starting database cleanup...')
+        await clear_all_collections()
+        print('Collections cleared')
+        
+        # Обновляем таблицу после очистки через перезагрузку страницы
+        return RedirectResponse(url="/")
+        
+    except Exception as e:
+        print(f"Error clearing database: {str(e)}")
+        return {"error": str(e)}
+
 def main(loop):
 
     async def init():
-        await init_beanie(database=client[database_name], document_models=[mongo_Estimate, mongo_Record, mOptimizer_mongo, mDataSet_mongo, mHyperParams_mongo, mTrainParams_mongo, mNeuralNet_mongo])
+        await init_beanie(database=client[database_name], document_models=[
+            mongo_Estimate, 
+            mongo_Record, 
+            mOptimizer_mongo, 
+            mDataSet_mongo, 
+            mHyperParams_mongo, 
+            mNeuralNet_mongo
+        ])
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -157,8 +183,10 @@ def main(loop):
     app.add_api_route("/load_model", load_model_handler, methods=["POST"])
     app.add_api_route("/run", run_neural_net, methods=["GET"])
     app.add_api_route("/run", run_neural_net_pict, methods=["POST"])
-    app.add_api_route("/train", train_neural_net, methods=["POST"])
+    app.add_api_route("/train", train_neural_net, methods=["GET"])
     app.add_api_route("/", root, methods=["GET"])
+    app.add_api_route("/update_train_params", update_train_parameters, methods=["POST"])
+    app.add_api_route("/clear_database", clear_database, methods=["GET"])
 
 
     app.include_router(router)

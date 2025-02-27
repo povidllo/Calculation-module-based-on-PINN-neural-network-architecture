@@ -25,7 +25,7 @@ def get_config():
     cfg.num_dots = [400]
 
     #Train
-    cfg.epochs = 10000
+    cfg.epochs = 450
     cfg.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     cfg.num_dots = [400, 50]
     

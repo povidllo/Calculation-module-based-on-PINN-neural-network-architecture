@@ -237,9 +237,9 @@ class oscillator_nn(abs_neural_net):
         torch.save(self.mymodel.state_dict(), path)
 
     
-    def train(self, train_params : mTrainParams):
-        # cfg = self.neural_model.hyper_param
-        epochs = train_params.epochs if train_params.epochs is not None else 0
+    def train(self):
+        cfg = self.neural_model.hyper_param
+        epochs = cfg.epochs
         self.config = self.neural_model.hyper_param
 
         for epoch in tqdm(range(epochs)):

@@ -56,7 +56,43 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 height: 30px;
                 font-size: 16px;
             }
-
+            .danger-button {
+                width: 150px;
+                height: 40px;
+                background-color: #ff4444;
+                color: white;
+                margin-top: 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .danger-button:hover {
+                background-color: #ff0000;
+            }
+            .hyperparams-container {
+                border: 2px solid #000;
+                padding: 15px;
+                width: 250px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+                background-color: #f8f8f8;
+            }
+            
+            .param-group {
+                margin-bottom: 15px;
+            }
+            
+            .param-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+            
+            .param-group input {
+                width: 100%;
+                height: 30px;
+                font-size: 16px;
+            }
         </style>
 
         <script>
@@ -89,18 +125,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 const a = await call_bff('POST', 'load_model', {'stored_item_id' : nn_id})
             }
             const handle_train_button = async (nn_id) => {
-                const epochs = document.getElementById('epochs').value || 100;
-                const optimizer = document.getElementById('optimizer').value || "Adam";
-                const optimizer_lr = document.getElementById('optimizer_lr').value || 0.001;
-                
-                const train_params = {
-                    'epochs': epochs,
-                    'optimizer': optimizer,
-                    'optimizer_lr': optimizer_lr
-                };
-                
-                const a = await call_bff('POST', 'train', train_params)
-                console.log('train: ' , a);
+                const a = await call_bff_get('train')
             }
             const handle_run_button = async (nn_id) => {
                 const a = await call_bff('POST', 'run', {})
@@ -108,16 +133,55 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 
             const handle_create_button = async () => {
                 const desc = document.getElementById('neural_desc').value;
-                const weights_path = document.getElementById('weights_path').value || '/osc_1d.pth';  // Значение по умолчанию
-
+                const weights_path = document.getElementById('weights_path').value || '/osc_1d.pth';
+                
+                // Получаем значения гиперпараметров
                 const params = {
-                    'mymodel_type': "oscil", 
+                    'mymodel_type': "oscil",
                     'mymodel_desc': desc,
-                    'save_weights_path': weights_path
+                    'save_weights_path': weights_path,
+                    
+                    // Гиперпараметры архитектуры
+                    'hidden_size': parseInt(document.getElementById('hidden_size').value) || 20,
+                    'hidden_count': parseInt(document.getElementById('hidden_count').value) || 32,
+                    'input_dim': parseInt(document.getElementById('input_dim').value) || 1,
+                    'output_dim': parseInt(document.getElementById('output_dim').value) || 1,
+                    'hidden_sizes': document.getElementById('hidden_sizes').value ? 
+                        document.getElementById('hidden_sizes').value.split(',').map(x => parseInt(x.trim())) : 
+                        [32, 32, 32],
+                    
+                    // Параметры данных
+                    'power_time_vector': parseInt(document.getElementById('power_time_vector').value) || 100,
+                    'num_dots': document.getElementById('num_dots').value ? 
+                        document.getElementById('num_dots').value.split(',').map(x => parseInt(x.trim())) : 
+                        [400, 50],
+                    
+                    // Параметры Фурье
+                    'Fourier': document.getElementById('fourier').checked,
+                    'FinputDim': parseInt(document.getElementById('finput_dim').value) || null,
+                    'FourierScale': parseFloat(document.getElementById('fourier_scale').value) || null
                 };
 
                 const a = await call_bff('POST', 'create_model', params);
-                console.log('pass: ' , a);
+                console.log('pass: ', a);
+            };
+
+            const handle_update_params_button = async () => {
+                const params = {
+                    'epochs': document.getElementById('epochs').value || 100,
+                    'optimizer': document.getElementById('optimizer').value || "Adam",
+                    'optimizer_lr': parseFloat(document.getElementById('optimizer_lr').value) || 0.001,
+                    'mymodel_type': "oscil"
+                };
+                
+                const response = await call_bff('POST', 'update_train_params', params);
+                console.log('update params response:', response);
+            };
+
+            const handle_clear_database = async () => {
+                if (confirm('Удалить все записи в базе данных?')) {
+                    window.location.href = base_url + 'clear_database';
+                }
             };
         </script>    
         """ + str(gscripts) + """
@@ -130,6 +194,49 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     <input style="width: 200px; height: 30px; font-size: 16px;" 
                            type="text" id="neural_desc" placeholder="Описание модели"/>
                 </div>
+                
+                <div class="hyperparams-container">
+                    <h3>Гиперпараметры архитектуры</h3>
+                    <div class="param-group">
+                        <label for="hidden_size">Hidden Size:</label>
+                        <input type="number" id="hidden_size" placeholder="20"/>
+                        
+                        <label for="hidden_count">Hidden Count:</label>
+                        <input type="number" id="hidden_count" placeholder="32"/>
+                        
+                        <label for="input_dim">Input Dimension:</label>
+                        <input type="number" id="input_dim" placeholder="1"/>
+                        
+                        <label for="output_dim">Output Dimension:</label>
+                        <input type="number" id="output_dim" placeholder="1"/>
+                        
+                        <label for="hidden_sizes">Hidden Sizes (через запятую):</label>
+                        <input type="text" id="hidden_sizes" placeholder="32,32,32"/>
+                    </div>
+                    
+                    <h3>Параметры данных</h3>
+                    <div class="param-group">
+                        <label for="power_time_vector">Power Time Vector:</label>
+                        <input type="number" id="power_time_vector" placeholder="100"/>
+                        
+                        <label for="num_dots">Num Dots (через запятую):</label>
+                        <input type="text" id="num_dots" placeholder="400,50"/>
+                    </div>
+                    
+                    <h3>Параметры Фурье</h3>
+                    <div class="param-group">
+                        <label>
+                            <input type="checkbox" id="fourier"/> Использовать Фурье
+                        </label>
+                        
+                        <label for="finput_dim">Fourier Input Dimension:</label>
+                        <input type="number" id="finput_dim" placeholder="Optional"/>
+                        
+                        <label for="fourier_scale">Fourier Scale:</label>
+                        <input type="number" id="fourier_scale" placeholder="Optional"/>
+                    </div>
+                </div>
+                
                 <div class="train-parameters">
                     <h3>Train Parameters</h3>
                     <label for="epochs">Количество эпох:</label>
@@ -140,6 +247,10 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     
                     <label for="optimizer_lr">Оптимизатор learning rate:</label>
                     <input type="text" id="optimizer_lr" placeholder="Оптимизатор learning rate"/>
+                    
+                    <input style="width: 150px; height: 30px; margin-top: 10px;" 
+                           type="button" value="Update Parameters" 
+                           onclick="handle_update_params_button()"/>
                 </div>
                 <div>
                     <label for="weights_path">Путь к весам:</label>
@@ -147,6 +258,10 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                            type="text" id="weights_path" placeholder="/osc_1d.pth"/>
                 </div>
                 <input style="width: 80px; height: 40px" type="button" value="Create" id="create_btn"/>
+                <input type="button" class="danger-button" 
+                       value="Clear Database" 
+                       onclick="handle_clear_database()"
+                       id="clear_db_btn"/>
             </div>
         </div>
         <div class="row">
@@ -173,6 +288,8 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 
 
         create_btn.addEventListener('click', handle_create_button);
+        document.getElementById('update_params_btn').addEventListener('click', handle_update_params_button);
+        document.getElementById('clear_db_btn').addEventListener('click', handle_clear_database);
     </script>
 </html>
 """
