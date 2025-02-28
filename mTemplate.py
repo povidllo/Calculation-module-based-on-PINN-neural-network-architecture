@@ -123,7 +123,15 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 
             const handle_load_button = async (nn_id) => {
                 const a = await call_bff('POST', 'load_model', {'stored_item_id' : nn_id})
+                
+                for (const [id, value] of Object.entries(a)) {
+                    const inputElement = document.getElementById(id);
+                    if (inputElement) {
+                        inputElement.value = value;
+                    }
+                }
             }
+            
             const handle_train_button = async (nn_id) => {
                 const a = await call_bff_get('train')
             }

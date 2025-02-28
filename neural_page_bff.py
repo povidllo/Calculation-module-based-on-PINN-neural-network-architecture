@@ -90,7 +90,9 @@ async def train_neural_net(params : Optional[mHyperParams] = None):
 async def load_model_handler(inp_nn : Optional[mNeuralNet] = None):
 
     res = await neural_net_manager.load_nn(inp_nn)
-    return {"result": "OK"}
+
+
+    return res
 
 
 async def root():
