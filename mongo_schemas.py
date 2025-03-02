@@ -17,7 +17,7 @@ opti_mongo_database = "OPTI"
 dataset_mongo_database = "DATASET"
 hyper_params_mongo_database = "HYPER_PARAMS"
 neural_net_mongo_database = "NEURAL_NET"
-
+weights_mongo_database = "WEIGHTS"
 class MyError(jsonrpc.BaseError):
     CODE = 5000
     MESSAGE = 'My error'
@@ -106,11 +106,23 @@ class mHyperParams_mongo(mHyperParams, Document):
     class Config:
         arbitrary_types_allowed = True
 
+class mWeight(BaseModel):
+    weights_id: Optional[str] = None
+    tag: Optional[str] = None
+
+class mWeight_mongo(mWeight, Document):
+    class Settings:
+        name = weights_mongo_database
+
+    class Config:
+        arbitrary_types_allowed = True
+
 class mNeuralNet_mongo(mNeuralNet, Document):
     hyper_param : Optional[Link[mHyperParams_mongo]] = None
     data_set : Optional[list[Link[mDataSet_mongo]]] = None
     optimizer :  Optional[list[Link[mOptimizer_mongo]]] = None
     records: Optional[list[Link[mongo_Record]]] = None
+    weights: Optional[Link[mWeight_mongo]] = None
 
     @staticmethod
     async def get_all():
@@ -189,7 +201,8 @@ async def clear_all_collections():
             mDataSet_mongo,
             mHyperParams_mongo,
             mNeuralNet_mongo,
-            mongo_Estimate
+            mongo_Estimate,
+            mWeight_mongo
         ]
         
         for collection in collections:

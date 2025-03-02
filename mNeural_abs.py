@@ -5,6 +5,7 @@ from pymongo import MongoClient
 import gridfs
 import pickle
 import numpy as np
+from bson.objectid import ObjectId
 
 
 class abs_neural_net(abc.ABC):
@@ -24,27 +25,14 @@ class abs_neural_net(abc.ABC):
         
     async def abs_save_weights(self, obj):
         try:
-            # """Сохранение модели"""
-            # weights = self.mymodel.state_dict()
-            # torch.save(weights, path)
-
-            # state_dict = self.mymodel.state_dict()
-            # weights_list = {key: tensor.tolist() for key, tensor in state_dict.items()}
-            # print('self.mymodel.state_dict()', type(weights_list), weights_list)
-
-            # item = mongo_Record(record={'weights': weights_list})
             items_dumps = pickle.dumps(obj, protocol=2)
-            # item_base64 = base64.b64encode(items_dumps).decode()
-
-
             retId = self.fs.put(items_dumps, filename='my_weights')
-            if (self.neural_model.records is None):
-                self.neural_model.records = []
-
-            item = mongo_Record(record={'tag' : 'weight', 'weights_id': retId})
-            self.neural_model.records.append(item)
+            
+            weight = mWeight_mongo(weights_id=str(retId), tag='weight')
+            await weight.insert()
+            
+            self.neural_model.weights = weight
             await mNeuralNet_mongo.m_save(self.neural_model)
-
 
             print('gridfs id', retId)
         except Exception as exp:
@@ -52,20 +40,18 @@ class abs_neural_net(abc.ABC):
 
     async def abs_load_weights(self):
         weights = None
-        last_fs_weights = None
-        if (self.neural_model.records is not None):
-            for it in self.neural_model.records:
-                if ('tag' in it.record):
-                    if (it.record['tag'] == 'weight'):
-                        print('weights_id', it.record['weights_id'])
-                        last_fs_weights = self.fs.find_one({'_id': it.record['weights_id']})
-
-
-        if (last_fs_weights is not None):
-            weight_dump = last_fs_weights.read()
-            weights = pickle.loads(weight_dump)
-            print('weights', type(weights))
-
+        if self.neural_model.weights is not None:
+            try:
+                weights_id = self.neural_model.weights.weights_id
+                last_fs_weights = self.fs.find_one({'_id': ObjectId(weights_id)})
+                
+                if last_fs_weights is not None:
+                    weight_dump = last_fs_weights.read()
+                    weights = pickle.loads(weight_dump)
+                    print('weights loaded', type(weights))
+            except Exception as e:
+                print('load_weights_exp', e)
+        
         return weights
 
 
@@ -81,12 +67,10 @@ class abs_neural_net(abc.ABC):
         await mNeuralNet_mongo.m_save(self.neural_model)
 
     async def update_train_params(self, train_params : mHyperParams):
-        # Обновляем параметры обучения в модели
         self.neural_model.hyper_param.epochs = train_params.epochs
         self.neural_model.hyper_param.optimizer = train_params.optimizer
         self.neural_model.hyper_param.optimizer_lr = train_params.optimizer_lr
         
-        # Сохраняем изменения в базе данных
         await mNeuralNet_mongo.m_save(self.neural_model)
 
     @abc.abstractmethod

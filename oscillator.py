@@ -288,7 +288,7 @@ class oscillator_nn(abs_neural_net):
 
 
     async def calc(self):
-        self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
+        # self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
         
         x, _, _ = test_data_generator()
         

@@ -141,13 +141,11 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 
             const handle_create_button = async () => {
                 const desc = document.getElementById('neural_desc').value;
-                const weights_path = document.getElementById('weights_path').value || '/osc_1d.pth';
                 
                 // Получаем значения гиперпараметров
                 const params = {
                     'mymodel_type': "oscil",
                     'mymodel_desc': desc,
-                    'save_weights_path': weights_path,
                     
                     // Гиперпараметры архитектуры
                     'hidden_size': parseInt(document.getElementById('hidden_size').value) || 20,
@@ -259,11 +257,6 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     <input style="width: 150px; height: 30px; margin-top: 10px;" 
                            type="button" value="Update Parameters" 
                            onclick="handle_update_params_button()"/>
-                </div>
-                <div>
-                    <label for="weights_path">Путь к весам:</label>
-                    <input style="width: 200px; height: 30px; font-size: 16px;" 
-                           type="text" id="weights_path" placeholder="/osc_1d.pth"/>
                 </div>
                 <input style="width: 80px; height: 40px" type="button" value="Create" id="create_btn"/>
                 <input type="button" class="danger-button" 

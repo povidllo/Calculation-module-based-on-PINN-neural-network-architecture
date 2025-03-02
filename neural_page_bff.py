@@ -170,7 +170,8 @@ def main(loop):
             mOptimizer_mongo, 
             mDataSet_mongo, 
             mHyperParams_mongo, 
-            mNeuralNet_mongo
+            mNeuralNet_mongo,
+            mWeight_mongo  # Добавляем новую модель для весов
         ])
 
     @asynccontextmanager
