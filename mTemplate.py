@@ -147,25 +147,20 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     'mymodel_type': "oscil",
                     'mymodel_desc': desc,
                     
-                    // Гиперпараметры архитектуры
-                    'hidden_size': parseInt(document.getElementById('hidden_size').value) || 20,
-                    'hidden_count': parseInt(document.getElementById('hidden_count').value) || 32,
+                    // Базовые параметры сети
                     'input_dim': parseInt(document.getElementById('input_dim').value) || 1,
                     'output_dim': parseInt(document.getElementById('output_dim').value) || 1,
                     'hidden_sizes': document.getElementById('hidden_sizes').value ? 
                         document.getElementById('hidden_sizes').value.split(',').map(x => parseInt(x.trim())) : 
                         [32, 32, 32],
                     
-                    // Параметры данных
-                    'power_time_vector': parseInt(document.getElementById('power_time_vector').value) || 100,
-                    'num_dots': document.getElementById('num_dots').value ? 
-                        document.getElementById('num_dots').value.split(',').map(x => parseInt(x.trim())) : 
-                        [400, 50],
-                    
                     // Параметры Фурье
                     'Fourier': document.getElementById('fourier').checked,
                     'FinputDim': parseInt(document.getElementById('finput_dim').value) || null,
-                    'FourierScale': parseFloat(document.getElementById('fourier_scale').value) || null
+                    'FourierScale': parseFloat(document.getElementById('fourier_scale').value) || null,
+                    
+                    // Путь к данным
+                    'path_true_data': "/data/OSC.npy"
                 };
 
                 const a = await call_bff('POST', 'create_model', params);
@@ -204,12 +199,6 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 <div class="hyperparams-container">
                     <h3>Гиперпараметры архитектуры</h3>
                     <div class="param-group">
-                        <label for="hidden_size">Hidden Size:</label>
-                        <input type="number" id="hidden_size" placeholder="20"/>
-                        
-                        <label for="hidden_count">Hidden Count:</label>
-                        <input type="number" id="hidden_count" placeholder="32"/>
-                        
                         <label for="input_dim">Input Dimension:</label>
                         <input type="number" id="input_dim" placeholder="1"/>
                         
@@ -218,15 +207,6 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                         
                         <label for="hidden_sizes">Hidden Sizes (через запятую):</label>
                         <input type="text" id="hidden_sizes" placeholder="32,32,32"/>
-                    </div>
-                    
-                    <h3>Параметры данных</h3>
-                    <div class="param-group">
-                        <label for="power_time_vector">Power Time Vector:</label>
-                        <input type="number" id="power_time_vector" placeholder="100"/>
-                        
-                        <label for="num_dots">Num Dots (через запятую):</label>
-                        <input type="text" id="num_dots" placeholder="400,50"/>
                     </div>
                     
                     <h3>Параметры Фурье</h3>

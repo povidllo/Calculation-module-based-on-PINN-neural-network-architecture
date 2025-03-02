@@ -78,7 +78,10 @@ class oscillator_nn(abs_neural_net):
             return t, t_data, t_phys
 
         def data_generator(self):
-            x, x_data, x_physics = self.generator(self.num_dots[0], self.num_dots[1])
+            x, x_data, x_physics = self.generator(
+                self.num_dots["train"], 
+                self.num_dots["physics"]
+            )
             x = torch.FloatTensor(x)
             x_data = torch.FloatTensor(x_data)
             x_physics = torch.FloatTensor(x_physics).requires_grad_(True)
@@ -196,19 +199,22 @@ class oscillator_nn(abs_neural_net):
 
 
     async def set_dataset(self, dataset : mDataSet = None):
-        if dataset is None:
-            self.neural_model.data_set = [self.mySpecialDataSet(
-                                                                power_time_vector=self.neural_model.hyper_param.power_time_vector,
-                                                                params={'nu': 3},
-                                                                num_dots=self.neural_model.hyper_param.num_dots
-                                                                )
-                                          ]
-        else:
-            new_dataset = self.mySpecialDataSet(
-                power_time_vector=self.neural_model.hyper_param.power_time_vector,
-                params=dataset.params
-            )
-            await self.update_dataset_for_nn(new_dataset)
+        # if dataset is None:
+        self.neural_model.data_set = [self.mySpecialDataSet(
+                                        params={'nu': 3},
+                                        num_dots={
+                                            "train": 400,
+                                            "physics": 50
+                                        }
+                                    )]
+        print('dataset is none')
+        # else:
+        #     new_dataset = self.mySpecialDataSet(
+        #         power_time_vector=self.neural_model.hyper_param.power_time_vector,
+        #         params=dataset.params
+        #     )
+        #     print('dataset is not none')
+        #     await self.update_dataset_for_nn(new_dataset)
         
         # Пробуем загрузить данные из базы
         loaded_data = self.neural_model.data_set[0].load_data_from_params()
@@ -249,10 +255,10 @@ class oscillator_nn(abs_neural_net):
         print('save complited')
     
     async def train(self):
-        cfg = self.neural_model.hyper_param
-        epochs = cfg.epochs
+        # cfg = self.neural_model.hyper_param
+        # epochs = cfg.epochs
         self.config = self.neural_model.hyper_param
-
+        epochs = self.config.epochs
         for epoch in tqdm(range(epochs)):
             self.myoptimizer.zero_grad()
             u_pred = self.mymodel(self.variables)
