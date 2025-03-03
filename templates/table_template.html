@@ -1,22 +1,18 @@
 <div id="neural_table" style="display:table; width:100%; ">
-<h3> Exchange </h3>
-{% if items %}
-<table style="width:100%; table-layout: fixed;">
-{% set ns = namespace(i=1) %}
-{% for item in items %}
-<TR>
-   <TD > <div>{{ns.i}}</div></TD>
-   <TD >{{item.hyper_param.mymodel_type}}</TD>
-   <TD >{{item.hyper_param.mymodel_desc}}</TD>
-   <TD ><input type=button value="LOAD"  onclick="handle_load_button('{{item.id}}')"></input></TD>
-   <TD ><input type=button value="TRAIN"  onclick="handle_train_button('{{item.id}}')"></input></TD>
-   <TD ><input type=button value="RUN"  onclick="handle_run_button('{{item.id}}')"></input></TD>
-   <!--<TD class="c7">
-   <input type=button value="X"  onclick="del_entries_from_db_dialog('{{item.id}}','{{item.Number}}')"></input>
-   </TD> -->
-</TR>
-{% set ns.i = ns.i + 1 %}
-{% endfor %}
-</table>
-{% endif %}
+    <h3> Exchange </h3>
+    {% if items %}
+    <label for="model_select">Выберите модель:</label>
+    <select id="model_select">
+        {% for item in items %}
+        <option value="{{ item.id }}">{{ item.hyper_param.mymodel_desc }}</option>
+        {% endfor %}
+    </select>
+
+    <button onclick="handle_load_button()">Load</button>
+
+    <div id="model_controls" style="display: none; margin-top: 10px;">
+        <button onclick="handle_train_button()">Train</button>
+        <button onclick="handle_run_button()">Run</button>
+    </div>
+    {% endif %}
 </div>

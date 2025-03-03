@@ -121,16 +121,22 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 }).then((response) => response.json())
             }                
 
-            const handle_load_button = async (nn_id) => {
-                const a = await call_bff('POST', 'load_model', {'stored_item_id' : nn_id})
-                
-                for (const [id, value] of Object.entries(a)) {
-                    const inputElement = document.getElementById(id);
-                    if (inputElement) {
-                        inputElement.value = value;
-                    }
+            const handle_load_button = async () => {
+                const selectElement = document.getElementById("model_select");
+                const selectedModelId = selectElement.value;
+            
+                if (!selectedModelId) {
+                    alert("Выберите модель!");
+                    return;
                 }
-            }
+            
+                const response = await call_bff("POST", "load_model", { "stored_item_id": selectedModelId });
+            
+                if (response.mymodel_desc) {
+                    document.getElementById("selected_model_desc").innerText = response.mymodel_desc;
+                    document.getElementById("model_controls").style.display = "block"; // Показываем кнопки
+                }
+            };
             
             const handle_train_button = async (nn_id) => {
                 const a = await call_bff_get('train')
@@ -264,6 +270,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     console.log("Обновляем описание модели:", res.data[1]); // Проверка
                     document.getElementById('selected_model_desc').innerText = res.data[1];
                 } else {
+                    console.log("Обновляем модели:", res.data[1]); // Проверка
                     document.getElementById(res.data[0]).innerHTML = res.data[1];
                 }
             }
