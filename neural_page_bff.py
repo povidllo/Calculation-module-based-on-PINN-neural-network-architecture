@@ -4,11 +4,13 @@ import json
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi import FastAPI, BackgroundTasks, Request, Depends,WebSocket, Query, Response, APIRouter
 from fastapi.websockets import WebSocketState, WebSocketDisconnect
-
+from fastapi.staticfiles import StaticFiles
 from typing import List, Dict, Optional, Union
 from pydantic import BaseModel
 import fastapi_jsonrpc as jsonrpc
+from fastapi.middleware.cors import CORSMiddleware
 
+from pathlib import Path
 import jinja2
 import io
 import base64
@@ -180,6 +182,20 @@ def main(loop):
         yield
 
     app = FastAPI(lifespan=lifespan)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.mount(
+        "/static",
+        StaticFiles(directory=Path(__file__).parent.absolute() / "static"),
+        name="static"
+    )
 
     # app.add_api_route("/create_model", create_neural_model, methods=["GET"])
     app.add_api_route("/create_model", create_neural_model_post, methods=["POST"])

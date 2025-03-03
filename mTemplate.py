@@ -4,6 +4,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <link href="/static/css/main.css" rel="stylesheet">
         <style>
             .row {
               display: flex;
@@ -29,23 +30,8 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 height: auto;
                 overflow: scroll;
             }
-            .train-parameters {
-                border: 2px solid #000;
-                padding: 15px;
-                width: 250px;
-                margin-bottom: 20px;
-                border-radius: 10px;
-                background-color: #f8f8f8;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
             
-            .train-parameters h3 {
-                margin-top: 0;
-                font-size: 18px;
-                text-align: center;
-            }
+
             
             .train-parameters label {
                 font-weight: bold;
@@ -94,32 +80,11 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 font-size: 16px;
             }
         </style>
-
+        
+        <script type="text/javascript" src="/static/js/mJS.js"></script>
         <script>
             var base_url = "http://""" + str(cur_host) + """:8010/"
-
-            async function call_bff(method, path, body_item){
-                return await fetch(base_url+path, {
-                    method: method,
-                    mode: 'cors',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(body_item)
-                }).then((response) => response.json())
-            }
-
-            async function call_bff_get(path){
-                return await fetch(base_url+path, {
-                    method: 'GET',
-                    mode: 'cors',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }).then((response) => response.json())
-            }                
+               
 
             const handle_load_button = async (nn_id) => {
                 const a = await call_bff('POST', 'load_model', {'stored_item_id' : nn_id})
@@ -269,7 +234,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 
 
         create_btn.addEventListener('click', handle_create_button);
-        document.getElementById('update_params_btn').addEventListener('click', handle_update_params_button);
+        //document.getElementById('update_params_btn').addEventListener('click', handle_update_params_button);
         document.getElementById('clear_db_btn').addEventListener('click', handle_clear_database);
     </script>
 </html>
