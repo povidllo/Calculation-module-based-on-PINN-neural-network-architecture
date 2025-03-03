@@ -32,10 +32,6 @@ import asyncio
 router = APIRouter()
 
 
-
-
-
-
 @router.websocket("/ws_ping")
 async def websocket_endpoint(websocket: WebSocket):
     try:
@@ -53,16 +49,6 @@ async def websocket_endpoint(websocket: WebSocket):
         except Exception as err:
             print('cant recive text', err)
             return
-
-# async def create_neural_model(model_type : Optional[str] = None, inNu : Optional[int] = None, desc : Optional[str] = 'hello world'):
-#     if (model_type is not None):
-#         params = mHyperParams(mymodel_type=model_type, mymodel_desc=desc)
-#         await neural_net_manager.create_model(params)
-#         if (inNu is not None):
-#             mdataset = mDataSet(params={'nu':inNu})
-#             await neural_net_manager.set_dataset(mdataset)
-#
-#     return {"resp" : "OK"}
 
 async def create_neural_model_post(params : Optional[mHyperParams] = None):
     # Если путь к весам не указан, используем значение по умолчанию
@@ -87,12 +73,17 @@ async def train_neural_net(params : Optional[mHyperParams] = None):
     res = await neural_net_manager.train_model()
     return {"result": res}
 
-async def load_model_handler(inp_nn : Optional[mNeuralNet] = None):
-
+async def load_model_handler(inp_nn: Optional[mNeuralNet] = None):
     res = await neural_net_manager.load_nn(inp_nn)
 
+    print(res['mymodel_desc'])
+
+    # Отправляем обновление на клиент через WebSocket
+    letter = chatMessage(user=glob_user, msg_type='jinja_tmpl', data=['model_desc', res['mymodel_desc']])
+    await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
     return res
+
 
 
 async def root():

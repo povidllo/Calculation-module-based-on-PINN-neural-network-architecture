@@ -243,6 +243,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                        value="Clear Database" 
                        onclick="handle_clear_database()"
                        id="clear_db_btn"/>
+                <div id="model_desc">Выбранная модель: <span id="selected_model_desc">---</span></div>
             </div>
         </div>
         <div class="row">
@@ -255,15 +256,16 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
         var ws_ping = new WebSocket(`ws://""" + str(cur_host) + """:8010/ws_ping`);
         ws_ping.onmessage = function(event) 
         {
-            const res = JSON.parse(event.data)
-            if (res.msg_type == 'hello')
-            {
-                console.log('hello from ws', res.data)
-            }else if (res.msg_type == 'jinja_tmpl')
-            {
-                        //console.log('div name: ', res.data[0])
-                        //console.log('content: ', res.data[1])
-                        document.getElementById(res.data[0]).innerHTML = res.data[1]
+            const res = JSON.parse(event.data);
+            console.log("Пришло сообщение:", res); // Проверка
+        
+            if (res.msg_type == 'jinja_tmpl') {
+                if (res.data[0] === 'model_desc') {
+                    console.log("Обновляем описание модели:", res.data[1]); // Проверка
+                    document.getElementById('selected_model_desc').innerText = res.data[1];
+                } else {
+                    document.getElementById(res.data[0]).innerHTML = res.data[1];
+                }
             }
         }
 
