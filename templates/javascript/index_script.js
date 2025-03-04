@@ -1,12 +1,6 @@
-async function initialize() {
-    cur_host = await fetch("/get_host").json().cur_host;
-    base_url = "http://" + cur_host + ":8010/";
-    console.log("Base URL установлен:", base_url);
-}
-
-async function call_bff(method, path, body_item){
+async function call_bff_post(path, body_item){
     return await fetch(base_url+path, {
-        method: method,
+        method: "POST",
         mode: 'cors',
         credentials: 'include',
         headers: {
@@ -36,7 +30,7 @@ const handle_load_button = async () => {
         return;
     }
 
-    const response = await call_bff("POST", "load_model", { "stored_item_id": selectedModelId });
+    const response = await call_bff_post("load_model", { "stored_item_id": selectedModelId });
 
     if (response.mymodel_desc) {
         document.getElementById("selected_model_desc").innerText = response.mymodel_desc;
@@ -48,7 +42,7 @@ const handle_train_button = async (nn_id) => {
     const a = await call_bff_get('train')
 }
 const handle_run_button = async (nn_id) => {
-    const a = await call_bff('POST', 'run', {})
+    const a = await call_bff_post('run', {})
 }
 
 const handle_create_button = async () => {
@@ -75,7 +69,7 @@ const handle_create_button = async () => {
         'path_true_data': "/data/OSC.npy"
     };
 
-    const a = await call_bff('POST', 'create_model', params);
+    const a = await call_bff_post('create_model', params);
     console.log('pass: ', a);
 };
 
@@ -87,19 +81,17 @@ const handle_update_params_button = async () => {
         'mymodel_type': "oscil"
     };
 
-    const response = await call_bff('POST', 'update_train_params', params);
+    const response = await call_bff_post('update_train_params', params);
     console.log('update params response:', response);
 };
 
 const handle_clear_database = async () => {
     if (confirm('Удалить все записи в базе данных?')) {
-        const a = await call_bff('GET', 'clear_database', {});
-        console.log('clear db: ', a);
+        const a = await call_bff_get('clear_database');
     }
 };
 
-let base_url;
-initialize();
+var base_url = "http://localhost:8010/";
 
 // var ws_ping = new WebSocket(`ws://""" + str(cur_host) + """:8010/ws_ping`);
 
@@ -119,6 +111,6 @@ initialize();
 //     }
 // }
 
-create_btn.addEventListener('click', handle_create_button);
-document.getElementById('update_params_btn').addEventListener('click', handle_update_params_button);
-document.getElementById('clear_db_btn').addEventListener('click', handle_clear_database);
+// create_btn.addEventListener('click', handle_create_button);
+// document.getElementById('update_params_btn').addEventListener('click', handle_update_params_button);
+// clear_db_btn.addEventListener('click', handle_clear_database);
