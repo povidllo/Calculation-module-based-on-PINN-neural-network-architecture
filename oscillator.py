@@ -198,35 +198,36 @@ class oscillator_nn(abs_neural_net):
 
 
 
-    async def set_dataset(self, dataset : mDataSet = None):
-        # if dataset is None:
-        self.neural_model.data_set = [self.mySpecialDataSet(
-                                        params={'nu': 3},
-                                        num_dots={
-                                            "train": 400,
-                                            "physics": 50
-                                        }
-                                    )]
-        print('dataset is none')
-        # else:
-        #     new_dataset = self.mySpecialDataSet(
-        #         power_time_vector=self.neural_model.hyper_param.power_time_vector,
-        #         params=dataset.params
-        #     )
-        #     print('dataset is not none')
-        #     await self.update_dataset_for_nn(new_dataset)
-        
-        # Пробуем загрузить данные из базы
-        loaded_data = self.neural_model.data_set[0].load_data_from_params()
-        
-        if loaded_data is None:
-            # Если данных в базе нет, генерируем новые
-            data = self.neural_model.data_set[0].data_generator()
-            print("loaded_data is none")
-        else:
-            data = loaded_data
-            print("loaded_data is not none")
+    async def set_dataset(self):
+        if not self.neural_model.data_set:
+            # Создаем новый датасет
+            dataset = self.mySpecialDataSet(
+                params={'nu': 3},
+                num_dots={
+                    "train": 400,
+                    "physics": 50
+                }
+            )
+            print('Creating new dataset')
+            data = dataset.data_generator()
+            # Сохраняем датасет в базу
+            await dataset.insert()
             
+            # Обновляем ссылку на датасет в модели
+            self.neural_model.data_set = [dataset]
+            await mNeuralNet_mongo.m_save(self.neural_model)
+        else:
+            print('Loading existing dataset')
+            # Получаем данные из существующего датасета
+            existing_data = self.neural_model.data_set[0]
+            
+            # Создаем новый экземпляр mySpecialDataSet с теми же данными
+            dataset = self.mySpecialDataSet(**existing_data.model_dump())
+            
+            # Заменяем старый датасет новым в модели
+            self.neural_model.data_set = [dataset]
+            data = dataset.data_generator()
+        
         self.variables_f = data['main'].to(self.mydevice)
         self.u_data = data['secondary_true'].to(self.mydevice)
         self.variables = data['secondary'].to(self.mydevice)
