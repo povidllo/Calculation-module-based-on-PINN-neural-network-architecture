@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import Body
 import json
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
 from fastapi import FastAPI, BackgroundTasks, Request, Depends,WebSocket, Query, Response, APIRouter
 from fastapi.websockets import WebSocketState, WebSocketDisconnect
+from fastapi.staticfiles import StaticFiles
+
 
 from typing import List, Dict, Optional, Union
 from pydantic import BaseModel
@@ -49,6 +51,11 @@ async def websocket_endpoint(websocket: WebSocket):
         except Exception as err:
             print('cant recive text', err)
             return
+        
+
+async def get_host():
+    return {"cur_host": cur_host}
+
 
 async def create_neural_model_post(params : Optional[mHyperParams] = None):
     # Если путь к весам не указан, используем значение по умолчанию
@@ -68,10 +75,12 @@ async def create_neural_model_post(params : Optional[mHyperParams] = None):
 
     return {"resp" : "OK"}
 
+
 async def train_neural_net(params : Optional[mHyperParams] = None):
     # Теперь params не используется, так как берутся из базы
     res = await neural_net_manager.train_model()
     return {"result": res}
+
 
 async def load_model_handler(inp_nn: Optional[mNeuralNet] = None):
     res = await neural_net_manager.load_nn(inp_nn)
@@ -84,26 +93,27 @@ async def load_model_handler(inp_nn: Optional[mNeuralNet] = None):
 
     return res
 
-
-
 async def root():
-    base64_encoded_image = b''
-    neural_list = []
+    # base64_encoded_image = b''
+    # neural_list = []
 
-    loader = jinja2.FileSystemLoader("./templates")
-    env = jinja2.Environment(loader=loader,autoescape = False)
+    # loader = jinja2.FileSystemLoader("./templates")
+    # env = jinja2.Environment(loader=loader,autoescape = False)
 
-    img_view_templ = env.get_template("img_tmpl.html")
-    neural_table_templ = env.get_template("table_template.html")
+    # img_view_templ = env.get_template("img_tmpl.html")
+    # neural_table_templ = env.get_template("table_template.html")
 
-    neural_list = await mNeuralNet_mongo.get_all()
-    # print('entries', mnl)
+    # neural_list = await mNeuralNet_mongo.get_all()
+    # # print('entries', mnl)
 
 
-    img_view_templ = img_view_templ.render(myImage=base64_encoded_image)
-    neural_table_templ = neural_table_templ.render(items=neural_list)
+    # img_view_templ = img_view_templ.render(myImage=base64_encoded_image)
+    # neural_table_templ = neural_table_templ.render(items=neural_list)
 
-    return HTMLResponse(mTemplate.mtemplate('<script></script>', neural_table_templ, img_view_templ))
+    # return HTMLResponse(mTemplate.mtemplate('<script></script>', neural_table_templ, img_view_templ))
+
+    return FileResponse("templates/html/index.html")
+
 
 async def run_neural_net():
  
@@ -133,11 +143,13 @@ async def run_neural_net_pict():
     
     return {"OK"}
 
+
 async def update_train_parameters(params : Optional[mHyperParams] = None):
     if neural_net_manager.inner_model is not None:
         await neural_net_manager.inner_model.update_train_params(params)
         return {"result": "OK"}
     return {"result": "No model loaded"}
+
 
 async def clear_database():
     try:
@@ -151,6 +163,7 @@ async def clear_database():
     except Exception as e:
         print(f"Error clearing database: {str(e)}")
         return {"error": str(e)}
+
 
 def main(loop):
 
@@ -181,6 +194,8 @@ def main(loop):
     app.add_api_route("/", root, methods=["GET"])
     app.add_api_route("/update_train_params", update_train_parameters, methods=["POST"])
     app.add_api_route("/clear_database", clear_database, methods=["GET"])
+    app.add_api_route("/get_host", get_host, methods=["GET"])
+    app.mount("/static", StaticFiles(directory="templates"), name="static")
 
 
     app.include_router(router)
