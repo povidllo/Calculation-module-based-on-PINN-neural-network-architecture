@@ -5,11 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dc31a479-082c-49d5-934e-335b919999b4" name="Changes" comment="something">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/OSC.npy" beforeDir="false" afterPath="$PROJECT_DIR$/data/OSC.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mNeuralNetService.py" beforeDir="false" afterPath="$PROJECT_DIR$/mNeuralNetService.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/neural_page_bff.py" beforeDir="false" afterPath="$PROJECT_DIR$/neural_page_bff.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/html/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/html/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/javascript/index_script.js" beforeDir="false" afterPath="$PROJECT_DIR$/templates/javascript/index_script.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -53,29 +52,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;Python.documents.executor&quot;: &quot;Run&quot;,
-    &quot;Python.mNeuralNetService.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.mTemplate.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.mongo_schemas.executor&quot;: &quot;Run&quot;,
-    &quot;Python.neural_page_bff.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pinn_init_torch.executor&quot;: &quot;Run&quot;,
-    &quot;Python.routing.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;#56 on normal-ui&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/sofia/Desktop/NSU/Calculation-module-based-on-PINN-neural-network-architecture&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "Python.documents.executor": "Run",
+    "Python.mNeuralNetService.executor": "Run",
+    "Python.mTemplate.executor": "Debug",
+    "Python.mongo_schemas.executor": "Run",
+    "Python.neural_page_bff.executor": "Run",
+    "Python.pinn_init_torch.executor": "Run",
+    "Python.routing.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "#56 on normal-ui",
+    "last_opened_file_path": "/Users/sofia/Desktop/NSU/Calculation-module-based-on-PINN-neural-network-architecture",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -123,7 +122,15 @@
       <option name="project" value="LOCAL" />
       <updated>1741122705056</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="something">
+      <option name="closed" value="true" />
+      <created>1741169898649</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1741169898649</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

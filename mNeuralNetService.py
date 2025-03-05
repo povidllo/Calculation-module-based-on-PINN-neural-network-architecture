@@ -43,6 +43,12 @@ class neural_net_microservice():
     models_list = {'oscil': oscillator_nn}
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ws_manager = ConnectionManager()
+    neural_list = None
+
+    async def reboot_neural_list(self):
+        self.neural_list = {}
+        for i in await mNeuralNet_mongo.get_all():
+            self.neural_list.update({i.hyper_param.mymodel_desc: i.id})
 
     async def create_model(self, params : mHyperParams):
         print('params', params)
@@ -50,6 +56,8 @@ class neural_net_microservice():
             if params.mymodel_type in self.models_list:
                 self.inner_model = (self.models_list[params.mymodel_type])()
                 await self.inner_model.construct_model(params, self.device)
+        await self.reboot_neural_list()
+
 
     async def train_model(self):
         if self.inner_model is not None:

@@ -1,6 +1,6 @@
 async function call_bff_post(path, body_item){
     return await fetch(base_url+path, {
-        method: "POST",
+        method: 'POST',
         mode: 'cors',
         credentials: 'include',
         headers: {
@@ -37,6 +37,13 @@ const handle_load_button = async () => {
         document.getElementById("model_controls").style.display = "block"; // Показываем кнопки
     }
 };
+
+const handle_load_model_list = async() => {
+    value = model_list.value;
+    console.log(value);
+
+    call_bff_post('load_model', {"value": value});
+}
 
 const handle_train_button = async (nn_id) => {
     const a = await call_bff_get('train')
@@ -94,6 +101,7 @@ const handle_clear_database = async () => {
 var base_url = "http://localhost:8010/";
 
 var ws_ping = new WebSocket(`ws://localhost:8010/ws_ping`);
+call_bff_get("start_model_list_conf");
 
 ws_ping.onmessage = function(event)
 {
@@ -110,8 +118,24 @@ ws_ping.onmessage = function(event)
         }
     }
 
-    if (res.msg_type == 'add model to list') {
+    if (res.msg_type == 'add_model_to_list') {
         
+        const opt = document.createElement("option");
+        opt.value = res.data[0];
+        opt.text = res.data[0];
+
+        model_list.add(opt, null);
+    }
+
+    if (res.msg_type == 'start_model_list_conf') {
+
+        for (const item of res.data) {
+            const opt = document.createElement("option");
+            opt.value = item;
+            opt.text = item;
+
+            model_list.add(opt, null);
+        }
     }
 }
 

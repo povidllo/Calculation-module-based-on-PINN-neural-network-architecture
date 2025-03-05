@@ -59,62 +59,65 @@ async def get_host():
 
 async def create_neural_model_post(params : Optional[mHyperParams] = None):
     # Если путь к весам не указан, используем значение по умолчанию
+    neural_list = neural_net_manager.neural_list
+    if params.mymodel_desc in neural_list:
+        return {"resp" : "NOT OK"}
+
     if not params.save_weights_path:
         params.save_weights_path = "weights/osc_1d.pth"
         
     await neural_net_manager.create_model(params)
 
-    neural_list = await mNeuralNet_mongo.get_all()
+    neural_list = neural_net_manager.neural_list.keys()
+    neural_list = list(neural_list)
     print(neural_list)
-    select_neural = []
-    for i in neural_list:
-        select_neural += [{i.id: i.hyper_param.mymodel_desc}]
 
-    print(select_neural)
-
-    await neural_net_manager.ws_manager.send_personal_message_json(chatMessage(msg_type='add model to list', data=[select_neural]))
+    letter = chatMessage(user=glob_user, msg_type='add_model_to_list', data=[neural_list[-1]])
+    await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
     return {"resp" : "OK"}
 
 
-async def train_neural_net(params : Optional[mHyperParams] = None):
-    # Теперь params не используется, так как берутся из базы
+async def train_neural_net():
     res = await neural_net_manager.train_model()
     return {"result": res}
 
 
-async def load_model_handler(inp_nn: Optional[mNeuralNet] = None):
-    res = await neural_net_manager.load_nn(inp_nn)
+async def load_model_handler(model_name: Optional[dict] = None):
 
-    print(res['mymodel_desc'])
+    print(f"start load model {model_name}")
 
-    # Отправляем обновление на клиент через WebSocket
-    letter = chatMessage(user=glob_user, msg_type='jinja_tmpl', data=['model_desc', res['mymodel_desc']])
-    await neural_net_manager.ws_manager.send_personal_message_json(letter)
+    neural_list = neural_net_manager.neural_list
+    res = await neural_net_manager.load_nn(neural_list[model_name['value']])
+    my_nn =
+    print(res)
 
-    return res
+    # letter = chatMessage(user=glob_user, msg_type='load_model', data=res['mymodel_desc'])
+    # await neural_net_manager.ws_manager.send_personal_message_json(letter)
+
+    return {"resp": "OK"}
 
 
 async def root():
-    # base64_encoded_image = b''
-    # neural_list = []
 
-    # loader = jinja2.FileSystemLoader("./templates")
-    # env = jinja2.Environment(loader=loader,autoescape = False)
+    await neural_net_manager.reboot_neural_list()
 
-    # img_view_templ = env.get_template("img_tmpl.html")
-    # neural_table_templ = env.get_template("table_template.html")
-
-    # neural_list = await mNeuralNet_mongo.get_all()
-    # # print('entries', mnl)
-
-
-    # img_view_templ = img_view_templ.render(myImage=base64_encoded_image)
-    # neural_table_templ = neural_table_templ.render(items=neural_list)
-
-    # return HTMLResponse(mTemplate.mtemplate('<script></script>', neural_table_templ, img_view_templ))
+    # letter = chatMessage(user=glob_user, msg_type='add_model_to_list', data=[[i.get() for i in neural_list]])
+    # await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
     return FileResponse("templates/html/index.html")
+
+
+async def start_model_list_conf():
+
+    await neural_net_manager.reboot_neural_list()
+
+    neural_list = list(neural_net_manager.neural_list.keys())
+
+    letter = chatMessage(user=glob_user, msg_type='start_model_list_conf', data=neural_list)
+    await neural_net_manager.ws_manager.send_personal_message_json(letter)
+
+    return {"resp": "OK"}
 
 
 async def run_neural_net():
@@ -197,8 +200,9 @@ def main(loop):
     app.add_api_route("/update_train_params", update_train_parameters, methods=["POST"])
     app.add_api_route("/clear_database", clear_database, methods=["GET"])
     app.add_api_route("/get_host", get_host, methods=["GET"])
-    app.mount("/static", StaticFiles(directory="templates"), name="static")
+    app.add_api_route("/start_model_list_conf", start_model_list_conf, methods=["GET"])
 
+    app.mount("/static", StaticFiles(directory="templates"), name="static")
 
     app.include_router(router)
 
