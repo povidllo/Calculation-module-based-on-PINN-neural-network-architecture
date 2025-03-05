@@ -40,21 +40,19 @@ class ConnectionManager:
 
 class neural_net_microservice():
     inner_model : abs_neural_net = None
-    # inner_model -> {'id_nn' : abs_neural_net}
-    # models_list = {'oscil': my_oscil_net}
     models_list = {'oscil': oscillator_nn}
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ws_manager = ConnectionManager()
 
     async def create_model(self, params : mHyperParams):
         print('params', params)
-        if (params.mymodel_type is not None):
-            if (params.mymodel_type in self.models_list):
+        if params.mymodel_type is not None:
+            if params.mymodel_type in self.models_list:
                 self.inner_model = (self.models_list[params.mymodel_type])()
                 await self.inner_model.construct_model(params, self.device)
 
     async def train_model(self):
-        if (self.inner_model is not None):
+        if self.inner_model is not None:
             print(self.inner_model)
             await self.inner_model.train()
 

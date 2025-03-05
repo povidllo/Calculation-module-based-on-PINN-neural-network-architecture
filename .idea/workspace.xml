@@ -4,19 +4,46 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dc31a479-082c-49d5-934e-335b919999b4" name="Changes" comment="">
+    <list default="true" id="dc31a479-082c-49d5-934e-335b919999b4" name="Changes" comment="something">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mTemplate.py" beforeDir="false" afterPath="$PROJECT_DIR$/mTemplate.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/table_template.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/table_template.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/OSC.npy" beforeDir="false" afterPath="$PROJECT_DIR$/data/OSC.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mNeuralNetService.py" beforeDir="false" afterPath="$PROJECT_DIR$/mNeuralNetService.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/neural_page_bff.py" beforeDir="false" afterPath="$PROJECT_DIR$/neural_page_bff.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/javascript/index_script.js" beforeDir="false" afterPath="$PROJECT_DIR$/templates/javascript/index_script.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="another_work_branch" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;YogNare&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:povidllo/Calculation-module-based-on-PINN-neural-network-architecture.git&quot;,
+    &quot;accountId&quot;: &quot;039bad38-0d10-41f1-8b7d-efe943c252f0&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 7
@@ -28,6 +55,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
     &quot;Python.documents.executor&quot;: &quot;Run&quot;,
     &quot;Python.mNeuralNetService.executor&quot;: &quot;Debug&quot;,
     &quot;Python.mTemplate.executor&quot;: &quot;Debug&quot;,
@@ -37,7 +65,7 @@
     &quot;Python.routing.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;another__work__branch&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;#56 on normal-ui&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/sofia/Desktop/NSU/Calculation-module-based-on-PINN-neural-network-architecture&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -51,8 +79,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-76f8388c3a79-JavaScript-PY-243.24978.54" />
-        <option value="bundled-python-sdk-91e3b7efe1d4-466328ff949b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-243.24978.54" />
+        <option value="bundled-python-sdk-fc1d50d2d915-aa17d162503b-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-243.24978.54" />
       </set>
     </attachedChunks>
   </component>
@@ -72,10 +99,40 @@
       <workItem from="1740993763935" duration="965000" />
       <workItem from="1741019929679" duration="5376000" />
     </task>
+    <task id="LOCAL-00001" summary="load hyper params">
+      <option name="closed" value="true" />
+      <created>1741116766178</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1741116766178</updated>
+    </task>
+    <task id="LOCAL-00002" summary="something">
+      <option name="closed" value="true" />
+      <created>1741119206614</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1741119206614</updated>
+    </task>
+    <task id="LOCAL-00003" summary="something">
+      <option name="closed" value="true" />
+      <created>1741122705056</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1741122705056</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="load hyper params" />
+    <MESSAGE value="something" />
+    <option name="LAST_COMMIT_MESSAGE" value="something" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calculation_module_based_on_PINN_neural_network_architecture$neural_page_bff.coverage" NAME="neural_page_bff Coverage Results" MODIFIED="1741028353347" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

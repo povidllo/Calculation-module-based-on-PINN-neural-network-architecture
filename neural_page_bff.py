@@ -65,13 +65,14 @@ async def create_neural_model_post(params : Optional[mHyperParams] = None):
     await neural_net_manager.create_model(params)
 
     neural_list = await mNeuralNet_mongo.get_all()
-    loader = jinja2.FileSystemLoader("./templates")
-    env = jinja2.Environment(loader=loader, autoescape = False)
-    neural_table_templ = env.get_template("table_template.html")
-    neural_table_templ = neural_table_templ.render(items=neural_list)
+    print(neural_list)
+    select_neural = []
+    for i in neural_list:
+        select_neural += [{i.id: i.hyper_param.mymodel_desc}]
 
-    letter = chatMessage(user=glob_user, msg_type='jinja_tmpl', data=['neural_table', neural_table_templ])
-    await neural_net_manager.ws_manager.send_personal_message_json(letter)
+    print(select_neural)
+
+    await neural_net_manager.ws_manager.send_personal_message_json(chatMessage(msg_type='add model to list', data=[select_neural]))
 
     return {"resp" : "OK"}
 
@@ -92,6 +93,7 @@ async def load_model_handler(inp_nn: Optional[mNeuralNet] = None):
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
     return res
+
 
 async def root():
     # base64_encoded_image = b''
@@ -205,6 +207,7 @@ def main(loop):
     config = uvicorn.Config(app, host=cur_host, port=8010, loop=loop,access_log=False)
     server = uvicorn.Server(config)
     loop.run_until_complete(server.serve())
+
 
 if __name__ == '__main__':
     client = AsyncIOMotorClient("mongodb://"+database_ulr+":27017")

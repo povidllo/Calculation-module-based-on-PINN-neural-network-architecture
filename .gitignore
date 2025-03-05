@@ -1,4 +1,7 @@
 __pycache__
+.gitignore
 .venv
 *.pth
 !*.py
+data/OSC.npy
+*.xml

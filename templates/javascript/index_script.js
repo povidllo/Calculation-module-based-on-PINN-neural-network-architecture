@@ -93,23 +93,27 @@ const handle_clear_database = async () => {
 
 var base_url = "http://localhost:8010/";
 
-// var ws_ping = new WebSocket(`ws://""" + str(cur_host) + """:8010/ws_ping`);
+var ws_ping = new WebSocket(`ws://localhost:8010/ws_ping`);
 
-// ws_ping.onmessage = function(event)
-// {
-//     const res = JSON.parse(event.data);
-//     console.log("Пришло сообщение:", res); // Проверка
+ws_ping.onmessage = function(event)
+{
+    const res = JSON.parse(event.data);
+    console.log("Пришло сообщение:", res); // Проверка
 
-//     if (res.msg_type == 'jinja_tmpl') {
-//         if (res.data[0] === 'model_desc') {
-//             console.log("Обновляем описание модели:", res.data[1]); // Проверка
-//             document.getElementById('selected_model_desc').innerText = res.data[1];
-//         } else {
-//             console.log("Обновляем модели:", res.data[1]); // Проверка
-//             document.getElementById(res.data[0]).innerHTML = res.data[1];
-//         }
-//     }
-// }
+    if (res.msg_type == 'jinja_tmpl') {
+        if (res.data[0] === 'model_desc') {
+            console.log("Обновляем описание модели:", res.data[1]); // Проверка
+            document.getElementById('selected_model_desc').innerText = res.data[1];
+        } else {
+            console.log("Обновляем модели:", res.data[1]); // Проверка
+            document.getElementById(res.data[0]).innerHTML = res.data[1];
+        }
+    }
+
+    if (res.msg_type == 'add model to list') {
+        
+    }
+}
 
 // create_btn.addEventListener('click', handle_create_button);
 // document.getElementById('update_params_btn').addEventListener('click', handle_update_params_button);
