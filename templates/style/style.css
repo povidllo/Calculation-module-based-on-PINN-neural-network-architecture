@@ -1,0 +1,175 @@
+html {
+    padding: 60px;
+    color: #083384;
+    background-color: #FAFAFF;
+    font-family: "Montserrat", sans-serif;
+}
+
+input[type="text"],
+input[type="number"] {
+    width: 185px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    border: 1px solid #083384;
+    padding: 5px;
+    margin: 2px 0px 8px 0px;
+}
+
+input[type="button"] {
+    display: flex;
+    width: 185px;
+    height: 40px;
+    margin-bottom: 24px;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    font-size: 16px;
+    color: #FAFAFF;
+    background: #083384;
+    text-align: center;
+}
+
+label {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/*--------------------------------------------------------*/
+
+.input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 54px;
+}
+
+.neural_dsc {
+    color: #083384;
+    font-size: 36px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -0.72px;
+    margin-right: 25px;
+}
+
+input.neural_input {
+    font-size: 16px;
+    width: 306px;
+    padding: 7px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 5px;
+    border: 2.5px solid #083384;
+}
+
+/*-------------------------------------------------------*/
+
+h1 {
+    position: absolute;
+    top: -14%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px;
+    width: 250px;
+    background: #FAFAFF;
+    color: #083384;
+    text-align: center;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 100%;
+    letter-spacing: -0.48px;
+}
+
+/*Общий контейнер*/
+.paramerets-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 800px;
+}
+
+.params-container:nth-child(1){
+    padding-top: 63px;
+}
+
+.params-container:nth-child(3),
+.params-container:nth-child(4) {
+    margin-bottom: 28px;
+}
+
+/*Стиль для каждого раздела параметров*/
+.params-container {
+    position: relative;
+    width: 289px;
+    height: 240px;
+    margin: 0 91px 50px 0px;
+    padding: 48px;
+    flex-shrink: 0;
+    border-radius: 20px;
+    border: 2px solid #083384;
+    background: #FAFAFF;
+}
+
+.checkbox-group {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.checkbox {
+    margin-left: 10px;
+}
+
+.train_h1 {
+    position: absolute;
+    top: -10%;
+}
+
+.button-container {
+    padding-top: 38px;
+}
+
+input[type="button"].clear-button {
+    background: #B90003;
+}
+
+input[type="checkbox"] {
+    color: #083384;
+}
+
+
+input[type="button"] {
+    transition: 0.1s ease-in-out;
+}
+
+input[type="button"]:hover {
+    background: #0a41a6;
+}
+
+input[type="button"]:active {
+    background: #FAFAFF;
+    color: #0a41a6;
+    border: 1px solid #0a41a6;
+}
+
+input[type="button"].clear-button:hover {
+    background: #d90004;
+}
+
+input[type="button"].clear-button {
+    transition: 0.01s ease-in-out;
+}
+
+input[type="button"].clear-button:active {
+    background: #FAFAFF;
+    color: #d90004;
+    border: 1px solid #d90004;
+}
+
+.model_lst {
+    display: flex;
+    gap: 10px;
+}

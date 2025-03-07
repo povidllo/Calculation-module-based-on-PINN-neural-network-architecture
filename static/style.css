@@ -1,0 +1,48 @@
+/* html {
+  width: 100%;
+  background: #000;
+}
+
+.row {
+  display: flex;
+}
+
+.top-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.infobox {
+  position: fixed;
+  position-anchor: --myAnchor;
+}
+
+.input_box {
+  width: 150px;
+}
+
+.left {
+  width: 70%;
+  height: auto;
+  float: right;
+  overflow: scroll;
+}
+
+.right {
+  width: 50%;
+  height: auto;
+  overflow: scroll;
+}
+
+input {
+  width: 200px;
+  height: 30px;
+  font-size: 16px;
+}
+
+#create_btn {
+  width: 80px;
+  height: 40px;
+} */

@@ -89,7 +89,6 @@ async def load_model_handler(model_name: Optional[dict] = None):
 
     neural_list = neural_net_manager.neural_list
     res = await neural_net_manager.load_nn(neural_list[model_name['value']])
-    my_nn =
     print(res)
 
     # letter = chatMessage(user=glob_user, msg_type='load_model', data=res['mymodel_desc'])
