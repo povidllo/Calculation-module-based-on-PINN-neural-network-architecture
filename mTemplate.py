@@ -175,10 +175,11 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 
             const handle_update_params_button = async () => {
                 const params = {
-                    'epochs': document.getElementById('epochs').value || 100,
-                    'optimizer': document.getElementById('optimizer').value || "Adam",
-                    'optimizer_lr': parseFloat(document.getElementById('optimizer_lr').value) || 0.001,
-                    'mymodel_type': "oscil"
+                    epochs: parseInt(document.getElementById('epochs').value) || 100,
+                    method: document.getElementById('optimizer').value || "Adam",
+                    params: {
+                        lr: parseFloat(document.getElementById('optimizer_lr').value) || 0.001
+                    }
                 };
                 
                 const response = await call_bff('POST', 'update_train_params', params);

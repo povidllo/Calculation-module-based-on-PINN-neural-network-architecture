@@ -133,7 +133,7 @@ async def run_neural_net_pict():
     
     return {"OK"}
 
-async def update_train_parameters(params : Optional[mHyperParams] = None):
+async def update_train_parameters(params: dict):
     if neural_net_manager.inner_model is not None:
         await neural_net_manager.inner_model.update_train_params(params)
         return {"result": "OK"}

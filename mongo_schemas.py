@@ -50,24 +50,16 @@ class mHyperParams(BaseModel):
     mymodel_type : Optional[str] = None
     mymodel_desc: Optional[str] = None
 
-    # hidden_size : Optional[int] = 20
-    # power_time_vector : Optional[int] = 100
-    # hidden_count : Optional[int] = 32
-    
     input_dim : Optional[int] = 1
     output_dim : Optional[int] = 1
     hidden_sizes : Optional[List[int]] = [32, 32, 32]
 
-    # Параметры обучения
     epochs : Optional[int] = 100
-    optimizer : Optional[str] = "Adam"
-    optimizer_lr : Optional[float] = 0.001
-
+    
     Fourier : Optional[bool] = False
     FinputDim : Optional[bool] = None
     FourierScale : Optional[bool] = None
     
-    # num_dots : Optional[List[int]] = [400, 50]
     path_true_data : Optional[str] = "/data/OSC.npy"
     save_weights_path : Optional[str] = "/osc_1d.pth"
 
