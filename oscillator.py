@@ -235,11 +235,9 @@ class oscillator_nn(abs_neural_net):
     
     def set_optimizer(self, opti: mOptimizer = None):
         if opti is None:
-            # Если оптимизатор уже существует в модели, используем его
             if self.neural_model.optimizer:
                 opti = self.neural_model.optimizer[0]
             else:
-                # Создаем новый оптимизатор
                 opti = mOptimizer_mongo(method='Adam', params={'lr': 0.001})
                 print('Создан новый оптимизатор:', opti)
         
@@ -256,10 +254,21 @@ class oscillator_nn(abs_neural_net):
                 self.mymodel.parameters(),
                 **opti.params
             )
+        elif opti.method == 'RMSprop':
+            print('Используем RMSprop')
+            self.myoptimizer = torch.optim.RMSprop(
+                self.mymodel.parameters(),
+                **opti.params
+            )
+        elif opti.method == 'Adagrad':
+            print('Используем Adagrad')
+            self.myoptimizer = torch.optim.Adagrad(
+                self.mymodel.parameters(),
+                **opti.params
+            )
         else:
             raise ValueError(f"Неизвестный метод оптимизации: {opti.method}")
         
-        # Сохраняем оптимизатор в модели, если его еще нет
         if not self.neural_model.optimizer:
             self.neural_model.optimizer = [opti]
 
