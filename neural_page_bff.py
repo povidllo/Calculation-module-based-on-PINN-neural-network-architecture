@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, File
 from fastapi import FastAPI, BackgroundTasks, Request, Depends,WebSocket, Query, Response, APIRouter
 from fastapi.websockets import WebSocketState, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 
 from typing import List, Dict, Optional, Union
@@ -32,6 +33,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import asyncio
 
 router = APIRouter()
+templates = Jinja2Templates(directory="templates")
+
 
 
 @router.websocket("/ws_ping")
@@ -89,7 +92,6 @@ async def load_model_handler(model_name: Optional[dict] = None):
 
     neural_list = neural_net_manager.neural_list
     res = await neural_net_manager.load_nn(neural_list[model_name['value']])
-    my_nn =
     print(res)
 
     # letter = chatMessage(user=glob_user, msg_type='load_model', data=res['mymodel_desc'])
@@ -98,14 +100,13 @@ async def load_model_handler(model_name: Optional[dict] = None):
     return {"resp": "OK"}
 
 
-async def root():
-
+async def root(request: Request):
     await neural_net_manager.reboot_neural_list()
 
-    # letter = chatMessage(user=glob_user, msg_type='add_model_to_list', data=[[i.get() for i in neural_list]])
-    # await neural_net_manager.ws_manager.send_personal_message_json(letter)
-
-    return FileResponse("templates/html/index.html")
+    return templates.TemplateResponse(
+        name="html/index.html",
+        context={"request": request}
+    )
 
 
 async def start_model_list_conf():
