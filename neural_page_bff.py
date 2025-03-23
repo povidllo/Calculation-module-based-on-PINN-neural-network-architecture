@@ -109,7 +109,7 @@ async def run_neural_net_pict():
     #
     image_html = templates.get_template("/html/chat_template.html").render({"image": base64_encoded_image})
     #
-    letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['chat-container', image_html])
+    letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['chat_container_id', image_html])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
     return {"OK"}

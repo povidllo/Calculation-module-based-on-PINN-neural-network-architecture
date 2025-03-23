@@ -6,21 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="dc31a479-082c-49d5-934e-335b919999b4" name="Changes" comment="something">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modules/pinn_init_torch.py" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/pinn_init_torch.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mHabr_neural_exmp.py" beforeDir="false" afterPath="$PROJECT_DIR$/mHabr_neural_exmp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mNeuralNetService.py" beforeDir="false" afterPath="$PROJECT_DIR$/mNeuralNetService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mNeural_abs.py" beforeDir="false" afterPath="$PROJECT_DIR$/mNeural_abs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mTemplate.py" beforeDir="false" afterPath="$PROJECT_DIR$/mTemplate.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mongo_schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/mongo_schemas.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/neural_page_bff.py" beforeDir="false" afterPath="$PROJECT_DIR$/neural_page_bff.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/old/allen_cahn equation/moduled/modulus.py" beforeDir="false" afterPath="$PROJECT_DIR$/old/allen_cahn equation/moduled/modulus.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/old/oscillator_equation/modulus.py" beforeDir="false" afterPath="$PROJECT_DIR$/old/oscillator_equation/modulus.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oscillator.py" beforeDir="false" afterPath="$PROJECT_DIR$/oscillator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pinn_init_torch.py" beforeDir="false" afterPath="$PROJECT_DIR$/pinn_init_torch.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/html/chat_template.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/html/chat_template.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/html/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/html/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/html/table_template.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/html/table_template.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/javascript/index_script.js" beforeDir="false" afterPath="$PROJECT_DIR$/templates/javascript/index_script.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/style/index_style.css" beforeDir="false" afterPath="$PROJECT_DIR$/templates/style/index_style.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -142,7 +132,23 @@
       <option name="project" value="LOCAL" />
       <updated>1741169898649</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="something">
+      <option name="closed" value="true" />
+      <created>1742715244334</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1742715244334</updated>
+    </task>
+    <task id="LOCAL-00006" summary="something">
+      <option name="closed" value="true" />
+      <created>1742717830521</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1742717830521</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

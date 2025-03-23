@@ -347,6 +347,6 @@ class oscillator_nn(AbsNeuralNet):
 
 
         plt.clf()
+        # plt.show()
 
         return my_base64_jpgData
-        # plt.show()

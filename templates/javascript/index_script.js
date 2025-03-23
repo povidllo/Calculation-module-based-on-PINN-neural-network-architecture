@@ -63,7 +63,12 @@ const handle_create_button = async () => {
         'FourierScale': parseFloat(document.getElementById('fourier_scale').value) || null,
 
         // Путь к данным
-        'path_true_data': "/data/OSC.npy"
+        'path_true_data': "/data/OSC.npy",
+
+        'epochs': document.getElementById('epochs').value || 100,
+        'optimizer': document.getElementById('optimizer').value || "Adam",
+        'optimizer_lr': parseFloat(document.getElementById('optimizer_lr').value) || 0.001,
+        'my_model_type': "oscil"
     };
 
     const a = await call_bff_post('create_model', params);
@@ -109,6 +114,11 @@ ws_ping.onmessage = function(event)
     if (res.msg_type == 'jinja_tmpl') {
         if (res.data[0] === 'model_desc') {
             console.log("Обновляем модели:", res.data[1]); // Проверка
+            document.getElementById(res.data[0]).innerHTML = res.data[1];
+        }
+
+        if (res.data[0] === 'chat_container_id') {
+            console.log("Выводим картинку:", res.data[1]); // Проверка
             document.getElementById(res.data[0]).innerHTML = res.data[1];
         }
     }
