@@ -3,3 +3,4 @@ __pycache__
 *.pth
 !*.py
 /Modules/*/__pycache__
+*.pyc
