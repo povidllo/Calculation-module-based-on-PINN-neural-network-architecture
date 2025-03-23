@@ -3,7 +3,6 @@
 *.pth
 !*.py
 data/OSC.npy
-*.xml
 .idea
 *.pyc
 .DS_Store

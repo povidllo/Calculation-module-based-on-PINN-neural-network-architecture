@@ -50,19 +50,12 @@ class mHyperParams(BaseModel):
     my_model_type : Optional[str] = None
     my_model_desc: Optional[str] = None
 
-    # hidden_size : Optional[int] = 20
-    # power_time_vector : Optional[int] = 100
-    # hidden_count : Optional[int] = 32
-    
     input_dim : Optional[int] = 1
     output_dim : Optional[int] = 1
     hidden_sizes : Optional[List[int]] = [32, 32, 32]
 
-    # Параметры обучения
     epochs : Optional[int] = 100
-    optimizer : Optional[str] = "Adam"
-    optimizer_lr : Optional[float] = 0.001
-
+    
     Fourier : Optional[bool] = False
     FInputDim : Optional[bool] = None
     FourierScale : Optional[bool] = None

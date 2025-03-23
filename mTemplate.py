@@ -173,15 +173,86 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 console.log('pass: ', a);
             };
 
+            const optimizerParams = {
+                'Adam': {
+                    'lr': { default: 0.001, type: 'number', label: 'Learning Rate' },
+                    'betas': { default: '0.9,0.999', type: 'text', label: 'Betas (через запятую)' },
+                    'eps': { default: 1e-8, type: 'number', label: 'Epsilon' },
+                    'weight_decay': { default: 0, type: 'number', label: 'Weight Decay' }
+                },
+                'SGD': {
+                    'lr': { default: 0.01, type: 'number', label: 'Learning Rate' },
+                    'momentum': { default: 0.9, type: 'number', label: 'Momentum' },
+                    'weight_decay': { default: 0, type: 'number', label: 'Weight Decay' },
+                    'nesterov': { default: false, type: 'checkbox', label: 'Nesterov' }
+                },
+                'RMSprop': {
+                    'lr': { default: 0.01, type: 'number', label: 'Learning Rate' },
+                    'alpha': { default: 0.99, type: 'number', label: 'Alpha' },
+                    'eps': { default: 1e-8, type: 'number', label: 'Epsilon' },
+                    'momentum': { default: 0, type: 'number', label: 'Momentum' }
+                },
+                'Adagrad': {
+                    'lr': { default: 0.01, type: 'number', label: 'Learning Rate' },
+                    'lr_decay': { default: 0, type: 'number', label: 'Learning Rate Decay' },
+                    'weight_decay': { default: 0, type: 'number', label: 'Weight Decay' }
+                }
+            };
+
+            function updateOptimizerParams() {
+                const optimizer = document.getElementById('optimizer').value;
+                const paramsContainer = document.getElementById('optimizer-params');
+                paramsContainer.innerHTML = '';
+
+                const params = optimizerParams[optimizer];
+                for (const [key, value] of Object.entries(params)) {
+                    const paramDiv = document.createElement('div');
+                    paramDiv.className = 'param-group';
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `optimizer-${key}`;
+                    label.textContent = value.label;
+                    
+                    const input = document.createElement('input');
+                    input.id = `optimizer-${key}`;
+                    input.type = value.type;
+                    input.value = value.default;
+                    input.placeholder = value.label;
+                    
+                    if (value.type === 'checkbox') {
+                        input.checked = value.default;
+                    }
+                    
+                    paramDiv.appendChild(label);
+                    paramDiv.appendChild(input);
+                    paramsContainer.appendChild(paramDiv);
+                }
+            }
+
             const handle_update_params_button = async () => {
-                const params = {
-                    'epochs': document.getElementById('epochs').value || 100,
-                    'optimizer': document.getElementById('optimizer').value || "Adam",
-                    'optimizer_lr': parseFloat(document.getElementById('optimizer_lr').value) || 0.001,
-                    'my_model_type': "oscil"
+
+                const optimizer = document.getElementById('optimizer').value;
+                const params = {};
+                
+                // Собираем все параметры для выбранного оптимизатора
+                for (const [key, _] of Object.entries(optimizerParams[optimizer])) {
+                    const input = document.getElementById(`optimizer-${key}`);
+                    if (input.type === 'checkbox') {
+                        params[key] = input.checked;
+                    } else if (key === 'betas') {
+                        params[key] = input.value.split(',').map(x => parseFloat(x.trim()));
+                    } else {
+                        params[key] = parseFloat(input.value);
+                    }
+                }
+
+                const updateData = {
+                    epochs: parseInt(document.getElementById('epochs').value) || 100,
+                    method: optimizer,
+                    params: params
                 };
                 
-                const response = await call_bff('POST', 'update_train_params', params);
+                const response = await call_bff('POST', 'update_train_params', updateData);
                 console.log('update params response:', response);
             };
 
@@ -232,13 +303,19 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 <div class="train-parameters">
                     <h3>Train Parameters</h3>
                     <label for="epochs">Количество эпох:</label>
-                    <input type="text" id="epochs" placeholder="Количество эпох"/>
+                    <input type="number" id="epochs" placeholder="100"/>
                     
                     <label for="optimizer">Оптимизатор:</label>
-                    <input type="text" id="optimizer" placeholder="Оптимизатор"/>
+                    <select id="optimizer" onchange="updateOptimizerParams()">
+                        <option value="Adam">Adam</option>
+                        <option value="SGD">SGD</option>
+                        <option value="RMSprop">RMSprop</option>
+                        <option value="Adagrad">Adagrad</option>
+                    </select>
                     
-                    <label for="optimizer_lr">Оптимизатор learning rate:</label>
-                    <input type="text" id="optimizer_lr" placeholder="Оптимизатор learning rate"/>
+                    <div id="optimizer-params">
+                        <!-- Параметры оптимизатора будут добавляться динамически -->
+                    </div>
                     
                     <input style="width: 150px; height: 30px; margin-top: 10px;" 
                            type="button" value="Update Parameters" 
@@ -280,6 +357,9 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
         create_btn.addEventListener('click', handle_create_button);
         document.getElementById('update_params_btn').addEventListener('click', handle_update_params_button);
         document.getElementById('clear_db_btn').addEventListener('click', handle_clear_database);
+
+        // Вызываем функцию при загрузке страницы
+        document.addEventListener('DOMContentLoaded', updateOptimizerParams);
     </script>
 </html>
 """

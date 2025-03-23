@@ -233,11 +233,46 @@ class oscillator_nn(AbsNeuralNet):
         self.variables = data['secondary'].to(self.mydevice)
 
     
-    def set_optimizer(self, opti : mOptimizer = None):
+    def set_optimizer(self, opti: mOptimizer = None):
         if opti is None:
-            self.neural_model.optimizer = [mOptimizerMongo(method='Adam', params={'lr':0.1})]
-            self.myoptimizer = create_optim(self.mymodel, get_config())
-            
+         
+            if self.neural_model.optimizer:
+                opti = self.neural_model.optimizer[0]
+            else:
+                opti = mOptimizer_mongo(method='Adam', params={'lr': 0.001})
+                print('Создан новый оптимизатор:', opti)
+        
+        # Создаем PyTorch оптимизатор в зависимости от метода
+        if opti.method == 'Adam':
+            print('Используем Adam')
+            self.myoptimizer = torch.optim.Adam(
+                self.mymodel.parameters(), 
+                **opti.params
+            )
+        elif opti.method == 'SGD':
+            print('Используем SGD')
+            self.myoptimizer = torch.optim.SGD(
+                self.mymodel.parameters(),
+                **opti.params
+            )
+        elif opti.method == 'RMSprop':
+            print('Используем RMSprop')
+            self.myoptimizer = torch.optim.RMSprop(
+                self.mymodel.parameters(),
+                **opti.params
+            )
+        elif opti.method == 'Adagrad':
+            print('Используем Adagrad')
+            self.myoptimizer = torch.optim.Adagrad(
+                self.mymodel.parameters(),
+                **opti.params
+            )
+        else:
+            raise ValueError(f"Неизвестный метод оптимизации: {opti.method}")
+        
+        if not self.neural_model.optimizer:
+            self.neural_model.optimizer = [opti]
+
     async def construct_model(self, params : mHyperParams, in_device ):
         await self.create_model(params)
 
@@ -290,7 +325,7 @@ class oscillator_nn(AbsNeuralNet):
                 print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
                 
         await self.save_model(sys.path[0] + self.config.save_weights_path)
-
+        print(f"Оптимизатор: {self.myoptimizer.__class__.__name__}")
 
 
 
