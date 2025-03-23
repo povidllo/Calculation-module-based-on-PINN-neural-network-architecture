@@ -67,7 +67,7 @@ def pinn(cfg):
     model = PINN(
         hidden_sizes=cfg.hidden_sizes,
         fourier=cfg.Fourier,
-        fourier_dim=cfg.FinputDim if cfg.Fourier else None,
+        fourier_dim=cfg.FInputDim if cfg.Fourier else None,
         fourier_scale=cfg.FourierScale if cfg.Fourier else 1.0
     )
     model.apply(weights_init)

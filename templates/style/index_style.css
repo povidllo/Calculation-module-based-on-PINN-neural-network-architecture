@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #181818;
+    background-color: #0f1011;
     color: #0050aa;
     margin: 0;
     padding: 20px;
@@ -8,13 +8,29 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    font-size: 20px;
+    font-size: 15px;
 }
 
 .main-container {
     display: flex;
     gap: 40px;
-    max-width: 1200px;
+    max-width: 800px;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    width: 800px;
+    height: 550px;
+    background-color: #1c1e1f;
+    border-radius: 10px;
+    border: 2px solid #0161cc;
+}
+
+.chat-message {
+    height: 80%
 }
 
 .left-container, .right-container {
@@ -30,9 +46,9 @@ body {
 
 .input-group, .hyperparams-container, .fourier-params, .train-parameters {
     padding: 15px;
-    background-color: #2e2e2e;
+    background-color: #1c1e1f;
     border-radius: 10px;
-    border: 2px solid #0050aa;
+    border: 2px solid #0161cc;
 }
 
 .param-group {
@@ -40,18 +56,35 @@ body {
     padding: 10px;
 }
 
+.user-message input {
+    background-color: #2d2f31;
+    color: #d9d4cf;
+    border: 1px solid #0161cc;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 15px;
+    width: 65%;
+    display: block;
+    margin: 1%;
+}
+
+.user-message {
+    display: flex;
+    align-items: center;
+}
+
 .input-group label, .param-group label, h3 {
-    color: #0050aa;
+    color: #66b9ff;
     text-align: center;
 }
 
 .input-group input, .param-group input {
-    background-color: #3a3a3a;
-    color: #e0e0e0;
-    border: 1px solid #0050aa;
+    background-color: #2d2f31;
+    color: #d9d4cf;
+    border: 1px solid #0161cc;
     border-radius: 8px;
     padding: 12px;
-    font-size: 20px;
+    font-size: 15px;
     width: calc(100% - 24px);
     display: block;
     margin: 0 auto;
@@ -74,26 +107,28 @@ body {
 .primary-button, .danger-button {
     width: 180px;
     height: 50px;
-    font-size: 20px;
+    font-size: 15px;
     border-radius: 12px;
-    border: 0.5px solid white;
+    border: 0.5px;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .primary-button {
-    background-color: #0050aa;
+    background-color: #00336d;
     color: white;
 }
+
 .primary-button:hover {
-    background-color: #003f88;
+    background-color: #00326d;
     transform: scale(1.05);
 }
 
 .danger-button {
-    background-color: #ff4444;
+    background-color: #a30101;
+    color: white;
 }
 .danger-button:hover {
-    background-color: #cc0000;
+    background-color: #a30101;
     transform: scale(1.05);
 }

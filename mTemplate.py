@@ -132,8 +132,8 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
             
                 const response = await call_bff("POST", "load_model", { "stored_item_id": selectedModelId });
             
-                if (response.mymodel_desc) {
-                    document.getElementById("selected_model_desc").innerText = response.mymodel_desc;
+                if (response.my_model_desc) {
+                    document.getElementById("selected_model_desc").innerText = response.my_model_desc;
                     document.getElementById("model_controls").style.display = "block"; // Показываем кнопки
                 }
             };
@@ -150,8 +150,8 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 
                 // Получаем значения гиперпараметров
                 const params = {
-                    'mymodel_type': "oscil",
-                    'mymodel_desc': desc,
+                    'my_model_type': "oscil",
+                    'my_model_desc': desc,
                     
                     // Базовые параметры сети
                     'input_dim': parseInt(document.getElementById('input_dim').value) || 1,
@@ -162,7 +162,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     
                     // Параметры Фурье
                     'Fourier': document.getElementById('fourier').checked,
-                    'FinputDim': parseInt(document.getElementById('finput_dim').value) || null,
+                    'FInputDim': parseInt(document.getElementById('finput_dim').value) || null,
                     'FourierScale': parseFloat(document.getElementById('fourier_scale').value) || null,
                     
                     // Путь к данным
@@ -178,7 +178,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     'epochs': document.getElementById('epochs').value || 100,
                     'optimizer': document.getElementById('optimizer').value || "Adam",
                     'optimizer_lr': parseFloat(document.getElementById('optimizer_lr').value) || 0.001,
-                    'mymodel_type': "oscil"
+                    'my_model_type': "oscil"
                 };
                 
                 const response = await call_bff('POST', 'update_train_params', params);

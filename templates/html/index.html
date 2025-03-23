@@ -71,12 +71,16 @@
                     <input type="button" value="Clear Database" class="danger-button" id="clear_db_btn" onclick="handle_clear_database()"/>
                 </div>
                 
-                <div id="model_desc">
-                    <label for="model_list">Выбранная модель: </label>
-                    <select id="model_list" onchange="handle_load_model_list()"></select>
-                </div>
+                <!-- <div id="model_desc"> -->
+                    <!-- <label for="model_list">Выбранная модель: </label>
+                    <select id="model_list" onchange="handle_load_model_list()"></select> -->
+
+                    <div id="model_desc">{{ table_html|safe }}</div>
+                <!-- </div> -->
             </div>
         </div>
+
+        <div class="chat-container">{{ chat_html |safe }}</div>
 
         <script src="/static/javascript/index_script.js"></script>
     </body>

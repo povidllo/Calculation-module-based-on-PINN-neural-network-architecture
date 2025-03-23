@@ -25,17 +25,7 @@ const handle_load_button = async () => {
     const selectElement = document.getElementById("model_select");
     const selectedModelId = selectElement.value;
 
-    if (!selectedModelId) {
-        alert("Выберите модель!");
-        return;
-    }
-
     const response = await call_bff_post("load_model", { "stored_item_id": selectedModelId });
-
-    if (response.mymodel_desc) {
-        document.getElementById("selected_model_desc").innerText = response.mymodel_desc;
-        document.getElementById("model_controls").style.display = "block"; // Показываем кнопки
-    }
 };
 
 const handle_load_model_list = async() => {
@@ -57,8 +47,8 @@ const handle_create_button = async () => {
 
     // Получаем значения гиперпараметров
     const params = {
-        'mymodel_type': "oscil",
-        'mymodel_desc': desc,
+        'my_model_type': "oscil",
+        'my_model_desc': desc,
 
         // Базовые параметры сети
         'input_dim': parseInt(document.getElementById('input_dim').value) || 1,
@@ -85,7 +75,7 @@ const handle_update_params_button = async () => {
         'epochs': document.getElementById('epochs').value || 100,
         'optimizer': document.getElementById('optimizer').value || "Adam",
         'optimizer_lr': parseFloat(document.getElementById('optimizer_lr').value) || 0.001,
-        'mymodel_type': "oscil"
+        'my_model_type': "oscil"
     };
 
     const response = await call_bff_post('update_train_params', params);
@@ -98,10 +88,18 @@ const handle_clear_database = async () => {
     }
 };
 
+const handle_send_command = async () => {
+    const command = document.getElementById('command_input').value;
+
+    if (command === "train")
+        await call_bff_get('train')
+    else if (command === "run")
+        await call_bff_post('run', {})
+}
+
 var base_url = "http://localhost:8010/";
 
 var ws_ping = new WebSocket(`ws://localhost:8010/ws_ping`);
-call_bff_get("start_model_list_conf");
 
 ws_ping.onmessage = function(event)
 {
@@ -110,9 +108,6 @@ ws_ping.onmessage = function(event)
 
     if (res.msg_type == 'jinja_tmpl') {
         if (res.data[0] === 'model_desc') {
-            console.log("Обновляем описание модели:", res.data[1]); // Проверка
-            document.getElementById('selected_model_desc').innerText = res.data[1];
-        } else {
             console.log("Обновляем модели:", res.data[1]); // Проверка
             document.getElementById(res.data[0]).innerHTML = res.data[1];
         }

@@ -41,7 +41,7 @@ np.random.seed(44)
 torch.cuda.manual_seed(44)
 # print(get_config().epochs)
 
-class oscillator_nn(abs_neural_net):
+class oscillator_nn(AbsNeuralNet):
     mymodel = None
     mydevice = None
     myoptimizer = None
@@ -51,7 +51,7 @@ class oscillator_nn(abs_neural_net):
     best_loss = float('inf')
     best_epoch = 0    
     
-    class mySpecialDataSet(mDataSet_mongo):
+    class mySpecialDataSet(mDataSetMongo):
         def oscillator(self, x, d=2, w0=20):
             assert d < w0
             w = np.sqrt(w0**2-d**2)
@@ -172,7 +172,7 @@ class oscillator_nn(abs_neural_net):
                 
         
     async def load_model(self, in_model : mNeuralNet, in_device):
-        load_nn = await mNeuralNet_mongo.get(in_model.stored_item_id, fetch_links=True)
+        load_nn = await mNeuralNetMongo.get(in_model.stored_item_id, fetch_links=True)
         
         # Всегда создаем новую модель
         self.neural_model = load_nn
@@ -198,7 +198,7 @@ class oscillator_nn(abs_neural_net):
 
 
 
-    async def set_dataset(self):
+    async def set_dataset(self, dataset: mDataSet = None):
         if not self.neural_model.data_set:
             # Создаем новый датасет
             dataset = self.mySpecialDataSet(
@@ -215,7 +215,7 @@ class oscillator_nn(abs_neural_net):
             
             # Обновляем ссылку на датасет в модели
             self.neural_model.data_set = [dataset]
-            await mNeuralNet_mongo.m_save(self.neural_model)
+            await mNeuralNetMongo.m_save(self.neural_model)
         else:
             print('Loading existing dataset')
             # Получаем данные из существующего датасета
@@ -235,11 +235,11 @@ class oscillator_nn(abs_neural_net):
     
     def set_optimizer(self, opti : mOptimizer = None):
         if opti is None:
-            self.neural_model.optimizer = [mOptimizer_mongo(method='Adam', params={'lr':0.1})]
+            self.neural_model.optimizer = [mOptimizerMongo(method='Adam', params={'lr':0.1})]
             self.myoptimizer = create_optim(self.mymodel, get_config())
             
     async def construct_model(self, params : mHyperParams, in_device ):
-        await self.createModel(params)
+        await self.create_model(params)
 
         self.mydevice = in_device
         self.mymodel = pinn(params).to(self.mydevice)
@@ -342,7 +342,7 @@ class oscillator_nn(abs_neural_net):
         my_stringIObytes.seek(0)
         my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
 
-        new_rec = mongo_Record(record={'raw' : my_base64_jpgData})
+        new_rec = MongoRecord(record={'raw' : my_base64_jpgData})
         await self.append_rec_to_nn(new_rec)
 
 

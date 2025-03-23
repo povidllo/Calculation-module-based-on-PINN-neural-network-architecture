@@ -2,15 +2,11 @@ from contextlib import asynccontextmanager
 from fastapi import Body
 import json
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
-from fastapi import FastAPI, BackgroundTasks, Request, Depends,WebSocket, Query, Response, APIRouter
+from fastapi import FastAPI, BackgroundTasks, Request, Depends, WebSocket, Query, Response, APIRouter
 from fastapi.websockets import WebSocketState, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-
-from typing import List, Dict, Optional, Union
-from pydantic import BaseModel
-import fastapi_jsonrpc as jsonrpc
 
 import jinja2
 import io
@@ -18,15 +14,7 @@ import base64
 
 import mTemplate
 from mongo_schemas import *
-from mNeuralNetService import neural_net_microservice
-
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-
-
+from mNeuralNetService import NeuralNetMicroservice
 
 import motor.motor_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -36,49 +24,43 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
-
 @router.websocket("/ws_ping")
 async def websocket_endpoint(websocket: WebSocket):
     try:
         await neural_net_manager.ws_manager.connect(websocket, glob_user)
     except Exception as err:
-        print('ws_ping exception', err)
+        print(f"ws_ping exception {err}")
 
     while True:
         try:
             data = await websocket.receive_text()
             await asyncio.sleep(2e-3)
         except WebSocketDisconnect:
-            print('WebSocketDisconnect ' , type(websocket))
+            print("WebSocketDisconnect {type(websocket)}")
             neural_net_manager.ws_manager.disconnect(websocket, glob_user)
         except Exception as err:
-            print('cant recive text', err)
+            print(f"cant receive text {err}")
             return
-        
+
 
 async def get_host():
     return {"cur_host": cur_host}
 
 
-async def create_neural_model_post(params : Optional[mHyperParams] = None):
-    # Если путь к весам не указан, используем значение по умолчанию
-    neural_list = neural_net_manager.neural_list
-    if params.mymodel_desc in neural_list:
-        return {"resp" : "NOT OK"}
-
+async def create_neural_model_post(params: Optional[mHyperParams] = None):
     if not params.save_weights_path:
         params.save_weights_path = "weights/osc_1d.pth"
-        
+
     await neural_net_manager.create_model(params)
 
-    neural_list = neural_net_manager.neural_list.keys()
-    neural_list = list(neural_list)
-    print(neural_list)
+    neural_list = await mNeuralNetMongo.get_all()
 
-    letter = chatMessage(user=glob_user, msg_type='add_model_to_list', data=[neural_list[-1]])
+    table_html = templates.get_template("html/table_template.html").render({"items": neural_list})
+
+    letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['model_desc', table_html])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
-    return {"resp" : "OK"}
+    return {"resp": "OK"}
 
 
 async def train_neural_net():
@@ -86,44 +68,27 @@ async def train_neural_net():
     return {"result": res}
 
 
-async def load_model_handler(model_name: Optional[dict] = None):
+async def load_model_handler(model_id: Optional[mNeuralNet] = None):
+    res = await neural_net_manager.load_nn(model_id)
 
-    print(f"start load model {model_name}")
+    print(res['my_model_desc'])
 
-    neural_list = neural_net_manager.neural_list
-    res = await neural_net_manager.load_nn(neural_list[model_name['value']])
-    print(res)
-
-    # letter = chatMessage(user=glob_user, msg_type='load_model', data=res['mymodel_desc'])
-    # await neural_net_manager.ws_manager.send_personal_message_json(letter)
-
-    return {"resp": "OK"}
+    return res
 
 
 async def root(request: Request):
-    await neural_net_manager.reboot_neural_list()
+    neural_list = await mNeuralNetMongo.get_all()
+
+    table_html = templates.get_template("html/table_template.html").render({"items": neural_list})
+    chat_html = templates.get_template("html/chat_template.html").render({})
 
     return templates.TemplateResponse(
         name="html/index.html",
-        context={"request": request}
+        context={"request": request, "table_html": table_html, "chat_html": chat_html}
     )
 
 
-async def start_model_list_conf():
-
-    await neural_net_manager.reboot_neural_list()
-
-    neural_list = list(neural_net_manager.neural_list.keys())
-
-    letter = chatMessage(user=glob_user, msg_type='start_model_list_conf', data=neural_list)
-    await neural_net_manager.ws_manager.send_personal_message_json(letter)
-
-    return {"resp": "OK"}
-
-
 async def run_neural_net():
- 
-
     base64_encoded_image = await neural_net_manager.run_model()
 
     loader = jinja2.FileSystemLoader("./templates")
@@ -138,22 +103,23 @@ async def run_neural_net():
 async def run_neural_net_pict():
     base64_encoded_image = await neural_net_manager.run_model()
 
-    loader = jinja2.FileSystemLoader("./templates")
-    env = jinja2.Environment(loader=loader, autoescape=False)
-    table_templ = env.get_template("index.html")
-
-    table_templ = table_templ.render(myImage=base64_encoded_image)
-
-    letter = chatMessage(user=glob_user, msg_type='jinja_tmpl', data=['my_img', table_templ])
+    # loader = jinja2.FileSystemLoader("./templates")
+    # env = jinja2.Environment(loader=loader, autoescape=False)
+    # table_templ = env.get_template("index.html")
+    #
+    image_html = templates.get_template("/html/chat_template.html").render({"image": base64_encoded_image})
+    #
+    letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['chat-container', image_html])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
-    
+
     return {"OK"}
 
 
-async def update_train_parameters(params : Optional[mHyperParams] = None):
+async def update_train_parameters(params: Optional[mHyperParams] = None):
     if neural_net_manager.inner_model is not None:
         await neural_net_manager.inner_model.update_train_params(params)
         return {"result": "OK"}
+
     return {"result": "No model loaded"}
 
 
@@ -162,26 +128,25 @@ async def clear_database():
         print('Starting database cleanup...')
         await clear_all_collections()
         print('Collections cleared')
-        
+
         # Обновляем таблицу после очистки через перезагрузку страницы
         return RedirectResponse(url="/")
-        
+
     except Exception as e:
         print(f"Error clearing database: {str(e)}")
-        return {"error": str(e)}
+        return {f"error {str(e)}"}
 
 
-def main(loop):
-
+def main(main_loop):
     async def init():
         await init_beanie(database=client[database_name], document_models=[
-            mongo_Estimate, 
-            mongo_Record, 
-            mOptimizer_mongo, 
-            mDataSet_mongo, 
-            mHyperParams_mongo, 
-            mNeuralNet_mongo,
-            mWeight_mongo  # Добавляем новую модель для весов
+            MongoEstimate,
+            MongoRecord,
+            mOptimizerMongo,
+            mDataSetMongo,
+            mHyperParamsMongo,
+            mNeuralNetMongo,
+            mWeightMongo
         ])
 
     @asynccontextmanager
@@ -191,7 +156,6 @@ def main(loop):
 
     app = FastAPI(lifespan=lifespan)
 
-    # app.add_api_route("/create_model", create_neural_model, methods=["GET"])
     app.add_api_route("/create_model", create_neural_model_post, methods=["POST"])
     app.add_api_route("/load_model", load_model_handler, methods=["POST"])
     app.add_api_route("/run", run_neural_net, methods=["GET"])
@@ -201,7 +165,6 @@ def main(loop):
     app.add_api_route("/update_train_params", update_train_parameters, methods=["POST"])
     app.add_api_route("/clear_database", clear_database, methods=["GET"])
     app.add_api_route("/get_host", get_host, methods=["GET"])
-    app.add_api_route("/start_model_list_conf", start_model_list_conf, methods=["GET"])
 
     app.mount("/static", StaticFiles(directory="templates"), name="static")
 
@@ -209,14 +172,14 @@ def main(loop):
 
     import uvicorn
 
-    config = uvicorn.Config(app, host=cur_host, port=8010, loop=loop,access_log=False)
+    config = uvicorn.Config(app, host=cur_host, port=8010, loop=main_loop, access_log=False)
     server = uvicorn.Server(config)
-    loop.run_until_complete(server.serve())
+    main_loop.run_until_complete(server.serve())
 
 
 if __name__ == '__main__':
-    client = AsyncIOMotorClient("mongodb://"+database_ulr+":27017")
-    neural_net_manager = neural_net_microservice()
+    client = AsyncIOMotorClient("mongodb://" + database_ulr + ":27017")
+    neural_net_manager = NeuralNetMicroservice()
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)

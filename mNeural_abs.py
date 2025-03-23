@@ -8,24 +8,24 @@ import numpy as np
 from bson.objectid import ObjectId
 
 
-class abs_neural_net(abc.ABC):
-    neural_model : mNeuralNet_mongo = None
-    
+class AbsNeuralNet(abc.ABC):
+    neural_model : mNeuralNetMongo = None
+
     client = MongoClient("mongodb://localhost")
     db = client.testDB
     fs = gridfs.GridFS(db)
 
-    async def createModel(self, params : mHyperParams):
+    async def create_model(self, params : mHyperParams):
         # Создаем гиперпараметры и сохраняем их
-        hyper_params = mHyperParams_mongo(**params.model_dump())
+        hyper_params = mHyperParamsMongo(**params.model_dump())
         await hyper_params.insert()
         
         # Создаем модель с сохраненными гиперпараметрами
-        self.neural_model = mNeuralNet_mongo(hyper_param=hyper_params)
+        self.neural_model = mNeuralNetMongo(hyper_param=hyper_params)
         self.neural_model.records = []
         
         # Сохраняем модель
-        await mNeuralNet_mongo.m_insert(self.neural_model)
+        await mNeuralNetMongo.m_insert(self.neural_model)
         
         # Создаем и сохраняем датасет
         await self.set_dataset()
@@ -33,15 +33,15 @@ class abs_neural_net(abc.ABC):
     async def abs_save_weights(self, obj):
         try:
             items_dumps = pickle.dumps(obj, protocol=2)
-            retId = self.fs.put(items_dumps, filename='my_weights')
+            ret_id = self.fs.put(items_dumps, filename='my_weights')
             
-            weight = mWeight_mongo(weights_id=str(retId), tag='weight')
+            weight = mWeightMongo(weights_id=str(ret_id), tag='weight')
             await weight.insert()
             
             self.neural_model.weights = weight
-            await mNeuralNet_mongo.m_save(self.neural_model)
+            await mNeuralNetMongo.m_save(self.neural_model)
 
-            print('gridfs id', retId)
+            print('gridfs id', ret_id)
         except Exception as exp:
             print('save_weights_exp', exp)
 
@@ -62,23 +62,23 @@ class abs_neural_net(abc.ABC):
         return weights
 
 
-    async def append_rec_to_nn(self, new_rec : mongo_Record):
+    async def append_rec_to_nn(self, new_rec : MongoRecord):
         self.neural_model.records.append(new_rec)
 
-        await mNeuralNet_mongo.m_save(self.neural_model)
+        await mNeuralNetMongo.m_save(self.neural_model)
 
-    async def update_dataset_for_nn(self, new_dataset : mDataSet_mongo):
+    async def update_dataset_for_nn(self, new_dataset : mDataSetMongo):
         await self.neural_model.data_set[0].delete()
         self.neural_model.data_set = [new_dataset]
 
-        await mNeuralNet_mongo.m_save(self.neural_model)
+        await mNeuralNetMongo.m_save(self.neural_model)
 
     async def update_train_params(self, train_params : mHyperParams):
         self.neural_model.hyper_param.epochs = train_params.epochs
         self.neural_model.hyper_param.optimizer = train_params.optimizer
         self.neural_model.hyper_param.optimizer_lr = train_params.optimizer_lr
         
-        await mNeuralNet_mongo.m_save(self.neural_model)
+        await mNeuralNetMongo.m_save(self.neural_model)
 
     @abc.abstractmethod
     async def construct_model(self, params : mHyperParams, in_device): pass
@@ -87,7 +87,7 @@ class abs_neural_net(abc.ABC):
     def set_optimizer(self, opti : mOptimizer = None): pass
 
     @abc.abstractmethod
-    async def set_dataset(self): pass
+    async def set_dataset(self, dataset: mDataSet = None): pass
 
     @abc.abstractmethod
     async def load_model(self, in_model : mNeuralNet, in_device): pass
