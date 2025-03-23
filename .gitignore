@@ -6,3 +6,4 @@ __pycache__
 data/OSC.npy
 *.xml
 .idea
+*.pyc
