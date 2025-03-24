@@ -40,17 +40,17 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 flex-direction: column;
                 gap: 10px;
             }
-            
+
             .train-parameters h3 {
                 margin-top: 0;
                 font-size: 18px;
                 text-align: center;
             }
-            
+
             .train-parameters label {
                 font-weight: bold;
             }
-            
+
             .train-parameters input {
                 width: 100%;
                 height: 30px;
@@ -77,17 +77,17 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 border-radius: 10px;
                 background-color: #f8f8f8;
             }
-            
+
             .param-group {
                 margin-bottom: 15px;
             }
-            
+
             .param-group label {
                 display: block;
                 margin-bottom: 5px;
                 font-weight: bold;
             }
-            
+
             .param-group input {
                 width: 100%;
                 height: 30px;
@@ -124,20 +124,20 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
             const handle_load_button = async () => {
                 const selectElement = document.getElementById("model_select");
                 const selectedModelId = selectElement.value;
-            
+
                 if (!selectedModelId) {
                     alert("Выберите модель!");
                     return;
                 }
-            
+
                 const response = await call_bff("POST", "load_model", { "stored_item_id": selectedModelId });
-            
-                if (response.my_model_desc) {
-                    document.getElementById("selected_model_desc").innerText = response.my_model_desc;
+
+                if (response.mymodel_desc) {
+                    document.getElementById("selected_model_desc").innerText = response.mymodel_desc;
                     document.getElementById("model_controls").style.display = "block"; // Показываем кнопки
                 }
             };
-            
+
             const handle_train_button = async (nn_id) => {
                 const a = await call_bff_get('train')
             }
@@ -147,24 +147,24 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
 
             const handle_create_button = async () => {
                 const desc = document.getElementById('neural_desc').value;
-                
+
                 // Получаем значения гиперпараметров
                 const params = {
-                    'my_model_type': "oscil",
-                    'my_model_desc': desc,
-                    
+                    'mymodel_type': "oscil",
+                    'mymodel_desc': desc,
+
                     // Базовые параметры сети
                     'input_dim': parseInt(document.getElementById('input_dim').value) || 1,
                     'output_dim': parseInt(document.getElementById('output_dim').value) || 1,
                     'hidden_sizes': document.getElementById('hidden_sizes').value ? 
                         document.getElementById('hidden_sizes').value.split(',').map(x => parseInt(x.trim())) : 
                         [32, 32, 32],
-                    
+
                     // Параметры Фурье
                     'Fourier': document.getElementById('fourier').checked,
-                    'FInputDim': parseInt(document.getElementById('finput_dim').value) || null,
+                    'FinputDim': parseInt(document.getElementById('finput_dim').value) || null,
                     'FourierScale': parseFloat(document.getElementById('fourier_scale').value) || null,
-                    
+
                     // Путь к данным
                     'path_true_data': "/data/OSC.npy"
                 };
@@ -208,21 +208,21 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                 for (const [key, value] of Object.entries(params)) {
                     const paramDiv = document.createElement('div');
                     paramDiv.className = 'param-group';
-                    
+
                     const label = document.createElement('label');
                     label.htmlFor = `optimizer-${key}`;
                     label.textContent = value.label;
-                    
+
                     const input = document.createElement('input');
                     input.id = `optimizer-${key}`;
                     input.type = value.type;
                     input.value = value.default;
                     input.placeholder = value.label;
-                    
+
                     if (value.type === 'checkbox') {
                         input.checked = value.default;
                     }
-                    
+
                     paramDiv.appendChild(label);
                     paramDiv.appendChild(input);
                     paramsContainer.appendChild(paramDiv);
@@ -230,10 +230,9 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
             }
 
             const handle_update_params_button = async () => {
-
                 const optimizer = document.getElementById('optimizer').value;
                 const params = {};
-                
+
                 // Собираем все параметры для выбранного оптимизатора
                 for (const [key, _] of Object.entries(optimizerParams[optimizer])) {
                     const input = document.getElementById(`optimizer-${key}`);
@@ -251,7 +250,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     method: optimizer,
                     params: params
                 };
-                
+
                 const response = await call_bff('POST', 'update_train_params', updateData);
                 console.log('update params response:', response);
             };
@@ -272,39 +271,39 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                     <input style="width: 200px; height: 30px; font-size: 16px;" 
                            type="text" id="neural_desc" placeholder="Описание модели"/>
                 </div>
-                
+
                 <div class="hyperparams-container">
                     <h3>Гиперпараметры архитектуры</h3>
                     <div class="param-group">
                         <label for="input_dim">Input Dimension:</label>
                         <input type="number" id="input_dim" placeholder="1"/>
-                        
+
                         <label for="output_dim">Output Dimension:</label>
                         <input type="number" id="output_dim" placeholder="1"/>
-                        
+
                         <label for="hidden_sizes">Hidden Sizes (через запятую):</label>
                         <input type="text" id="hidden_sizes" placeholder="32,32,32"/>
                     </div>
-                    
+
                     <h3>Параметры Фурье</h3>
                     <div class="param-group">
                         <label>
                             <input type="checkbox" id="fourier"/> Использовать Фурье
                         </label>
-                        
+
                         <label for="finput_dim">Fourier Input Dimension:</label>
                         <input type="number" id="finput_dim" placeholder="Optional"/>
-                        
+
                         <label for="fourier_scale">Fourier Scale:</label>
                         <input type="number" id="fourier_scale" placeholder="Optional"/>
                     </div>
                 </div>
-                
+
                 <div class="train-parameters">
                     <h3>Train Parameters</h3>
                     <label for="epochs">Количество эпох:</label>
                     <input type="number" id="epochs" placeholder="100"/>
-                    
+
                     <label for="optimizer">Оптимизатор:</label>
                     <select id="optimizer" onchange="updateOptimizerParams()">
                         <option value="Adam">Adam</option>
@@ -312,11 +311,11 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
                         <option value="RMSprop">RMSprop</option>
                         <option value="Adagrad">Adagrad</option>
                     </select>
-                    
+
                     <div id="optimizer-params">
                         <!-- Параметры оптимизатора будут добавляться динамически -->
                     </div>
-                    
+
                     <input style="width: 150px; height: 30px; margin-top: 10px;" 
                            type="button" value="Update Parameters" 
                            onclick="handle_update_params_button()"/>
@@ -341,7 +340,7 @@ mtemplate = lambda gscripts, gdivs_left, gdivs_right: """
         {
             const res = JSON.parse(event.data);
             console.log("Пришло сообщение:", res); // Проверка
-        
+
             if (res.msg_type == 'jinja_tmpl') {
                 if (res.data[0] === 'model_desc') {
                     console.log("Обновляем описание модели:", res.data[1]); // Проверка

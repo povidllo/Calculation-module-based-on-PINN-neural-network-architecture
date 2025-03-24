@@ -273,7 +273,7 @@ class oscillator_nn(AbsNeuralNet):
         if not self.neural_model.optimizer:
             self.neural_model.optimizer = [opti]
 
-    async def construct_model(self, params : mHyperParams, in_device ):
+    async def construct_model(self, params : mHyperParams, in_device):
         await self.create_model(params)
 
         self.mydevice = in_device

@@ -90,15 +90,16 @@ class AbsNeuralNet(abc.ABC):
         if self.neural_model.optimizer:
             print('Обновляем существующий оптимизатор')
             optimizer = self.neural_model.optimizer[0]
-            optimizer.method = train_params.get('optimizer')
-            optimizer.params = {'lr': train_params.get('optimizer_lr')}
+            optimizer.method = train_params.get('method')
+            optimizer.params = train_params.get('params', {'lr': 0.001})
+
             # optimizer.params = {''}
             await optimizer.save()
         else:
             # Создаем новый оптимизатор только если его нет
             print('Создаем новый оптимизатор')
             optimizer = mOptimizerMongo(
-                method=train_params.get('method', 'Adam'),
+                method=train_params.get('method'),
                 params=train_params.get('params', {'lr': 0.001})
             )
             await optimizer.insert()

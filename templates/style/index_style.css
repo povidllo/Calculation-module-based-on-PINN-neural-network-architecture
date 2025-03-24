@@ -15,14 +15,17 @@ body {
     display: flex;
     gap: 40px;
     max-width: 800px;
+    min-height: 100%;
 }
 
 .chat-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex: 1;
     gap: 40px;
     width: 800px;
+    height: 100%;
     height: 550px;
     background-color: #1c1e1f;
     border-radius: 10px;

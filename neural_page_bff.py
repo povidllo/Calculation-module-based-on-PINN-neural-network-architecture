@@ -69,11 +69,17 @@ async def train_neural_net():
 
 
 async def load_model_handler(model_id: Optional[mNeuralNetMongo] = None):
-    res = await neural_net_manager.load_nn(model_id)
+    hyper_param_dict = await neural_net_manager.load_nn(model_id)
 
-    print(res['my_model_desc'])
+    print(hyper_param_dict)
 
-    return res
+    # res = await mNeuralNetMongo.get_item_by_id(model_id)
+    #
+    # optim_dict = await res.optimizer[-1].fetch()
+    # optim_dict = optim_dict.__dict__
+    # return_dict = {**hyper_param_dict, **optim_dict}
+
+    return hyper_param_dict
 
 
 async def root(request: Request):

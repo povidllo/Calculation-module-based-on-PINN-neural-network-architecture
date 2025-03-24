@@ -53,14 +53,28 @@
                         <label for="epochs">Количество эпох:</label>
                         <input type="text" id="epochs" placeholder="Количество эпох"/>
                     </div>
-                    <div class="param-group">
+                    <!-- <div class="param-group">
                         <label for="optimizer">Оптимизатор:</label>
                         <input type="text" id="optimizer" placeholder="Оптимизатор"/>
                     </div>
                     <div class="param-group">
                         <label for="optimizer_lr">Оптимизатор learning rate:</label>
                         <input type="text" id="optimizer_lr" placeholder="Оптимизатор learning rate"/>
+                    </div> -->
+                    <div class="param-group">
+                    <label for="optimizer">Оптимизатор:</label>
+                    <select id="optimizer" onchange="updateOptimizerParams()">
+                        <option value="Adam">Adam</option>
+                        <option value="SGD">SGD</option>
+                        <option value="RMSprop">RMSprop</option>
+                        <option value="Adagrad">Adagrad</option>
+                    </select>
                     </div>
+
+                    <div id="optimizer-params" class="param-group">
+                        <!-- Параметры оптимизатора будут добавляться динамически -->
+                    </div>
+
                     <div class="button-container">
                         <input type="button" value="Update Parameters" class="primary-button" onclick="handle_update_params_button()"/>
                     </div>
