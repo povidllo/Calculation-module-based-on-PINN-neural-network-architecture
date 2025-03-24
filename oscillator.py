@@ -239,7 +239,7 @@ class oscillator_nn(AbsNeuralNet):
             if self.neural_model.optimizer:
                 opti = self.neural_model.optimizer[0]
             else:
-                opti = mOptimizer_mongo(method='Adam', params={'lr': 0.001})
+                opti = mOptimizerMongo(method='Adam', params={'lr': 0.001})
                 print('Создан новый оптимизатор:', opti)
         
         # Создаем PyTorch оптимизатор в зависимости от метода

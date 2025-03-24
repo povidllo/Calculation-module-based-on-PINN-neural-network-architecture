@@ -68,7 +68,7 @@ async def train_neural_net():
     return {"result": res}
 
 
-async def load_model_handler(model_id: Optional[mNeuralNet] = None):
+async def load_model_handler(model_id: Optional[mNeuralNetMongo] = None):
     res = await neural_net_manager.load_nn(model_id)
 
     print(res['my_model_desc'])
@@ -81,6 +81,13 @@ async def root(request: Request):
 
     table_html = templates.get_template("html/table_template.html").render({"items": neural_list})
     chat_html = templates.get_template("html/chat_template.html").render({})
+
+    if neural_list:
+        # await load_model_handler(neural_list[0].id)
+
+        print(type(neural_list[0]))
+        print(neural_list[0])
+        # await neural_net_manager.load_nn()
 
     return templates.TemplateResponse(
         name="html/index.html",
@@ -116,7 +123,7 @@ async def run_neural_net_pict():
 
 
 
-async def update_train_parameters(params: Optional[mHyperParams] = None):
+async def update_train_parameters(params: dict = None):
 
     if neural_net_manager.inner_model is not None:
         await neural_net_manager.inner_model.update_train_params(params)

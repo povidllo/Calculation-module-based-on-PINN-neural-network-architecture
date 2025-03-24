@@ -82,31 +82,32 @@ class AbsNeuralNet(abc.ABC):
 
         await mNeuralNetMongo.m_save(self.neural_model)
 
-    async def update_train_params(self, train_params: dict):
+    async def update_train_params(self, train_params: dict = None):
         # Обновляем количество эпох
-        self.neural_model.hyper_param.epochs = train_params.get('epochs', 100)
+        self.neural_model.hyper_param.epochs = train_params.get('epochs')
         
         # Если оптимизатор уже существует, обновляем его
         if self.neural_model.optimizer:
             print('Обновляем существующий оптимизатор')
             optimizer = self.neural_model.optimizer[0]
-            optimizer.method = train_params.get('method', 'Adam')
-            optimizer.params = train_params.get('params', {'lr': 0.001})
+            optimizer.method = train_params.get('optimizer')
+            optimizer.params = {'lr': train_params.get('optimizer_lr')}
+            # optimizer.params = {''}
             await optimizer.save()
         else:
             # Создаем новый оптимизатор только если его нет
             print('Создаем новый оптимизатор')
-            optimizer = mOptimizer_mongo(
+            optimizer = mOptimizerMongo(
                 method=train_params.get('method', 'Adam'),
                 params=train_params.get('params', {'lr': 0.001})
             )
             await optimizer.insert()
             self.neural_model.optimizer = [optimizer]
         
-        await mNeuralNet_mongo.m_save(self.neural_model)
+        await mNeuralNetMongo.m_save(self.neural_model)
         
         # Пересоздаем оптимизатор в PyTorch
-        self.set_optimizer(optimizer) -- здесь нужно внимае
+        self.set_optimizer(optimizer)
 
     @abc.abstractmethod
     async def construct_model(self, params : mHyperParams, in_device): pass

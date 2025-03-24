@@ -50,7 +50,7 @@ class NeuralNetMicroservice:
         if dataset is not None:
             await self.inner_model.set_dataset(dataset)
 
-    async def load_nn(self, inp_nn: Optional[mNeuralNet] = None):
+    async def load_nn(self, inp_nn: Optional[mNeuralNetMongo] = None):
 
         my_nn = await mNeuralNetMongo.get_item_by_id(inp_nn)
 
