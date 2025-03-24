@@ -2,7 +2,6 @@
 .venv
 *.pth
 !*.py
-data/OSC.npy
 .idea
 *.pyc
 .DS_Store
