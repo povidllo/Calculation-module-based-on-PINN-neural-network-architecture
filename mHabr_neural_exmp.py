@@ -33,7 +33,7 @@ class simpleModel(nn.Module):
 
 
 
-class my_oscil_net(abs_neural_net):
+class my_oscil_net(AbsNeuralNet):
 
     mymodel = None
     mydevice = None
@@ -42,7 +42,7 @@ class my_oscil_net(abs_neural_net):
     x0_true = None
     dx0dt_true = None
 
-    class mySpecialDataSet(mDataSet_mongo):
+    class mySpecialDataSet(mDataSetMongo):
 
         def pde(self, out, t, nu=3):
             omega = 2 * torch.pi * nu
@@ -78,7 +78,7 @@ class my_oscil_net(abs_neural_net):
 
     async def load_model(self, in_model : mNeuralNet, in_device):
         
-        load_nn = await mNeuralNet_mongo.get(in_model.stored_item_id, fetch_links=True)
+        load_nn = await mNeuralNetMongo.get(in_model.stored_item_id, fetch_links=True)
         print('load_nn-', load_nn)
         self.neural_model = load_nn
 
@@ -113,12 +113,12 @@ class my_oscil_net(abs_neural_net):
 
     def set_optimizer(self, opti : mOptimizer = None):
         if opti is None:
-            self.neural_model.optimizer = [mOptimizer_mongo(method='LBFGS', params={'lr':0.1})]
+            self.neural_model.optimizer = [mOptimizerMongo(method='LBFGS', params={'lr':0.1})]
             self.myoptimizer = torch.optim.LBFGS(self.mymodel.parameters(), lr=0.1)
 
 
     async def construct_model(self, params : mHyperParams, in_device ):
-        await self.createModel(params)
+        await self.create_model(params)
 
         self.mydevice = in_device
 
@@ -197,7 +197,7 @@ class my_oscil_net(abs_neural_net):
         my_stringIObytes.seek(0)
         my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
 
-        new_rec = mongo_Record(record={'raw' : my_base64_jpgData})
+        new_rec = MongoRecord(record={'raw' : my_base64_jpgData})
         await self.append_rec_to_nn(new_rec)
 
 

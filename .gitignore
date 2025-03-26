@@ -1,6 +1,7 @@
-__pycache__
+**/__pycache__
 .venv
 *.pth
 !*.py
-/Modules/*/__pycache__
+.idea
 *.pyc
+.DS_Store

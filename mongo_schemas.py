@@ -26,7 +26,7 @@ class MyError(jsonrpc.BaseError):
         details: str
 
 
-class chatMessage(BaseModel):
+class ChatMessage(BaseModel):
     msg_id: Optional[str] = None
     msg_type: Optional[str] = None
     data : Optional[list] = None
@@ -47,8 +47,8 @@ class mDataSet(BaseModel):
     }
 
 class mHyperParams(BaseModel):
-    mymodel_type : Optional[str] = None
-    mymodel_desc: Optional[str] = None
+    my_model_type : Optional[str] = None
+    my_model_desc: Optional[str] = None
 
     input_dim : Optional[int] = 1
     output_dim : Optional[int] = 1
@@ -57,7 +57,7 @@ class mHyperParams(BaseModel):
     epochs : Optional[int] = 100
     
     Fourier : Optional[bool] = False
-    FinputDim : Optional[bool] = None
+    FInputDim : Optional[bool] = None
     FourierScale : Optional[bool] = None
     
     path_true_data : Optional[str] = "/data/OSC.npy"
@@ -69,7 +69,7 @@ class mNeuralNet(BaseModel):
     status : Optional[str] = None
 
 
-class mongo_Record(mRecord, Document):
+class MongoRecord(mRecord, Document):
     class Settings:
         name = rec_mongo_database
 
@@ -77,7 +77,7 @@ class mongo_Record(mRecord, Document):
         arbitrary_types_allowed = True
         # json_encoders = {bytes: lambda s: str(s, errors='ignore') }
 
-class mOptimizer_mongo(mOptimizer,Document):
+class mOptimizerMongo(mOptimizer, Document):
     class Settings:
         name = opti_mongo_database
 
@@ -85,14 +85,14 @@ class mOptimizer_mongo(mOptimizer,Document):
         arbitrary_types_allowed = True
 
 
-class mDataSet_mongo(mDataSet, Document):
+class mDataSetMongo(mDataSet, Document):
     class Settings:
         name = dataset_mongo_database
 
     class Config:
         arbitrary_types_allowed = True
 
-class mHyperParams_mongo(mHyperParams, Document):
+class mHyperParamsMongo(mHyperParams, Document):
 
     class Settings:
         name = hyper_params_mongo_database
@@ -104,23 +104,23 @@ class mWeight(BaseModel):
     weights_id: Optional[str] = None
     tag: Optional[str] = None
 
-class mWeight_mongo(mWeight, Document):
+class mWeightMongo(mWeight, Document):
     class Settings:
         name = weights_mongo_database
 
     class Config:
         arbitrary_types_allowed = True
 
-class mNeuralNet_mongo(mNeuralNet, Document):
-    hyper_param : Optional[Link[mHyperParams_mongo]] = None
-    data_set : Optional[list[Link[mDataSet_mongo]]] = None
-    optimizer :  Optional[list[Link[mOptimizer_mongo]]] = None
-    records: Optional[list[Link[mongo_Record]]] = None
-    weights: Optional[Link[mWeight_mongo]] = None
+class mNeuralNetMongo(mNeuralNet, Document):
+    hyper_param : Optional[Link[mHyperParamsMongo]] = None
+    data_set : Optional[list[Link[mDataSetMongo]]] = None
+    optimizer :  Optional[list[Link[mOptimizerMongo]]] = None
+    records: Optional[list[Link[MongoRecord]]] = None
+    weights: Optional[Link[mWeightMongo]] = None
 
     @staticmethod
     async def get_all():
-        entries = await mNeuralNet_mongo.find_all(fetch_links=True).to_list()
+        entries = await mNeuralNetMongo.find_all(fetch_links=True).to_list()
         return entries
 
     @staticmethod
@@ -131,7 +131,7 @@ class mNeuralNet_mongo(mNeuralNet, Document):
     @staticmethod
     async def get_item_by_id(el:Document):
 
-        res = await mNeuralNet_mongo.get(el.stored_item_id)
+        res = await mNeuralNetMongo.get(el.stored_item_id)
         return res
 
     @staticmethod
@@ -140,9 +140,9 @@ class mNeuralNet_mongo(mNeuralNet, Document):
         # await el.insert(link_rule=WriteRules.WRITE)
 
     @staticmethod
-    async def update_train_params(model_id: str, train_params: mHyperParams_mongo):
+    async def update_train_params(model_id: str, train_params: mHyperParamsMongo):
         """Обновляет параметры обучения для модели"""
-        model = await mNeuralNet_mongo.get(model_id)
+        model = await mNeuralNetMongo.get(model_id)
         model.hyper_param = train_params
         await model.save(link_rule=WriteRules.WRITE)
 
@@ -163,17 +163,17 @@ class mEstimate(BaseModel):
     file_id : Optional[str] = None
     frame_interval: Optional[list[int]] = None
     roi: Optional[list[int]] = None
-    records: Optional[list[Link[mongo_Record]]] = None
+    records: Optional[list[Link[MongoRecord]]] = None
     tag: Optional[str] = None
 
-class mongo_Estimate(mEstimate, Document):
+class MongoEstimate(mEstimate, Document):
     @staticmethod
     async def m_insert(el:Document):
         await el.save(link_rule=WriteRules.WRITE)
 
     @staticmethod
     async def find_entries_all():
-        all = await mongo_Estimate.find( {}, fetch_links=True).to_list()
+        all = await MongoEstimate.find({}, fetch_links=True).to_list()
         print(all)
         return all
 
@@ -190,13 +190,13 @@ async def clear_all_collections():
         print("Starting database cleanup...")
         
         collections = [
-            mongo_Record,
-            mOptimizer_mongo,
-            mDataSet_mongo,
-            mHyperParams_mongo,
-            mNeuralNet_mongo,
-            mongo_Estimate,
-            mWeight_mongo
+            MongoRecord,
+            mOptimizerMongo,
+            mDataSetMongo,
+            mHyperParamsMongo,
+            mNeuralNetMongo,
+            MongoEstimate,
+            mWeightMongo
         ]
         
         for collection in collections:

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+  <select id="existingList">
+    <option value="1">Option: Value 1</option>
+    <option value="2">Option: Value 2</option>
+  </select>
+
+  <script>
+    const opt = document.createElement("option");
+    opt.value = "3";
+    opt.text = "Option: Value 3";
+
+    existingList.add(opt, null);
+  </script>
+</body>
+</html>
