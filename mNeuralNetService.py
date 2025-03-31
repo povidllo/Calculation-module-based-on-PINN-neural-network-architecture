@@ -1,9 +1,6 @@
 from fastapi import WebSocket
 from mNeural_abs import *
-from oscillator import oscillator_nn
-import base64
-
-import asyncio
+from equations.oscillator import oscillator_nn
 
 import torch
 

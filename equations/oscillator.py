@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from mongo_schemas import *
 from mNeural_abs import *
 
@@ -44,13 +47,13 @@ torch.cuda.manual_seed(44)
 class oscillator_nn(AbsNeuralNet):
     mymodel = None
     mydevice = None
-    myoptimizer = None
-    
+    torch_optimizer = None
+
     loss_history = []
     l2_history = []
     best_loss = float('inf')
-    best_epoch = 0    
-    
+    best_epoch = 0
+
     class mySpecialDataSet(mDataSetMongo):
         def oscillator(self, x, d=2, w0=20):
             assert d < w0
@@ -73,13 +76,13 @@ class oscillator_nn(AbsNeuralNet):
             t = np.linspace(0, 1, num_t).reshape(-1, 1)
             l = len(t)//2
             t_data = t[0:l:l//10]
-            
+
             t_phys = np.linspace(0, 1, num_ph).reshape(-1, 1)
             return t, t_data, t_phys
 
         def data_generator(self):
             x, x_data, x_physics = self.generator(
-                self.num_dots["train"], 
+                self.num_dots["train"],
                 self.num_dots["physics"]
             )
             x = torch.FloatTensor(x)
@@ -90,7 +93,7 @@ class oscillator_nn(AbsNeuralNet):
 
             # Сохраняем данные в base64
             buffer = io.BytesIO()
-            np.savez_compressed(buffer, 
+            np.savez_compressed(buffer,
                 x=x.cpu().detach().numpy(),
                 x_data=x_data.cpu().detach().numpy(),
                 x_physics=x_physics.cpu().detach().numpy(),
@@ -98,32 +101,32 @@ class oscillator_nn(AbsNeuralNet):
                 y_data=y_data.cpu().detach().numpy()
             )
             encoded_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
-            
+
             # Сохраняем в базу данных
             self.params['points_data'] = encoded_data
-            
+
             # Для обратной совместимости пока оставляем и старое сохранение
             np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
-            
+
             return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 
         def load_data_from_params(self):
             """Загрузка данных из base64 в params"""
             if 'points_data' not in self.params:
                 return None
-                
+
             # Декодируем данные из base64
             decoded_data = base64.b64decode(self.params['points_data'])
             buffer = io.BytesIO(decoded_data)
             data = np.load(buffer)
-            
+
             # Преобразуем обратно в тензоры
             x = torch.FloatTensor(data['x'])
             x_data = torch.FloatTensor(data['x_data'])
             x_physics = torch.FloatTensor(data['x_physics']).requires_grad_(True)
             y = torch.FloatTensor(data['y'])
             y_data = torch.FloatTensor(data['y_data'])
-            
+
             return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 
         def equation(self,yhp, x_physics, d=2, w0=20):
@@ -140,17 +143,17 @@ class oscillator_nn(AbsNeuralNet):
             # loss_u = torch.mean((u_pred - u_data) ** 2)
             # loss = loss_f + loss_u
             loss1 = torch.mean((yh-y_data)**2)# use mean squared error
-            
+
             physics = self.equation(yhp, x_physics)
             loss2 = (1e-4)*torch.mean(physics**2)
 
-            loss = loss1 + loss2    
+            loss = loss1 + loss2
 
-            return loss     
-        
+            return loss
+
         def calculate_l2_error(self, path_true_data, model, device, test_data_generator):
             x, _, _ = test_data_generator()
-            
+
             # Загружаем данные из базы вместо файла
             if 'points_data' not in self.params:
                 print("Warning: No data found in database, using file")
@@ -161,28 +164,28 @@ class oscillator_nn(AbsNeuralNet):
                 buffer = io.BytesIO(decoded_data)
                 data = np.load(buffer)
                 y = data['y']
-            
+
             u_pred = model(x)
             u_pred = u_pred.cpu().detach().numpy()
             true = y
             # Сравнение с эталоном
             error = np.linalg.norm(u_pred - true, 2) / np.linalg.norm(true, 2)
             return error
-                
-                
-        
+
+
+
     async def load_model(self, in_model : mNeuralNet, in_device):
         load_nn = await mNeuralNetMongo.get(in_model.stored_item_id, fetch_links=True)
-        
+
         # Всегда создаем новую модель
         self.neural_model = load_nn
         self.neural_model.records = []
         await self.set_dataset()
-        
+
         self.mydevice = in_device
         self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
         self.set_optimizer()
-        
+
         # Пытаемся загрузить веса, если они есть
         # try:
         #     self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
@@ -212,7 +215,7 @@ class oscillator_nn(AbsNeuralNet):
             data = dataset.data_generator()
             # Сохраняем датасет в базу
             await dataset.insert()
-            
+
             # Обновляем ссылку на датасет в модели
             self.neural_model.data_set = [dataset]
             await mNeuralNetMongo.m_save(self.neural_model)
@@ -220,120 +223,111 @@ class oscillator_nn(AbsNeuralNet):
             print('Loading existing dataset')
             # Получаем данные из существующего датасета
             existing_data = self.neural_model.data_set[0]
-            
+
             # Создаем новый экземпляр mySpecialDataSet с теми же данными
             dataset = self.mySpecialDataSet(**existing_data.model_dump())
-            
+
             # Заменяем старый датасет новым в модели
             self.neural_model.data_set = [dataset]
             data = dataset.data_generator()
-        
+
         self.variables_f = data['main'].to(self.mydevice)
         self.u_data = data['secondary_true'].to(self.mydevice)
         self.variables = data['secondary'].to(self.mydevice)
 
-    
-    def set_optimizer(self, opti: mOptimizer = None):
+
+    async def set_optimizer(self, opti = None):
         if opti is None:
-         
             if self.neural_model.optimizer:
                 opti = self.neural_model.optimizer[0]
+                opti.save()
             else:
-                opti = mOptimizerMongo(method='Adam', params={'lr': 0.001})
+                await self.abs_load_optimizer()
+                opti = self.neural_model.optimizer[0]
                 print('Создан новый оптимизатор:', opti)
-        
+
         # Создаем PyTorch оптимизатор в зависимости от метода
         if opti.method == 'Adam':
             print('Используем Adam')
-            self.myoptimizer = torch.optim.Adam(
-                self.mymodel.parameters(), 
+            self.torch_optimizer = torch.optim.Adam(
+                self.mymodel.parameters(),
                 **opti.params
             )
         elif opti.method == 'SGD':
             print('Используем SGD')
-            self.myoptimizer = torch.optim.SGD(
+            self.torch_optimizer = torch.optim.SGD(
                 self.mymodel.parameters(),
                 **opti.params
             )
         elif opti.method == 'RMSprop':
             print('Используем RMSprop')
-            self.myoptimizer = torch.optim.RMSprop(
+            self.torch_optimizer = torch.optim.RMSprop(
                 self.mymodel.parameters(),
                 **opti.params
             )
         elif opti.method == 'Adagrad':
             print('Используем Adagrad')
-            self.myoptimizer = torch.optim.Adagrad(
+            self.torch_optimizer = torch.optim.Adagrad(
                 self.mymodel.parameters(),
                 **opti.params
             )
         else:
             raise ValueError(f"Неизвестный метод оптимизации: {opti.method}")
-        
-        if not self.neural_model.optimizer:
-            self.neural_model.optimizer = [opti]
 
-    async def construct_model(self, params : mHyperParams, in_device):
+    async def construct_model(self, params, in_device):
         await self.create_model(params)
 
         self.mydevice = in_device
         self.mymodel = pinn(params).to(self.mydevice)
-        self.set_optimizer()
-    
+        await self.set_optimizer()
 
-    # def save_model(self, path):
-    #     """Сохранение модели"""
-    #     torch.save(self.mymodel.state_dict(), path)
+
     async def save_model(self, path):
         print('run saving')
         weights = self.mymodel.state_dict()
         await self.abs_save_weights(weights)
         print('save complited')
-    
+
     async def train(self):
-        # cfg = self.neural_model.hyper_param
-        # epochs = cfg.epochs
         self.config = self.neural_model.hyper_param
         epochs = self.config.epochs
         for epoch in tqdm(range(epochs)):
-            self.myoptimizer.zero_grad()
+            self.torch_optimizer.zero_grad()
             u_pred = self.mymodel(self.variables)
             u_pred_f = self.mymodel(self.variables_f)
-            
+
             loss = self.neural_model.data_set[0].loss_calculator(u_pred_f, self.variables_f, u_pred, self.u_data)
             loss.backward()
-            self.myoptimizer.step()
+            self.torch_optimizer.step()
 
             current_loss = loss.item()
             self.loss_history.append(current_loss)
-            
+
             if self.neural_model.data_set[0].calculate_l2_error:
                 l2_error = self.neural_model.data_set[0].calculate_l2_error(
-                            self.config.path_true_data, 
-                            self.mymodel, 
-                            self.mydevice, 
+                            self.config.path_true_data,
+                            self.mymodel,
+                            self.mydevice,
                             test_data_generator)
-                self.l2_history.append(l2_error)            
+                self.l2_history.append(l2_error)
 
             if current_loss < self.best_loss:
                 self.best_loss = current_loss
                 self.best_epoch = epoch
-                
-                # self.save_model(sys.path[0] + self.config.save_weights_path)
-            
+
             if(epoch % 400 == 0):
                 print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
-                
+
         await self.save_model(sys.path[0] + self.config.save_weights_path)
-        print(f"Оптимизатор: {self.myoptimizer.__class__.__name__}")
+        print(f"Оптимизатор: {self.torch_optimizer.__class__.__name__}")
 
 
 
     async def calc(self):
         # self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
-        
+
         x, _, _ = test_data_generator()
-        
+
         # Загружаем данные из базы вместо файла
         if 'points_data' not in self.neural_model.data_set[0].params:
             print("Warning: No data found in database, using file")
@@ -343,35 +337,35 @@ class oscillator_nn(AbsNeuralNet):
             buffer = io.BytesIO(decoded_data)
             data = np.load(buffer)
             y = data['y']
-            
+
         u_pred = self.mymodel(x)
         u_pred = u_pred.cpu().detach().numpy()
         true = y
 
         plt.figure(figsize=(10, 6))
-        
+
         # Преобразуем x в numpy array если это тензор
         x_plot = x.cpu().numpy() if torch.is_tensor(x) else x
-        
+
         # Строим оба графика
         plt.plot(x_plot, true, 'b-', linewidth=2, label='Истинное решение')
         plt.plot(x_plot, u_pred, 'r--', linewidth=2, label='Предсказание модели')
-        
+
         # Настройки графика
         plt.xlabel('Временная координата (t)', fontsize=12)
         plt.ylabel('Значение y', fontsize=12)
         plt.title('Сравнение предсказаний модели с эталонным решением', fontsize=14)
         plt.legend(loc='upper right', fontsize=12)
         plt.grid(True, linestyle='--', alpha=0.7)
-        
+
         # Рассчитываем и выводим ошибку
         error = np.linalg.norm(u_pred - true, 2) / np.linalg.norm(true, 2)
-        plt.text(0.05, 0.95, f'Средняя абсолютная ошибка: {error:.4f}', 
+        plt.text(0.05, 0.95, f'Средняя абсолютная ошибка: {error:.4f}',
                 transform=plt.gca().transAxes, fontsize=12,
                 verticalalignment='top', bbox=dict(facecolor='white', alpha=0.9))
-        
+
         plt.tight_layout()
-        
+
         my_stringIObytes = io.BytesIO()
         plt.savefig(my_stringIObytes, format='jpg')
         my_stringIObytes.seek(0)

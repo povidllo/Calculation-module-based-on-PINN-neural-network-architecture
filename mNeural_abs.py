@@ -54,6 +54,17 @@ class AbsNeuralNet(abc.ABC):
         except Exception as exp:
             print('save_weights_exp', exp)
 
+    async def abs_load_optimizer(self):
+        try:
+            opti = mOptimizerMongo(method='Adam', params={'lr': 0.001})
+            print('Создан новый оптимизатор:', opti)
+
+            await opti.insert()
+            self.neural_model.optimizer = [opti]
+            await mNeuralNetMongo.m_save(self.neural_model)
+        except Exception as exp:
+            print('save_optimizer_exp', exp)
+
     async def abs_load_weights(self):
         weights = None
         if self.neural_model.weights is not None:
@@ -108,7 +119,7 @@ class AbsNeuralNet(abc.ABC):
         await mNeuralNetMongo.m_save(self.neural_model)
         
         # Пересоздаем оптимизатор в PyTorch
-        self.set_optimizer(optimizer)
+        await self.set_optimizer(optimizer)
 
     @abc.abstractmethod
     async def construct_model(self, params : mHyperParams, in_device): pass
