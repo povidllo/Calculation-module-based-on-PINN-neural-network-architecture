@@ -110,24 +110,6 @@ class oscillator_nn(AbsNeuralNet):
 
             return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 
-        def load_data_from_params(self):
-            """Загрузка данных из base64 в params"""
-            if 'points_data' not in self.params:
-                return None
-
-            # Декодируем данные из base64
-            decoded_data = base64.b64decode(self.params['points_data'])
-            buffer = io.BytesIO(decoded_data)
-            data = np.load(buffer)
-
-            # Преобразуем обратно в тензоры
-            x = torch.FloatTensor(data['x'])
-            x_data = torch.FloatTensor(data['x_data'])
-            x_physics = torch.FloatTensor(data['x_physics']).requires_grad_(True)
-            y = torch.FloatTensor(data['y'])
-            y_data = torch.FloatTensor(data['y_data'])
-
-            return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 
         def equation(self,yhp, x_physics, d=2, w0=20):
             mu = d * 2
@@ -139,17 +121,14 @@ class oscillator_nn(AbsNeuralNet):
 
 
         def loss_calculator(self,yhp, x_physics, yh, y_data):
-            # loss_f = torch.mean(ac_equation(u_pred_f, variables_f) ** 2)
-            # loss_u = torch.mean((u_pred - u_data) ** 2)
-            # loss = loss_f + loss_u
             loss1 = torch.mean((yh-y_data)**2)# use mean squared error
 
             physics = self.equation(yhp, x_physics)
             loss2 = (1e-4)*torch.mean(physics**2)
 
             loss = loss1 + loss2
-
             return loss
+
 
         def calculate_l2_error(self, path_true_data, model, device, test_data_generator):
             x, _, _ = test_data_generator()
@@ -173,35 +152,7 @@ class oscillator_nn(AbsNeuralNet):
             return error
 
 
-
-    async def load_model(self, in_model : mNeuralNet, in_device):
-        load_nn = await mNeuralNetMongo.get(in_model.stored_item_id, fetch_links=True)
-
-        # Всегда создаем новую модель
-        self.neural_model = load_nn
-        self.neural_model.records = []
-        await self.set_dataset()
-
-        self.mydevice = in_device
-        self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
-        self.set_optimizer()
-
-        # Пытаемся загрузить веса, если они есть
-        # try:
-        #     self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
-        #     print("Weights loaded successfully" + self.neural_model.hyper_param.save_weights_path)
-        # except:
-        #     print("No saved weights found, using initialized weights")
-        cur_state = await self.abs_load_weights()
-        if (cur_state is not None):
-            self.mymodel.load_state_dict(cur_state)
-        else:
-            print("No saved weights found, using initialized weights")
-
-
-
-
-    async def set_dataset(self, dataset: mDataSet = None):
+    async def set_dataset(self):
         if not self.neural_model.data_set:
             # Создаем новый датасет
             dataset = self.mySpecialDataSet(
@@ -240,9 +191,9 @@ class oscillator_nn(AbsNeuralNet):
         if opti is None:
             if self.neural_model.optimizer:
                 opti = self.neural_model.optimizer[0]
-                opti.save()
+                await opti.save()
             else:
-                await self.abs_load_optimizer()
+                await self.abs_set_optimizer()
                 opti = self.neural_model.optimizer[0]
                 print('Создан новый оптимизатор:', opti)
 
@@ -281,8 +232,7 @@ class oscillator_nn(AbsNeuralNet):
         self.mymodel = pinn(params).to(self.mydevice)
         await self.set_optimizer()
 
-
-    async def save_model(self, path):
+    async def save_weights(self, path):
         print('run saving')
         weights = self.mymodel.state_dict()
         await self.abs_save_weights(weights)
@@ -318,14 +268,10 @@ class oscillator_nn(AbsNeuralNet):
             if(epoch % 400 == 0):
                 print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
 
-        await self.save_model(sys.path[0] + self.config.save_weights_path)
+        await self.save_weights(sys.path[0] + self.config.save_weights_path)
         print(f"Оптимизатор: {self.torch_optimizer.__class__.__name__}")
 
-
-
     async def calc(self):
-        # self.mymodel.load_state_dict(torch.load(sys.path[0] + self.neural_model.hyper_param.save_weights_path))
-
         x, _, _ = test_data_generator()
 
         # Загружаем данные из базы вместо файла
@@ -371,11 +317,8 @@ class oscillator_nn(AbsNeuralNet):
         my_stringIObytes.seek(0)
         my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
 
-        new_rec = MongoRecord(record={'raw' : my_base64_jpgData})
-        await self.append_rec_to_nn(new_rec)
-
+        await self.abs_save_plot(my_base64_jpgData)
 
         plt.clf()
-        # plt.show()
 
         return my_base64_jpgData

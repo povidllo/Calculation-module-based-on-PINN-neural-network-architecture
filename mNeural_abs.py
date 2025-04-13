@@ -7,6 +7,8 @@ import pickle
 import numpy as np
 from bson.objectid import ObjectId
 
+from pinn_init_torch import pinn
+
 
 class AbsNeuralNet(abc.ABC):
     neural_model : mNeuralNetMongo = None
@@ -23,10 +25,11 @@ class AbsNeuralNet(abc.ABC):
         # Создаем модель с сохраненными гиперпараметрами
         self.neural_model = mNeuralNetMongo(hyper_param=hyper_params)
         self.neural_model.records = []
+
         
         # Если есть параметры оптимизатора, создаем его
         if hasattr(params, 'optimizer'):
-            optimizer = mOptimizer_mongo(
+            optimizer = mOptimizerMongo(
                 method=params.optimizer.method,
                 params=params.optimizer.params
             )
@@ -38,6 +41,10 @@ class AbsNeuralNet(abc.ABC):
         
         # Создаем и сохраняем датасет
         await self.set_dataset()
+
+    async def abs_save_plot(self, plot):
+        new_rec = MongoRecord(record={'raw': plot})
+        await self.append_rec_to_nn(new_rec)
 
     async def abs_save_weights(self, obj):
         try:
@@ -54,7 +61,7 @@ class AbsNeuralNet(abc.ABC):
         except Exception as exp:
             print('save_weights_exp', exp)
 
-    async def abs_load_optimizer(self):
+    async def abs_set_optimizer(self):
         try:
             opti = mOptimizerMongo(method='Adam', params={'lr': 0.001})
             print('Создан новый оптимизатор:', opti)
@@ -64,6 +71,31 @@ class AbsNeuralNet(abc.ABC):
             await mNeuralNetMongo.m_save(self.neural_model)
         except Exception as exp:
             print('save_optimizer_exp', exp)
+
+    # async def abs_set_dataset(self):
+    #     if not self.neural_model.data_set:
+    #         # Создаем новый датасет
+    #         dataset = self.mySpecialDataSet(
+    #             params={'nu': 3},
+    #             num_dots={
+    #                 "train": 400,
+    #                 "physics": 50
+    #             }
+    #         )
+    #         print('Creating new dataset')
+    #         data = dataset.data_generator()
+    #         # Сохраняем датасет в базу
+    #         await dataset.insert()
+    #
+    #         # Обновляем ссылку на датасет в модели
+    #         self.neural_model.data_set = [dataset]
+    #         await mNeuralNetMongo.m_save(self.neural_model)
+    #
+    #
+    #     await self.neural_model.data_set[0].delete()
+    #     self.neural_model.data_set = [new_dataset]
+    #
+    #     await mNeuralNetMongo.m_save(self.neural_model)
 
     async def abs_load_weights(self):
         weights = None
@@ -92,6 +124,26 @@ class AbsNeuralNet(abc.ABC):
         self.neural_model.data_set = [new_dataset]
 
         await mNeuralNetMongo.m_save(self.neural_model)
+
+    '''
+    загружает из БД выбранную в интерфейсе модель
+    '''
+    async def load_model(self, in_model: mNeuralNet, in_device):
+        load_nn = await mNeuralNetMongo.get(in_model.stored_item_id, fetch_links=True)
+
+        self.neural_model = load_nn
+        self.neural_model.records = []
+        await self.set_dataset()
+
+        self.mydevice = in_device
+        self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
+        await self.set_optimizer()
+
+        cur_state = await self.abs_load_weights()
+        if (cur_state is not None):
+            self.mymodel.load_state_dict(cur_state)
+        else:
+            print("No saved weights found, using initialized weights")
 
     async def update_train_params(self, train_params: dict = None):
         # Обновляем количество эпох
@@ -130,11 +182,14 @@ class AbsNeuralNet(abc.ABC):
     @abc.abstractmethod
     async def set_dataset(self, dataset: mDataSet = None): pass
 
-    @abc.abstractmethod
-    async def load_model(self, in_model : mNeuralNet, in_device): pass
-
+    '''
+    тренировка модели
+    '''
     @abc.abstractmethod
     async def train(self): pass
 
+    '''
+    обученная модель рассчитывает значения и возвращает график
+    '''
     @abc.abstractmethod
     async def calc(self): pass
