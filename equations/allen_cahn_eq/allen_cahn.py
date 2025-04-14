@@ -1,6 +1,8 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+
 from mongo_schemas import *
 from mNeural_abs import *
 
@@ -12,6 +14,7 @@ import jinja2
 import io
 import base64
 import abc
+import scipy.io
 
 import torch
 import torch.nn as nn
@@ -43,118 +46,151 @@ torch.manual_seed(123)
 np.random.seed(44)
 torch.cuda.manual_seed(44)
 # print(get_config().epochs)
+# -----------------
 
-class oscillator_nn(AbsNeuralNet):
+# import torch
+from pprint import pprint
+# import numpy as np
+
+# from Modules.pinn_init_torch import pinn
+# from Modules.optim_Adam_torch import create_optim
+# from Modules.train_torch import Train_torch
+# from Modules.allen_cahn.loss_calc import loss_calculator
+# from Modules.allen_cahn.calculate_l2 import calculate_l2_error
+# from Modules.allen_cahn.vizualizer import vizualize
+# from Modules.allen_cahn.test_data_generator import generator as test_data_generator
+# import cfg_pinn_init as cfg_pinn_init
+# import cfg_main as cfg_main
+# import cfg_train_torch as cfg_train_torch
+
+# torch.manual_seed(123)
+# np.random.seed(44)
+# torch.cuda.manual_seed(44)
+
+# model = pinn(cfg_main.get_config())
+# Вывод весов при инициализации
+# for name, param in model.named_parameters():
+#     print(f"\nLayer: {name}")
+#     print(f"Shape: {param.shape}")
+#     print(f"Values:\n{param.data}")
+# exit()
+
+# optimizer = create_optim(model, cfg_main.get_config())
+#
+# trainer = Train_torch(cfg_main.get_config(),
+#                     model,
+#                     optimizer,
+#                     data_generator,
+#                     loss_calculator,
+#                     test_data_generator,
+#                     calculate_l2_error,
+#                     vizualize)
+# trainer.train()
+# -----------------
+
+class allen_cahn_nn(AbsNeuralNet):
     mymodel = None
     mydevice = None
-    torch_optimizer = None
+    myoptimizer = None
 
     loss_history = []
     l2_history = []
     best_loss = float('inf')
     best_epoch = 0
 
+
     class mySpecialDataSet(mDataSetMongo):
-        def oscillator(self, x, d=2, w0=20):
+        def __prepare_data(self):
             '''
-            Решение уравнения, которое должна получить нейросеть
+            Загрузка и подготовка данных через внешний модуль
+            main - данные для обучения физического аспекта модели
+            secondary - данные для обучения, путем сравнения с правильными данными
+            secondary_true - правильные данные для secondary
             '''
-            assert d < w0
-            w = np.sqrt(w0**2-d**2)
-            phi = np.arctan(-d/w)
-            A = 1/(2*np.cos(phi))
-            cos = torch.cos(phi+w*x)
-            sin = torch.sin(phi+w*x)
-            exp = torch.exp(-d*x)
-            y = exp*2*A*cos
-            return y
+            data = self.data_generator()
+            self.variables_f = data['main'].to(self.device)
+            self.u_data = data['secondary_true'].to(self.device)
+            self.variables = data['secondary'].to(self.device)
 
-        def time_generator(self, num_t, num_ph, typ='train'):
-            '''
-            Генерирует данные (временные координаты) для обучения осциллятора
-            t - вся выборка
-            t_phys - выборка для обучения физического аспекта модели
-            t_data - выборка для обучения путем сравнения с правильными данными
-            '''
-            t = np.linspace(0, 1, num_t).reshape(-1, 1)
-            l = len(t)//2
-            t_data = t[0:l:l//10]
+        def equation(self, u, tx):
+            u_tx = torch.autograd.grad(u, tx, torch.ones_like(u), create_graph=True)[0]
+            u_t = u_tx[:, 0:1]
+            u_x = u_tx[:, 1:2]
+            u_xx = torch.autograd.grad(u_x, tx, torch.ones_like(u_x), create_graph=True)[0][:, 1:2]
+            e = u_t - 0.0001 * u_xx + 5 * u ** 3 - 5 * u
+            return e
 
-            t_phys = np.linspace(0, 1, num_ph).reshape(-1, 1)
-            return t, t_data, t_phys
+        def ac_generator(self, num_t, num_x, typ='train'):
+            N_f = num_t * num_x
+            t = np.linspace(0, 1, num_t).reshape(-1, 1)  # T x 1
+            x = np.linspace(-1, 1, num_x).reshape(-1, 1)  # N x 1
+            T = t.shape[0]
+            N = x.shape[0]
+            T_star = np.tile(t, (1, N)).T  # N x T
+            X_star = np.tile(x, (1, T))  # N x T
+
+            # Initial condition and boundary condition
+            u = np.zeros((N, T))  # N x T
+            u[:, 0:1] = (x ** 2) * np.cos(np.pi * x)
+            u[0, :] = -np.ones(T)
+            u[-1, :] = u[0, :]
+
+            t_data = T_star.flatten()[:, None]
+            x_data = X_star.flatten()[:, None]
+            u_data = u.flatten()[:, None]
+
+            t_data_f = t_data.copy()
+            x_data_f = x_data.copy()
+
+            if typ == 'train':
+                idx = np.random.choice(np.where((x_data == -1) | (x_data == 1))[0], num_t)
+                t_data = t_data[idx]
+                x_data = x_data[idx]
+                u_data = u_data[idx]
+
+                init_idx = np.random.choice(N - 1, num_x - 4, replace=False) + 1
+                t_data = np.concatenate([t_data, np.ones((2, 1)), np.zeros((num_x - 4, 1))], axis=0)
+                x_data = np.concatenate([x_data, np.array([[-1], [1]]), x[init_idx]], axis=0)
+                u_data = np.concatenate([u_data, -np.ones((2, 1)), u[init_idx, 0:1]], axis=0)
+
+                return t_data, x_data, u_data, t_data_f, x_data_f
+
+            else:
+                return t_data_f, x_data_f
 
         def data_generator(self):
-            x, x_data, x_physics = self.time_generator(
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            t_data, x_data, u_data, t_data_f, x_data_f = self.ac_generator(
                 self.num_dots["train"],
                 self.num_dots["physics"]
             )
-            x = torch.FloatTensor(x)
-            x_data = torch.FloatTensor(x_data)
-            x_physics = torch.FloatTensor(x_physics).requires_grad_(True)
-            y = self.oscillator(x).view(-1,1)
-            y_data = y[0:len(x)//2:len(x)//20]
+            variables = torch.FloatTensor(np.concatenate((t_data, x_data), axis=1)).to(device)
+            variables_f = torch.FloatTensor(np.concatenate((t_data_f, x_data_f), axis=1)).to(device)
+            variables_f.requires_grad = True
+            u_data = torch.FloatTensor(u_data).to(device)
+            # return {'train': variables_f, 'boundary': variables, 'boundary_true': u_data}
+            return {'main': variables_f, 'secondary': variables, 'secondary_true': u_data}
 
-            # Сохраняем данные в base64
-            buffer = io.BytesIO()
-            np.savez_compressed(buffer,
-                x=x.cpu().detach().numpy(),
-                x_data=x_data.cpu().detach().numpy(),
-                x_physics=x_physics.cpu().detach().numpy(),
-                y=y.cpu().detach().numpy(),
-                y_data=y_data.cpu().detach().numpy()
-            )
-            encoded_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        def loss_calculator(self, u_pred_f, x_physics, u_pred, y_data):
+            physics = self.equation(u_pred_f, x_physics)
+            loss2 = torch.mean(physics ** 2)
 
-            # Сохраняем в базу данных
-            self.params['points_data'] = encoded_data
+            loss_u = torch.mean((u_pred - y_data) ** 2)  # use mean squared error
+            loss = loss_u + loss2
 
-            # Для обратной совместимости пока оставляем и старое сохранение
-            np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
-
-            return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
-
-
-        def equation(self,yhp, x_physics, d=2, w0=20):
-            '''
-            Уравнение затухающего гармонического осциллятора
-            '''
-            mu = d * 2
-            k = w0 ** 2
-            dx  = torch.autograd.grad(yhp, x_physics, torch.ones_like(yhp), create_graph=True)[0]
-            dx2 = torch.autograd.grad(dx,  x_physics, torch.ones_like(dx),  create_graph=True)[0]
-            physics = dx2 + mu*dx + k*yhp
-            return physics
-
-
-        def loss_calculator(self,yhp, x_physics, yh, y_data):
-            loss1 = torch.mean((yh-y_data)**2)# use mean squared error
-
-            physics = self.equation(yhp, x_physics)
-            loss2 = (1e-4)*torch.mean(physics**2)
-
-            loss = loss1 + loss2
             return loss
 
-
         def calculate_l2_error(self, path_true_data, model, device, test_data_generator):
-            x, _, _ = test_data_generator()
+            test_data, _, [N, T] = test_data_generator()
+            test_variables = torch.FloatTensor(test_data).to(device)
+            with torch.no_grad():
+                u_pred = model(test_variables)
+            u_pred = u_pred.cpu().numpy().reshape(N, T)
 
-            # Загружаем данные из базы вместо файла
-            if 'points_data' not in self.params:
-                print("Warning: No data found in database, using file")
-                y = np.load(sys.path[0] + path_true_data)
-            else:
-                # Декодируем данные из base64
-                decoded_data = base64.b64decode(self.params['points_data'])
-                buffer = io.BytesIO(decoded_data)
-                data = np.load(buffer)
-                y = data['y']
-
-            u_pred = model(x)
-            u_pred = u_pred.cpu().detach().numpy()
-            true = y
             # Сравнение с эталоном
-            error = np.linalg.norm(u_pred - true, 2) / np.linalg.norm(true, 2)
+            data = scipy.io.loadmat(sys.path[0] + path_true_data)
+            exact_solution = np.real(data['uu'])
+            error = np.linalg.norm(u_pred - exact_solution, 2) / np.linalg.norm(exact_solution, 2)
             return error
 
 
@@ -162,10 +198,9 @@ class oscillator_nn(AbsNeuralNet):
         if not self.neural_model.data_set:
             # Создаем новый датасет
             dataset = self.mySpecialDataSet(
-                params={'nu': 3},
                 num_dots={
-                    "train": 400,
-                    "physics": 50
+                    "train": 201,
+                    "physics": 513
                 }
             )
             print('Creating new dataset')
@@ -191,7 +226,6 @@ class oscillator_nn(AbsNeuralNet):
         self.variables_f = data['main'].to(self.mydevice)
         self.u_data = data['secondary_true'].to(self.mydevice)
         self.variables = data['secondary'].to(self.mydevice)
-
 
     async def set_optimizer(self, opti = None):
         if opti is None:
@@ -271,8 +305,9 @@ class oscillator_nn(AbsNeuralNet):
                 self.best_loss = current_loss
                 self.best_epoch = epoch
 
-            if(epoch % 400 == 0):
-                print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
+            if (epoch % 400 == 0):
+                print(
+                    f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
 
         await self.save_weights(sys.path[0] + self.config.save_weights_path)
         print(f"Оптимизатор: {self.torch_optimizer.__class__.__name__}")

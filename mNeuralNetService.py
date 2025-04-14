@@ -1,6 +1,7 @@
 from fastapi import WebSocket
 from mNeural_abs import *
-from equations.oscillator import oscillator_nn
+from equations.oscillator_eq.oscillator import oscillator_nn
+from equations.allen_cahn_eq.allen_cahn import allen_cahn_nn
 
 import torch
 
@@ -28,7 +29,7 @@ class ConnectionManager:
 
 class NeuralNetMicroservice:
     inner_model: AbsNeuralNet = None
-    models_list = {'oscil': oscillator_nn}
+    models_list = {'oscil': oscillator_nn, 'allencahn': allen_cahn_nn}
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ws_manager = ConnectionManager()
 
