@@ -56,6 +56,9 @@ class oscillator_nn(AbsNeuralNet):
 
     class mySpecialDataSet(mDataSetMongo):
         def oscillator(self, x, d=2, w0=20):
+            '''
+            Решение уравнения, которое должна получить нейросеть
+            '''
             assert d < w0
             w = np.sqrt(w0**2-d**2)
             phi = np.arctan(-d/w)
@@ -66,9 +69,9 @@ class oscillator_nn(AbsNeuralNet):
             y = exp*2*A*cos
             return y
 
-        def generator(self, num_t, num_ph, typ='train'):
+        def time_generator(self, num_t, num_ph, typ='train'):
             '''
-            Генерирует данные для осцилятора
+            Генерирует данные (временные координаты) для обучения осциллятора
             t - вся выборка
             t_phys - выборка для обучения физического аспекта модели
             t_data - выборка для обучения путем сравнения с правильными данными
@@ -81,7 +84,7 @@ class oscillator_nn(AbsNeuralNet):
             return t, t_data, t_phys
 
         def data_generator(self):
-            x, x_data, x_physics = self.generator(
+            x, x_data, x_physics = self.time_generator(
                 self.num_dots["train"],
                 self.num_dots["physics"]
             )
@@ -112,6 +115,9 @@ class oscillator_nn(AbsNeuralNet):
 
 
         def equation(self,yhp, x_physics, d=2, w0=20):
+            '''
+            Уравнение затухающего гармонического осциллятора
+            '''
             mu = d * 2
             k = w0 ** 2
             dx  = torch.autograd.grad(yhp, x_physics, torch.ones_like(yhp), create_graph=True)[0]
