@@ -39,7 +39,7 @@ import numpy as np
 
 from optim_Adam_torch import create_optim
 from pinn_init_torch import pinn
-from test_data_generator import generator as test_data_generator
+from equations.allen_cahn_eq.test_data_generator import generator as test_data_generator
 
 from cfg_main import get_config
 torch.manual_seed(123)
