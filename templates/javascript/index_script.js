@@ -70,7 +70,7 @@ const handle_create_button = async () => {
         'path_true_data': "/data/OSC.npy",
 
         'epochs': parseInt(document.getElementById('epochs').value) || 100,
-        'my_model_type': "oscil"
+        // 'my_model_type': "oscil"
     };
 
     const a = await call_bff_post('create_model', params);
