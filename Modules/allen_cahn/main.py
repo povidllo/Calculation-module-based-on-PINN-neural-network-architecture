@@ -1,8 +1,6 @@
 import torch
 import sys
 import os
-from pprint import pprint
-import numpy as np
 
 # Добавляем родительскую директорию проекта в sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -14,7 +12,7 @@ from Modules.allen_cahn.data_generator import data_generator
 from Modules.allen_cahn.loss_calc import loss_calculator
 from Modules.allen_cahn.calculate_l2 import calculate_l2_error
 from Modules.allen_cahn.vizualizer import vizualize
-from Modules.allen_cahn.test_data_generator import generator as test_data_generator
+from equations.test_data_generator import generator as test_data_generator
 # import cfg_pinn_init as cfg_pinn_init
 import cfg_main as cfg_main
 # import cfg_train_torch as cfg_train_torch

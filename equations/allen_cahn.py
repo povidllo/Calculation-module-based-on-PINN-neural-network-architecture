@@ -52,13 +52,13 @@ import torch
 from pprint import pprint
 import numpy as np
 
-from Modules.pinn_init_torch import pinn
-from Modules.optim_Adam_torch import create_optim
-from Modules.train_torch import Train_torch
-from Modules.allen_cahn.loss_calc import loss_calculator
-from Modules.allen_cahn.calculate_l2 import calculate_l2_error
-from Modules.allen_cahn.vizualizer import vizualize
-from Modules.allen_cahn.test_data_generator import generator as test_data_generator
+# from Modules.pinn_init_torch import pinn
+# from Modules.optim_Adam_torch import create_optim
+# from Modules.train_torch import Train_torch
+# from Modules.allen_cahn.loss_calc import loss_calculator
+# from Modules.allen_cahn.calculate_l2 import calculate_l2_error
+# from Modules.allen_cahn.vizualizer import vizualize
+# from Modules.allen_cahn.test_data_generator import generator as test_data_generator
 # import cfg_pinn_init as cfg_pinn_init
 import cfg_main as cfg_main
 # import cfg_train_torch as cfg_train_torch
@@ -281,4 +281,85 @@ class allen_cahn_nn(AbsNeuralNet):
     async def train(self):
         self.config = self.neural_model.hyper_param
         epochs = self.config.epochs
+        for epoch in tqdm(range(epochs)):
+            self.torch_optimizer.zero_grad()
+            u_pred = self.mymodel(self.variables)
+            u_pred_f = self.mymodel(self.variables_f)
 
+            loss = self.neural_model.data_set[0].loss_calculator(u_pred_f, self.variables_f, u_pred, self.u_data)
+            loss.backward()
+            self.torch_optimizer.step()
+
+            current_loss = loss.item()
+            self.loss_history.append(current_loss)
+
+            if self.neural_model.data_set[0].calculate_l2_error:
+                l2_error = self.neural_model.data_set[0].calculate_l2_error(
+                            self.config.path_true_data,
+                            self.mymodel,
+                            self.mydevice,
+                            test_data_generator)
+                self.l2_history.append(l2_error)
+
+            if current_loss < self.best_loss:
+                self.best_loss = current_loss
+                self.best_epoch = epoch
+
+            if (epoch % 400 == 0):
+                print(
+                    f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
+
+        await self.save_weights(sys.path[0] + self.config.save_weights_path)
+        print(f"Оптимизатор: {self.torch_optimizer.__class__.__name__}")
+
+    async def calc(self):
+        x, _, _ = test_data_generator()
+
+        # Загружаем данные из базы вместо файла
+        if 'points_data' not in self.neural_model.data_set[0].params:
+            print("Warning: No data found in database, using file")
+            y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)
+        else:
+            decoded_data = base64.b64decode(self.neural_model.data_set[0].params['points_data'])
+            buffer = io.BytesIO(decoded_data)
+            data = np.load(buffer)
+            y = data['y']
+
+        u_pred = self.mymodel(x)
+        u_pred = u_pred.cpu().detach().numpy()
+        true = y
+
+        plt.figure(figsize=(10, 6))
+
+        # Преобразуем x в numpy array если это тензор
+        x_plot = x.cpu().numpy() if torch.is_tensor(x) else x
+
+        # Строим оба графика
+        plt.plot(x_plot, true, 'b-', linewidth=2, label='Истинное решение')
+        plt.plot(x_plot, u_pred, 'r--', linewidth=2, label='Предсказание модели')
+
+        # Настройки графика
+        plt.xlabel('Временная координата (t)', fontsize=12)
+        plt.ylabel('Значение y', fontsize=12)
+        plt.title('Сравнение предсказаний модели с эталонным решением', fontsize=14)
+        plt.legend(loc='upper right', fontsize=12)
+        plt.grid(True, linestyle='--', alpha=0.7)
+
+        # Рассчитываем и выводим ошибку
+        error = np.linalg.norm(u_pred - true, 2) / np.linalg.norm(true, 2)
+        plt.text(0.05, 0.95, f'Средняя абсолютная ошибка: {error:.4f}',
+                transform=plt.gca().transAxes, fontsize=12,
+                verticalalignment='top', bbox=dict(facecolor='white', alpha=0.9))
+
+        plt.tight_layout()
+
+        my_stringIObytes = io.BytesIO()
+        plt.savefig(my_stringIObytes, format='jpg')
+        my_stringIObytes.seek(0)
+        my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
+
+        await self.abs_save_plot(my_base64_jpgData)
+
+        plt.clf()
+
+        return my_base64_jpgData
