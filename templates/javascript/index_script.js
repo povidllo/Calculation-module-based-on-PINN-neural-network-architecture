@@ -51,7 +51,7 @@ const handle_create_button = async () => {
     // Получаем значения гиперпараметров
     const params = {
         // 'my_model_type': "oscil",
-        'my_model_type': "allencahn",
+        'my_model_type': document.getElementById('equation_type').value,
         'my_model_desc': desc,
 
         // Базовые параметры сети
