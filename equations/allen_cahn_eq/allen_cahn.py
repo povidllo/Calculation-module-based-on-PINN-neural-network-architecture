@@ -100,17 +100,17 @@ class allen_cahn_nn(AbsNeuralNet):
 
 
     class mySpecialDataSet(mDataSetMongo):
-        def __prepare_data(self):
-            '''
-            Загрузка и подготовка данных через внешний модуль
-            main - данные для обучения физического аспекта модели
-            secondary - данные для обучения, путем сравнения с правильными данными
-            secondary_true - правильные данные для secondary
-            '''
-            data = self.data_generator()
-            self.variables_f = data['main'].to(self.device)
-            self.u_data = data['secondary_true'].to(self.device)
-            self.variables = data['secondary'].to(self.device)
+        # def __prepare_data(self):
+        #     '''
+        #     Загрузка и подготовка данных через внешний модуль
+        #     main - данные для обучения физического аспекта модели
+        #     secondary - данные для обучения, путем сравнения с правильными данными
+        #     secondary_true - правильные данные для secondary
+        #     '''
+        #     data = self.data_generator()
+        #     self.variables_f = data['main'].to(self.device)
+        #     self.u_data = data['secondary_true'].to(self.device)
+        #     self.variables = data['secondary'].to(self.device)
 
         def equation(self, u, tx):
             u_tx = torch.autograd.grad(u, tx, torch.ones_like(u), create_graph=True)[0]
@@ -293,13 +293,14 @@ class allen_cahn_nn(AbsNeuralNet):
             current_loss = loss.item()
             self.loss_history.append(current_loss)
 
-            if self.neural_model.data_set[0].calculate_l2_error:
-                l2_error = self.neural_model.data_set[0].calculate_l2_error(
-                            self.config.path_true_data,
-                            self.mymodel,
-                            self.mydevice,
-                            test_data_generator)
-                self.l2_history.append(l2_error)
+            # if self.neural_model.data_set[0].calculate_l2_error:
+            #     l2_error = self.neural_model.data_set[0].calculate_l2_error(
+            #                 self.config.path_true_data,
+            #                 self.mymodel,
+            #                 self.mydevice,
+            #                 test_data_generator)
+            #     self.l2_history.append(l2_error)
+            l2_error = 0
 
             if current_loss < self.best_loss:
                 self.best_loss = current_loss

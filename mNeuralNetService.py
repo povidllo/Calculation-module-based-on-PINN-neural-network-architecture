@@ -34,7 +34,7 @@ class NeuralNetMicroservice:
     ws_manager = ConnectionManager()
 
     async def create_model(self, params: mHyperParams):
-        print(f"params: {params}")
+        print(f"PARAMS: {params}")
         if params.my_model_type is not None and params.my_model_type in self.models_list:
             self.inner_model = (self.models_list[params.my_model_type])()
             await self.inner_model.construct_model(params, self.device)
