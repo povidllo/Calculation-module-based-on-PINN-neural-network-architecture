@@ -238,16 +238,4 @@ ws_ping.onmessage = function(event)
         }
     }
 
-    // if (res.msg_type == 'hahaha') {
-        
-    //     const opt = document.createElement("option");
-    //     opt.value = res.data[0];
-    //     opt.text = res.data[0];
-
-    //     model_list.add(opt, null);
-    // }
 }
-
-// create_btn.addEventListener('click', handle_create_button);
-// document.getElementById('update_params_btn').addEventListener('click', handle_update_params_button);
-// clear_db_btn.addEventListener('click', handle_clear_database);
