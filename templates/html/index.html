@@ -11,6 +11,14 @@
                     <label for="neural_desc">Описание модели:</label>
                     <input type="text" id="neural_desc" placeholder="Описание модели"/>
                 </div>
+                {{equation_type | safe}}
+                <div class="model_name-container">
+                    <label for="equation_type">Уравнение</label>
+                    <select id="equation_type">
+                        <option value="allencahn">AllenCahn</option>
+                        <option value="oscil">Oscilator</option>
+                    </select>
+                </div>
                 <div class="hyperparams-container">
                     <div class="const-hyperparams-container">
                         <h3 class="centered">Гиперпараметры архитектуры</h3>

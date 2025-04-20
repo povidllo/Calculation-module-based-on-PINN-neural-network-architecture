@@ -1,24 +1,21 @@
 from contextlib import asynccontextmanager
-from fastapi import Body
-import json
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
-from fastapi import FastAPI, BackgroundTasks, Request, Depends, WebSocket, Query, Response, APIRouter
-from fastapi.websockets import WebSocketState, WebSocketDisconnect
+from fastapi import (
+    FastAPI, APIRouter, WebSocket, WebSocketDisconnect, Request,
+    Depends, BackgroundTasks, Query, Response, Body
+)
+from fastapi.responses import (
+    HTMLResponse, RedirectResponse, JSONResponse, FileResponse
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from motor.motor_asyncio import AsyncIOMotorClient
 
+import asyncio
 import jinja2
-import io
-import base64
 
-import mTemplate
 from mongo_schemas import *
 from mNeuralNetService import NeuralNetMicroservice
-
-import motor.motor_asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-import asyncio
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -28,172 +25,116 @@ templates = Jinja2Templates(directory="templates")
 async def websocket_endpoint(websocket: WebSocket):
     try:
         await neural_net_manager.ws_manager.connect(websocket, glob_user)
-    except Exception as err:
-        print(f"ws_ping exception {err}")
-
-    while True:
-        try:
+        while True:
+            await asyncio.sleep(0.002)
             data = await websocket.receive_text()
-            await asyncio.sleep(2e-3)
-        except WebSocketDisconnect:
-            print("WebSocketDisconnect {type(websocket)}")
-            neural_net_manager.ws_manager.disconnect(websocket, glob_user)
-        except Exception as err:
-            print(f"cant receive text {err}")
-            return
+    except WebSocketDisconnect:
+        print("WebSocketDisconnect", type(websocket))
+        neural_net_manager.ws_manager.disconnect(websocket, glob_user)
+    except Exception as err:
+        print(f"WebSocket error: {err}")
 
 
 async def get_host():
     return {"cur_host": cur_host}
 
 
-async def create_neural_model_post(params: Optional[mHyperParams] = None):
-    if not params.save_weights_path:
-        params.save_weights_path = "weights/osc_1d.pth"
-
+@router.post("/create_model")
+async def create_neural_model_post(params: mHyperParams = Body(...)):
+    params.save_weights_path = params.save_weights_path or "weights/osc_1d.pth"
     await neural_net_manager.create_model(params)
-
     neural_list = await mNeuralNetMongo.get_all()
 
     table_html = templates.get_template("html/table_template.html").render({"items": neural_list})
-
     letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['model_desc', table_html])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
     return {"resp": "OK"}
 
 
+@router.get("/train")
 async def train_neural_net():
-    res = await neural_net_manager.train_model()
-    return {"result": res}
+    result = await neural_net_manager.train_model()
+    return {"result": result}
 
 
-async def load_model_handler(model_id: Optional[mNeuralNetMongo] = None):
+@router.post("/load_model")
+async def load_model_handler(model_id: mNeuralNetMongo = Body(...)):
     hyper_param_dict = await neural_net_manager.load_nn(model_id)
-
-    print(hyper_param_dict)
-
-    # res = await mNeuralNetMongo.get_item_by_id(model_id)
-    #
-    # optim_dict = await res.optimizer[-1].fetch()
-    # optim_dict = optim_dict.__dict__
-    # return_dict = {**hyper_param_dict, **optim_dict}
-
     return hyper_param_dict
 
 
+@router.get("/")
 async def root(request: Request):
     neural_list = await mNeuralNetMongo.get_all()
 
     table_html = templates.get_template("html/table_template.html").render({"items": neural_list})
     chat_html = templates.get_template("html/chat_template.html").render({})
-
-    if neural_list:
-        # await load_model_handler(neural_list[0].id)
-
-        print(type(neural_list[0]))
-        print(neural_list[0])
-        # await neural_net_manager.load_nn()
+    equation_html = templates.get_template("html/equation_template.html").render({"equation_dict": neural_net_manager.models_list})
 
     return templates.TemplateResponse(
         name="html/index.html",
-        context={"request": request, "table_html": table_html, "chat_html": chat_html}
+        context={
+            "request": request,
+            "table_html": table_html,
+            "chat_html": chat_html,
+            "equation_html": equation_html}
     )
 
 
-async def run_neural_net():
-    base64_encoded_image = await neural_net_manager.run_model()
-
-    loader = jinja2.FileSystemLoader("./templates")
-    env = jinja2.Environment(loader=loader, autoescape=False)
-    table_templ = env.get_template("index.html")
-
-    table_templ = table_templ.render(myImage=base64_encoded_image)
-
-    return HTMLResponse(mTemplate.mtemplate('<script></script>', table_templ, ''))
-
-
+@router.post("/run")
 async def run_neural_net_pict():
-    base64_encoded_image = await neural_net_manager.run_model()
+    encoded_image = await neural_net_manager.run_model()
+    image_html = templates.get_template("html/chat_template.html").render({"image": encoded_image})
 
-    # loader = jinja2.FileSystemLoader("./templates")
-    # env = jinja2.Environment(loader=loader, autoescape=False)
-    # table_templ = env.get_template("index.html")
-    #
-    image_html = templates.get_template("/html/chat_template.html").render({"image": base64_encoded_image})
-    #
     letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['chat_container_id', image_html])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
-    return {"OK"}
+    return {"status": "OK"}
 
 
-
-async def update_train_parameters(params: dict = None):
-
-    if neural_net_manager.inner_model is not None:
+@router.post("/update_train_params")
+async def update_train_parameters(params: dict = Body(...)):
+    if neural_net_manager.inner_model:
         await neural_net_manager.inner_model.update_train_params(params)
         return {"result": "OK"}
-
     return {"result": "No model loaded"}
 
 
+@router.get("/clear_database")
 async def clear_database():
     try:
         print('Starting database cleanup...')
         await clear_all_collections()
         print('Collections cleared')
-
-        # Обновляем таблицу после очистки через перезагрузку страницы
         return RedirectResponse(url="/")
-
     except Exception as e:
         print(f"Error clearing database: {str(e)}")
-        return {f"error {str(e)}"}
+        return {"error": str(e)}
 
 
-def main(main_loop):
-    async def init():
-        await init_beanie(database=client[database_name], document_models=[
-            MongoEstimate,
-            MongoRecord,
-            mOptimizerMongo,
-            mDataSetMongo,
-            mHyperParamsMongo,
-            mNeuralNetMongo,
-            mWeightMongo
-        ])
-
+def main(loop):
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        await init()
+        await init_beanie(database=client[database_name], document_models=[
+            MongoEstimate, MongoRecord, mOptimizerMongo, mDataSetMongo,
+            mHyperParamsMongo, mNeuralNetMongo, mWeightMongo
+        ])
         yield
 
     app = FastAPI(lifespan=lifespan)
 
-    app.add_api_route("/create_model", create_neural_model_post, methods=["POST"])
-    app.add_api_route("/load_model", load_model_handler, methods=["POST"])
-    app.add_api_route("/run", run_neural_net, methods=["GET"])
-    app.add_api_route("/run", run_neural_net_pict, methods=["POST"])
-    app.add_api_route("/train", train_neural_net, methods=["GET"])
-    app.add_api_route("/", root, methods=["GET"])
-    app.add_api_route("/update_train_params", update_train_parameters, methods=["POST"])
-    app.add_api_route("/clear_database", clear_database, methods=["GET"])
-    app.add_api_route("/get_host", get_host, methods=["GET"])
-
+    app.include_router(router)
     app.mount("/static", StaticFiles(directory="templates"), name="static")
 
-    app.include_router(router)
-
     import uvicorn
-
-    config = uvicorn.Config(app, host=cur_host, port=8010, loop=main_loop, access_log=False)
+    config = uvicorn.Config(app, host=cur_host, port=8010, loop=loop, access_log=False)
     server = uvicorn.Server(config)
-    main_loop.run_until_complete(server.serve())
+    loop.run_until_complete(server.serve())
 
 
 if __name__ == '__main__':
-    client = AsyncIOMotorClient("mongodb://" + database_ulr + ":27017")
+    client = AsyncIOMotorClient(f"mongodb://{database_ulr}:27017")
     neural_net_manager = NeuralNetMicroservice()
 
     loop = asyncio.new_event_loop()

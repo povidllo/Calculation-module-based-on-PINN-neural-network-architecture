@@ -1,0 +1,8 @@
+<div class="model_name-container">
+    <label for="equation_type">Equation</label>
+    <select id="equation_type">
+        {%for key in equation_dict %}
+        <option value=key>equation_dict[key]</option>
+        {% endfor %}
+    </select>
+</div>
