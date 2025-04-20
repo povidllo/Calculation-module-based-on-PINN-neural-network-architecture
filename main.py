@@ -1,23 +1,15 @@
 from contextlib import asynccontextmanager
-from fastapi import Body
-import json
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
-from fastapi import FastAPI, BackgroundTasks, Request, Depends, WebSocket, Query, Response, APIRouter
-from fastapi.websockets import WebSocketState, WebSocketDisconnect
+import asyncio
+from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Request, WebSocket, APIRouter
+from fastapi.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
-
-import jinja2
-import io
-import base64
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from mongo_schemas import *
 from mNeuralNetService import NeuralNetMicroservice
 
-import motor.motor_asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-import asyncio
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -69,15 +61,6 @@ async def train_neural_net():
 
 async def load_model_handler(model_id: Optional[mNeuralNetMongo] = None):
     hyper_param_dict = await neural_net_manager.load_nn(model_id)
-
-    print(hyper_param_dict)
-
-    # res = await mNeuralNetMongo.get_item_by_id(model_id)
-    #
-    # optim_dict = await res.optimizer[-1].fetch()
-    # optim_dict = optim_dict.__dict__
-    # return_dict = {**hyper_param_dict, **optim_dict}
-
     return hyper_param_dict
 
 
@@ -87,13 +70,6 @@ async def root(request: Request):
     table_html = templates.get_template("html/table_template.html").render({"items": neural_list})
     chat_html = templates.get_template("html/chat_template.html").render({})
 
-    if neural_list:
-        # await load_model_handler(neural_list[0].id)
-
-        print(type(neural_list[0]))
-        print(neural_list[0])
-        # await neural_net_manager.load_nn()
-
     return templates.TemplateResponse(
         name="html/index.html",
         context={"request": request, "table_html": table_html, "chat_html": chat_html}
@@ -102,13 +78,7 @@ async def root(request: Request):
 
 async def run_neural_net_pict():
     base64_encoded_image = await neural_net_manager.run_model()
-
-    # loader = jinja2.FileSystemLoader("./templates")
-    # env = jinja2.Environment(loader=loader, autoescape=False)
-    # table_templ = env.get_template("index.html")
-    #
     image_html = templates.get_template("/html/chat_template.html").render({"image": base64_encoded_image})
-    #
     letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['chat_container_id', image_html])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
 

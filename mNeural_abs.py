@@ -1,10 +1,8 @@
 from mongo_schemas import *
 import abc
-
 from pymongo import MongoClient
 import gridfs
 import pickle
-import numpy as np
 from bson.objectid import ObjectId
 
 from pinn_init_torch import pinn
@@ -71,31 +69,6 @@ class AbsNeuralNet(abc.ABC):
             await mNeuralNetMongo.m_save(self.neural_model)
         except Exception as exp:
             print('save_optimizer_exp', exp)
-
-    # async def abs_set_dataset(self):
-    #     if not self.neural_model.data_set:
-    #         # Создаем новый датасет
-    #         dataset = self.mySpecialDataSet(
-    #             params={'nu': 3},
-    #             num_dots={
-    #                 "train": 400,
-    #                 "physics": 50
-    #             }
-    #         )
-    #         print('Creating new dataset')
-    #         data = dataset.data_generator()
-    #         # Сохраняем датасет в базу
-    #         await dataset.insert()
-    #
-    #         # Обновляем ссылку на датасет в модели
-    #         self.neural_model.data_set = [dataset]
-    #         await mNeuralNetMongo.m_save(self.neural_model)
-    #
-    #
-    #     await self.neural_model.data_set[0].delete()
-    #     self.neural_model.data_set = [new_dataset]
-    #
-    #     await mNeuralNetMongo.m_save(self.neural_model)
 
     async def abs_load_weights(self):
         weights = None

@@ -1,9 +1,9 @@
 from fastapi import WebSocket
-from mNeural_abs import *
+import torch
+
+from mNeural_abs import ChatMessage, AbsNeuralNet, mHyperParams, mDataSet, mNeuralNetMongo, Optional
 from equations.oscillator_eq.oscillator import oscillator_nn
 from equations.allen_cahn_eq.allen_cahn import allen_cahn_nn
-
-import torch
 
 
 class ConnectionManager:

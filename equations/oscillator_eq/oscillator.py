@@ -38,7 +38,6 @@ from optim_Adam_torch import create_optim
 from pinn_init_torch import pinn
 from equations.oscillator_eq.test_data_generator import generator as test_data_generator
 
-from cfg_main import get_config
 torch.manual_seed(123)
 np.random.seed(44)
 torch.cuda.manual_seed(44)
