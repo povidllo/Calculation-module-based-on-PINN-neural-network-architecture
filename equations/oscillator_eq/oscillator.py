@@ -84,6 +84,11 @@ class oscillator_nn(AbsNeuralNet):
             return t, t_data, t_phys
 
         def data_generator(self):
+            '''
+            x - вся выборка
+            x_data - выборка для обучения путем сравнения с правильными данными
+            x_physics - выборка для обучения физического аспекта модели
+            '''
             x, x_data, x_physics = self.time_generator(
                 self.num_dots["train"],
                 self.num_dots["physics"]
@@ -92,8 +97,8 @@ class oscillator_nn(AbsNeuralNet):
             x_data = torch.FloatTensor(x_data)
             x_physics = torch.FloatTensor(x_physics).requires_grad_(True)
             y = self.oscillator(x).view(-1,1)
-            y_data = y[0:len(x)//2:len(x)//20]
-
+            # y_data = y[0:len(x)//2:len(x)//20]
+            y_data = self.oscillator(x_data).view(-1,1)
             # Сохраняем данные в base64
             buffer = io.BytesIO()
             np.savez_compressed(buffer,
@@ -281,6 +286,9 @@ class oscillator_nn(AbsNeuralNet):
         x, _, _ = test_data_generator()
 
         # Загружаем данные из базы вместо файла
+        # print(self.neural_model.data_set)
+        # print("dataset[0]", self.neural_model.data_set[0])
+        # print("dataset[0].params", self.neural_model.data_set[0].params)
         if 'points_data' not in self.neural_model.data_set[0].params:
             print("Warning: No data found in database, using file")
             y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)

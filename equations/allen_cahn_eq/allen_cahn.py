@@ -159,17 +159,37 @@ class allen_cahn_nn(AbsNeuralNet):
                 return t_data_f, x_data_f
 
         def data_generator(self):
+            '''
+            t_data, x_data - выборка для сравнения с правильными данными (начальные и граничные условия)
+            u_data = f(t_data, x_data)
+            t_data_f, x_data_f - выборка для обучения физического аспекта модели
+            '''
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             t_data, x_data, u_data, t_data_f, x_data_f = self.ac_generator(
                 self.num_dots["train"],
                 self.num_dots["physics"]
             )
-            variables = torch.FloatTensor(np.concatenate((t_data, x_data), axis=1)).to(device)
-            variables_f = torch.FloatTensor(np.concatenate((t_data_f, x_data_f), axis=1)).to(device)
-            variables_f.requires_grad = True
+
+            x_pairs = torch.FloatTensor(np.concatenate((t_data, x_data), axis=1)).to(device)
+            x_f = torch.FloatTensor(np.concatenate((t_data_f, x_data_f), axis=1)).to(device)
+            x_f.requires_grad = True
             u_data = torch.FloatTensor(u_data).to(device)
+
+
+            # buffer = io.BytesIO()
+            # np.savez_compressed(buffer,
+            #                     # x=x.cpu().detach().numpy(),
+            #                     # t=t.cpu().deatch().numpy(),
+            #                     x_data=x_pairs.cpu().detach().numpy(),
+            #                     x_physics=x_f.cpu().detach().numpy(),
+            #                     # y=y.cpu().detach().numpy(),
+            #                     y_data=u_data.cpu().detach().numpy()
+            #                     )
+            # encoded_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            # self.params['points_data'] = encoded_data
+
             # return {'train': variables_f, 'boundary': variables, 'boundary_true': u_data}
-            return {'main': variables_f, 'secondary': variables, 'secondary_true': u_data}
+            return {'main': x_f, 'secondary': x_pairs, 'secondary_true': u_data}
 
         def loss_calculator(self, u_pred_f, x_physics, u_pred, y_data):
             physics = self.equation(u_pred_f, x_physics)
@@ -314,43 +334,48 @@ class allen_cahn_nn(AbsNeuralNet):
         print(f"Оптимизатор: {self.torch_optimizer.__class__.__name__}")
 
     async def calc(self):
-        x, _, _ = test_data_generator()
+        test_data, [t, x], [N, T] = test_data_generator()
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        test_variables = torch.FloatTensor(test_data).to(device)
+        with torch.no_grad():
+            u_pred = self.mymodel(test_variables)
+        u_pred = u_pred.cpu().numpy().reshape(N, T)
 
-        # Загружаем данные из базы вместо файла
-        if 'points_data' not in self.neural_model.data_set[0].params:
-            print("Warning: No data found in database, using file")
-            y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)
-        else:
-            decoded_data = base64.b64decode(self.neural_model.data_set[0].params['points_data'])
-            buffer = io.BytesIO(decoded_data)
-            data = np.load(buffer)
-            y = data['y']
+        self.neural_model.hyper_param.path_true_data = "/equations/allen_cahn_eq/AC.mat"
+        data = scipy.io.loadmat(sys.path[0] + self.neural_model.hyper_param.path_true_data)
+        Exact = np.real(data['uu'])
+        err = u_pred - Exact
 
-        u_pred = self.mymodel(x)
-        u_pred = u_pred.cpu().detach().numpy()
-        true = y
+        err = np.linalg.norm(err, 2) / np.linalg.norm(Exact, 2)
+        print(f"L2 Relative Error: {err}")
 
-        plt.figure(figsize=(10, 6))
+        # Создаем сетку для 3D графиков
+        T_mesh, X_mesh = np.meshgrid(t, x)
 
-        # Преобразуем x в numpy array если это тензор
-        x_plot = x.cpu().numpy() if torch.is_tensor(x) else x
+        # 3D визуализация предсказанного решения
+        fig = plt.figure(figsize=(18, 6))
 
-        # Строим оба графика
-        plt.plot(x_plot, true, 'b-', linewidth=2, label='Истинное решение')
-        plt.plot(x_plot, u_pred, 'r--', linewidth=2, label='Предсказание модели')
+        # Первый субплот - предсказанное решение
+        ax1 = fig.add_subplot(1, 2, 1, projection='3d')
+        surf1 = ax1.plot_surface(T_mesh, X_mesh, u_pred, cmap='jet',
+                                 linewidth=0, antialiased=True)
+        fig.colorbar(surf1, ax=ax1, shrink=0.5)
+        ax1.set_xlabel('Время (t)')
+        ax1.set_ylabel('Пространство (x)')
+        ax1.set_zlabel('u(t,x)')
+        ax1.set_title('Предсказанное решение')
+        ax1.set_zlim(-1, 1)
 
-        # Настройки графика
-        plt.xlabel('Временная координата (t)', fontsize=12)
-        plt.ylabel('Значение y', fontsize=12)
-        plt.title('Сравнение предсказаний модели с эталонным решением', fontsize=14)
-        plt.legend(loc='upper right', fontsize=12)
-        plt.grid(True, linestyle='--', alpha=0.7)
-
-        # Рассчитываем и выводим ошибку
-        error = np.linalg.norm(u_pred - true, 2) / np.linalg.norm(true, 2)
-        plt.text(0.05, 0.95, f'Средняя абсолютная ошибка: {error:.4f}',
-                transform=plt.gca().transAxes, fontsize=12,
-                verticalalignment='top', bbox=dict(facecolor='white', alpha=0.9))
+        # Второй субплот - истинное решение
+        ax2 = fig.add_subplot(1, 2, 2, projection='3d')
+        surf2 = ax2.plot_surface(T_mesh, X_mesh, Exact, cmap='jet',
+                                 linewidth=0, antialiased=True)
+        fig.colorbar(surf2, ax=ax2, shrink=0.5)
+        ax2.set_xlabel('Время (t)')
+        ax2.set_ylabel('Пространство (x)')
+        ax2.set_zlabel('u(t,x)')
+        ax2.set_title('Истинное решение')
+        ax2.set_zlim(-1, 1)
 
         plt.tight_layout()
 
