@@ -1,33 +1,8 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from mongo_schemas import *
-from mNeural_abs import *
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import asyncio
-import jinja2
 import io
 import base64
-import abc
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-
-from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
-
-
-from torchviz import make_dot
-
-from torchvision import models
-from torchsummary import summary
-import hiddenlayer as hl
-
 from tqdm import tqdm
 import torch
 import matplotlib.pyplot as plt
@@ -37,11 +12,13 @@ import numpy as np
 from optim_Adam_torch import create_optim
 from pinn_init_torch import pinn
 from equations.oscillator_eq.test_data_generator import generator as test_data_generator
+from mongo_schemas import *
+from mNeural_abs import *
+
 
 torch.manual_seed(123)
 np.random.seed(44)
 torch.cuda.manual_seed(44)
-# print(get_config().epochs)
 
 class oscillator_nn(AbsNeuralNet):
     mymodel = None
@@ -53,7 +30,7 @@ class oscillator_nn(AbsNeuralNet):
     best_loss = float('inf')
     best_epoch = 0
 
-    class mySpecialDataSet(mDataSetMongo):
+    class mySpecialDataSet(AbsNeuralNet.AbsDataSet):
         def oscillator(self, x, d=2, w0=20):
             '''
             Решение уравнения, которое должна получить нейросеть
@@ -84,9 +61,9 @@ class oscillator_nn(AbsNeuralNet):
 
         def data_generator(self):
             '''
-            x - вся выборка
-            x_data - выборка для обучения путем сравнения с правильными данными
-            x_physics - выборка для обучения физического аспекта модели
+            x - Вся выборка
+            x_data - Выборка для обучения путем сравнения с правильными данными
+            x_physics - Выборка для обучения физического аспекта модели
             '''
             x, x_data, x_physics = self.time_generator(
                 self.num_dots["train"],
@@ -117,11 +94,11 @@ class oscillator_nn(AbsNeuralNet):
 
             return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 
-
-        def equation(self,yhp, x_physics, d=2, w0=20):
+        def equation(self, args):
             '''
             Уравнение затухающего гармонического осциллятора
             '''
+            yhp, x_physics, d, w0 = args.values()
             mu = d * 2
             k = w0 ** 2
             dx  = torch.autograd.grad(yhp, x_physics, torch.ones_like(yhp), create_graph=True)[0]
@@ -129,16 +106,15 @@ class oscillator_nn(AbsNeuralNet):
             physics = dx2 + mu*dx + k*yhp
             return physics
 
+        def loss_calculator(self, u_pred_f, x_physics, u_pred, y_data):
+            loss1 = torch.mean((u_pred-y_data)**2)# use mean squared error
 
-        def loss_calculator(self,yhp, x_physics, yh, y_data):
-            loss1 = torch.mean((yh-y_data)**2)# use mean squared error
-
-            physics = self.equation(yhp, x_physics)
+            args = {'yhp':u_pred_f, 'x_physics': x_physics, 'd':2, 'w0':20}
+            physics = self.equation(args)
             loss2 = (1e-4)*torch.mean(physics**2)
 
             loss = loss1 + loss2
             return loss
-
 
         def calculate_l2_error(self, path_true_data, model, device, test_data_generator):
             x, _, _ = test_data_generator()
@@ -195,7 +171,6 @@ class oscillator_nn(AbsNeuralNet):
         self.variables_f = data['main'].to(self.mydevice)
         self.u_data = data['secondary_true'].to(self.mydevice)
         self.variables = data['secondary'].to(self.mydevice)
-
 
     async def set_optimizer(self, opti = None):
         if opti is None:
@@ -284,10 +259,6 @@ class oscillator_nn(AbsNeuralNet):
     async def calc(self):
         x, _, _ = test_data_generator()
 
-        # Загружаем данные из базы вместо файла
-        # print(self.neural_model.data_set)
-        # print("dataset[0]", self.neural_model.data_set[0])
-        # print("dataset[0].params", self.neural_model.data_set[0].params)
         if 'points_data' not in self.neural_model.data_set[0].params:
             print("Warning: No data found in database, using file")
             y = np.load(sys.path[0] + self.neural_model.hyper_param.path_true_data)

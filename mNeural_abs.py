@@ -15,6 +15,39 @@ class AbsNeuralNet(abc.ABC):
     db = client.testDB
     fs = gridfs.GridFS(db)
 
+    class AbsDataSet(mDataSetMongo):
+        @abc.abstractmethod
+        def data_generator(self):
+            '''
+            Генерация датаcета для обучения.
+            Возвращает {
+             'main':x_physics, - Выборка для обучения физического аспекта модели
+             'secondary':x_data, - Выборка для обучения путем сравнения с правильными данными
+             'secondary_true':y_data - Правильные данные для x_data
+             }
+            '''
+            pass
+
+        @abc.abstractmethod
+        def equation(self, args):
+            '''
+            Уравнение для обучения.
+            args - Аргументы уравнения
+            '''
+            pass
+
+        @abc.abstractmethod
+        def loss_calculator(self, u_pred_f, x_physics, u_pred, y_data):
+            '''
+            Считает значение loss.
+            u_pred_f - Предсказание модели на x_physics, подставляется в дифф. ур-е
+            x_physics - Выборка для обучения физического аспекта модели
+            u_pred - Предсказание модели на y_data, подставляется в MSE
+            y_data - Выборка для обучения путем сравнения с правильными данными
+            '''
+            pass
+
+
     async def create_model(self, params : mHyperParams):
         # Создаем гиперпараметры и сохраняем их
         hyper_params = mHyperParamsMongo(**params.model_dump())
@@ -58,6 +91,8 @@ class AbsNeuralNet(abc.ABC):
             print('gridfs id', ret_id)
         except Exception as exp:
             print('save_weights_exp', exp)
+
+
 
     async def abs_set_optimizer(self):
         try:

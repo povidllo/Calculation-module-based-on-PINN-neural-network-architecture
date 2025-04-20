@@ -34,8 +34,9 @@ class allen_cahn_nn(AbsNeuralNet):
     best_epoch = 0
 
 
-    class mySpecialDataSet(mDataSetMongo):
-        def equation(self, u, tx):
+    class mySpecialDataSet(AbsNeuralNet.AbsDataSet):
+        def equation(self, args):
+            u, tx = args.values()
             u_tx = torch.autograd.grad(u, tx, torch.ones_like(u), create_graph=True)[0]
             u_t = u_tx[:, 0:1]
             u_x = u_tx[:, 1:2]
@@ -101,7 +102,8 @@ class allen_cahn_nn(AbsNeuralNet):
             return {'main': x_f, 'secondary': x_pairs, 'secondary_true': u_data}
 
         def loss_calculator(self, u_pred_f, x_physics, u_pred, y_data):
-            physics = self.equation(u_pred_f, x_physics)
+            args = {'u_pred_f': u_pred_f, 'x_physics': x_physics}
+            physics = self.equation(args)
             loss2 = torch.mean(physics ** 2)
 
             loss_u = torch.mean((u_pred - y_data) ** 2)  # use mean squared error
