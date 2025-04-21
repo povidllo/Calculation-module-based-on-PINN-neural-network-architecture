@@ -141,7 +141,7 @@ class AbsNeuralNet(abc.ABC):
         load_nn = await mNeuralNetMongo.get(in_model.stored_item_id, fetch_links=True)
 
         self.neural_model = load_nn
-        self.neural_model.records = []
+        # self.neural_model.records = []
         await self.set_dataset()
 
         # Загружаем loss_graph из записей модели
@@ -188,12 +188,12 @@ class AbsNeuralNet(abc.ABC):
         # Пересоздаем оптимизатор в PyTorch
         await self.set_optimizer(optimizer)
     
-    def add_to_loss_graph(self, time, loss, between):
+    def add_to_loss_graph(self, time, loss, epoch):
         if len(self.loss_graph) == 0:
             self.loss_graph.append([time, 0, loss])
         else:
-            prev = self.loss_graph[-1]
-            self.loss_graph.append([prev[0] + time, prev[1] + between, loss])
+            # prev = self.loss_graph[-1]
+            self.loss_graph.append([time, epoch, loss])
     
     async def set_loss_graph(self):
         for record in self.neural_model.records:

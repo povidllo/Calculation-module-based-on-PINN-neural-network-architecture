@@ -8,6 +8,7 @@ import torch
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
+import time
 
 from optim_Adam_torch import create_optim
 from pinn_init_torch import pinn
@@ -226,6 +227,7 @@ class oscillator_nn(AbsNeuralNet):
     async def train(self):
         self.config = self.neural_model.hyper_param
         epochs = self.config.epochs
+        start_time = time.time()
         for epoch in tqdm(range(epochs)):
             self.torch_optimizer.zero_grad()
             u_pred = self.mymodel(self.variables)
@@ -250,9 +252,11 @@ class oscillator_nn(AbsNeuralNet):
                 self.best_loss = current_loss
                 self.best_epoch = epoch
 
-            if(epoch % 400 == 0):
-                self.add_to_loss_graph(0, current_loss, 400)
+            if(epoch % 400 == 0 and epoch != epochs-1):
+                self.add_to_loss_graph(time.time() - start_time, current_loss, epoch)
                 print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
+            if(epoch == epochs - 1):
+                self.add_to_loss_graph(time.time() - start_time, current_loss, epoch)
 
         await self.save_weights(sys.path[0] + self.config.save_weights_path)
         await self.set_loss_graph()
