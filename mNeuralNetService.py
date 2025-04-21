@@ -36,6 +36,9 @@ class NeuralNetMicroservice:
     async def create_model(self, params: mHyperParams):
         print(f"params: {params}")
         model_type = params.my_model_type
+
+        # await self.init_chat()
+
         if model_type and model_type in self.models_list:
             self.inner_model = self.models_list[model_type]()
             await self.inner_model.construct_model(params, self.device)
@@ -67,3 +70,12 @@ class NeuralNetMicroservice:
         if self.inner_model:
             return await self.inner_model.calc()
         return b''
+
+    async def init_chat(self) -> None:
+        ...
+
+    async def get_chat(self) -> list:
+        ...
+
+    async def update_chat(self, body: Optional[str] = None) -> None:
+        ...
