@@ -11,11 +11,14 @@ from fastapi.templating import Jinja2Templates
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
+import json
 import asyncio
 import jinja2
 
 from mongo_schemas import *
 from mNeuralNetService import NeuralNetMicroservice
+
+from optimizer_setings import optimizer_dict
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -119,12 +122,17 @@ async def clear_database():
 @router.post("/update_optimizer_params")
 async def update_optimizer_params(optimizer_name: dict = Body(...)):
 
-    optimizer_params_html = templates.get_template(f"html/{optimizer_name['optimizer_name'] + "_optimizer_template.html"}").render({})
+    opti_name = optimizer_name['optimizer_name']
+
+    optimizer_params_html = (templates.get_template(f"html/optimizer_template.html").render({"optimizer_list": optimizer_dict[opti_name]}))
 
     letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['optimizer-params', optimizer_params_html])
     await neural_net_manager.ws_manager.send_personal_message_json(letter)
 
-    return {"status": "OK"}
+    opti_id_list = [i['id'] for i in optimizer_dict[opti_name]]
+
+
+    return {"list_of_id": opti_id_list}
 
 
 def main(loop):

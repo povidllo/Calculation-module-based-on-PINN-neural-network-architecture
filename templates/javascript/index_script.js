@@ -76,7 +76,17 @@ const handleCreateButton = async () => {
 
 const handleUpdateParamsButton = async () => {
     const optimizer = document.getElementById('optimizer')?.value || 'Adam';
-    const params = await returnParams;
+    const params = {};
+    optimizer_params_list.forEach((item) => {
+        const input = document.getElementById(item);
+        if (input.type === 'checkbox') {
+            params[item] = input.checked;
+        } else if (item === 'betas') {
+            params[item] = input.value.split(',').map(x => parseFloat(x.trim()));
+        } else {
+            params[item] = parseFloat(input.value);
+        }
+    })
 
     const updateData = {
         epochs: parseInt(document.getElementById('epochs')?.value) || 100,
@@ -103,13 +113,15 @@ const handleSendCommand = async () => {
     }
 };
 
+var optimizer_params_list;
+
 // --- Обновление параметров формы ---
-const updateOptimizerParams = () => {
+const updateOptimizerParams = async () => {
     const val = document.getElementById("optimizer").value;
 
-    const response = callBffPost("update_optimizer_params", {optimizer_name: val});
-
-    console.log(response);
+    const response = await callBffPost("update_optimizer_params", {optimizer_name: val});
+    optimizer_params_list = response.list_of_id;
+    console.log("response:", response);
 };
 
 // --- Инициализация при загрузке страницы ---
