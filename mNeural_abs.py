@@ -14,6 +14,7 @@ class AbsNeuralNet(abc.ABC):
     client = MongoClient("mongodb://localhost")
     db = client.testDB
     fs = gridfs.GridFS(db)
+    loss_graph = []
 
     class AbsDataSet(mDataSetMongo):
         @abc.abstractmethod
@@ -143,6 +144,12 @@ class AbsNeuralNet(abc.ABC):
         self.neural_model.records = []
         await self.set_dataset()
 
+        # Загружаем loss_graph из записей модели
+        for record in load_nn.records:
+            if record.tag == 'loss_graph':
+                self.loss_graph = record.record['loss_graph']
+                break
+
         self.mydevice = in_device
         self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
         await self.set_optimizer()
@@ -180,6 +187,29 @@ class AbsNeuralNet(abc.ABC):
         
         # Пересоздаем оптимизатор в PyTorch
         await self.set_optimizer(optimizer)
+    
+    def add_to_loss_graph(self, time, loss, between):
+        if len(self.loss_graph) == 0:
+            self.loss_graph.append([time, 0, loss])
+        else:
+            prev = self.loss_graph[-1]
+            self.loss_graph.append([prev[0] + time, prev[1] + between, loss])
+    
+    async def set_loss_graph(self):
+        for record in self.neural_model.records:
+            if record.tag == 'loss_graph':
+                # self.loss_graph = record.record['loss_graph']
+                record.record['loss_graph'] = self.loss_graph
+                await mNeuralNetMongo.m_save(self.neural_model)
+                return
+            
+        # Создаем запись с loss_graph
+        loss_record = MongoRecord(record={'loss_graph': self.loss_graph}, tag='loss_graph')
+        await loss_record.insert()
+        
+        # Добавляем запись к модели
+        self.neural_model.records.append(loss_record)
+        await mNeuralNetMongo.m_save(self.neural_model)
 
     @abc.abstractmethod
     async def construct_model(self, params : mHyperParams, in_device): pass

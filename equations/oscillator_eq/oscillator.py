@@ -251,9 +251,12 @@ class oscillator_nn(AbsNeuralNet):
                 self.best_epoch = epoch
 
             if(epoch % 400 == 0):
+                self.add_to_loss_graph(0, current_loss, 400)
                 print(f"Epoch {epoch}, Train loss: {current_loss}, L2: {l2_error if self.neural_model.data_set[0].calculate_l2_error else 0}")
 
         await self.save_weights(sys.path[0] + self.config.save_weights_path)
+        await self.set_loss_graph()
+        print("loss data " + str(self.loss_graph))
         print(f"Оптимизатор: {self.torch_optimizer.__class__.__name__}")
 
     async def calc(self):

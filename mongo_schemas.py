@@ -32,6 +32,7 @@ class ChatMessage(BaseModel):
 
 class mRecord(BaseModel):
     record: Optional[dict] = None
+    tag: Optional[str] = None #loss_graph - data for plot
 
 class mOptimizer(BaseModel):
     method: Optional[str] = None
