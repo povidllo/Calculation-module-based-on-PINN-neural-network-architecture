@@ -70,7 +70,8 @@ async def root(request: Request):
 
     table_html = templates.get_template("html/table_template.html").render({"items": neural_list})
     chat_html = templates.get_template("html/chat_template.html").render({})
-    equation_html = templates.get_template("html/equation_template.html").render({"equation_dict": neural_net_manager.models_list})
+    equation_type_html = templates.get_template("html/equation_template.html").render({"equation_dict": neural_net_manager.models_list})
+    hyperparams_html = templates.get_template("html/hyperparams_template.html").render({})
 
     return templates.TemplateResponse(
         name="html/index.html",
@@ -78,7 +79,9 @@ async def root(request: Request):
             "request": request,
             "table_html": table_html,
             "chat_html": chat_html,
-            "equation_html": equation_html}
+            "equation_type_html": equation_type_html,
+            "hyperparams_html": hyperparams_html
+        }
     )
 
 
@@ -111,6 +114,17 @@ async def clear_database():
     except Exception as e:
         print(f"Error clearing database: {str(e)}")
         return {"error": str(e)}
+
+
+@router.post("/update_optimizer_params")
+async def update_optimizer_params(optimizer_name: dict = Body(...)):
+
+    optimizer_params_html = templates.get_template(f"html/{optimizer_name['optimizer_name'] + "_optimizer_template.html"}").render({})
+
+    letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['optimizer-params', optimizer_params_html])
+    await neural_net_manager.ws_manager.send_personal_message_json(letter)
+
+    return {"status": "OK"}
 
 
 def main(loop):

@@ -3,63 +3,25 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/static/style/index_style.css">
+        <link rel="icon" href="static/favicon.ico" type="image/x-icon">
     </head>
     <body>
         <div class="main-container">
             <div class="left-container">
                 <div class="input-group">
-                    <label for="neural_desc">Описание модели:</label>
-                    <input type="text" id="neural_desc" placeholder="Описание модели"/>
+                    <label for="neural_desc">Model description:</label>
+                    <input type="text" id="neural_desc" placeholder="Model description"/>
                 </div>
-                {{equation_type | safe}}
-                <div class="model_name-container">
-                    <label for="equation_type">Уравнение</label>
-                    <select id="equation_type">
-                        <option value="allencahn">AllenCahn</option>
-                        <option value="oscil">Oscilator</option>
-                    </select>
-                </div>
-                <div class="hyperparams-container">
-                    <div class="const-hyperparams-container">
-                        <h3 class="centered">Гиперпараметры архитектуры</h3>
-                        <div class="param-group">
-                            <label for="input_dim">Input Dimension:</label>
-                            <input type="number" id="input_dim" placeholder="1"/>
-                        </div>
-                        <div class="param-group">
-                            <label for="output_dim">Output Dimension:</label>
-                            <input type="number" id="output_dim" placeholder="1"/>
-                        </div>
-                        <div class="param-group">
-                            <label for="hidden_sizes">Hidden Sizes (через запятую):</label>
-                            <input type="text" id="hidden_sizes" placeholder="32,32,32"/>
-                        </div>
-                    </div>
-
-                    <div class="fourier-params">
-                        <h3 class="centered">Параметры Фурье</h3>
-                        <div class="param-group checkbox-group">
-                            <label for="fourier">Использовать Фурье</label>
-                            <input type="checkbox" id="fourier"/>
-                        </div>
-                        <div class="param-group">
-                            <label for="finput_dim">Fourier Input Dimension:</label>
-                            <input type="number" id="finput_dim" placeholder="Optional"/>
-                        </div>
-                        <div class="param-group">
-                            <label for="fourier_scale">Fourier Scale:</label>
-                            <input type="number" id="fourier_scale" placeholder="Optional"/>
-                        </div>
-                    </div>
-                </div>
+                {{equation_type_html | safe}}
+                {{hyperparams_html | safe}}
             </div>
 
             <div class="right-container">
                 <div class="train-parameters">
                     <h3 class="centered">Train Parameters</h3>
                     <div class="param-group">
-                        <label for="epochs">Количество эпох:</label>
-                        <input type="text" id="epochs" placeholder="Количество эпох"/>
+                        <label for="epochs">Number of epochs:</label>
+                        <input type="text" id="epochs" placeholder="Number of epochs"/>
                     </div>
                     <!-- <div class="param-group">
                         <label for="optimizer">Оптимизатор:</label>
@@ -70,12 +32,12 @@
                         <input type="text" id="optimizer_lr" placeholder="Оптимизатор learning rate"/>
                     </div> -->
                     <div class="param-group">
-                    <label for="optimizer">Оптимизатор:</label>
+                    <label for="optimizer">Optimizer:</label>
                     <select id="optimizer" onchange="updateOptimizerParams()">
-                        <option value="Adam">Adam</option>
-                        <option value="SGD">SGD</option>
-                        <option value="RMSprop">RMSprop</option>
-                        <option value="Adagrad">Adagrad</option>
+                        <option value="adam">Adam</option>
+                        <option value="sgd">SGD</option>
+                        <option value="rmsprop">RMSprop</option>
+                        <option value="adagrad">Adagrad</option>
                     </select>
                     </div>
 
@@ -84,13 +46,13 @@
                     </div>
 
                     <div class="button-container">
-                        <input type="button" value="Update Parameters" class="primary-button" onclick="handle_update_params_button()"/>
+                        <input type="button" value="Update Parameters" class="primary-button" onclick="handleUpdateParamsButton()"/>
                     </div>
                 </div>
                 
                 <div class="button-container">
-                    <input type="button" value="Create" id="create_btn" class="primary-button" onclick="handle_create_button()"/>
-                    <input type="button" value="Clear Database" class="danger-button" id="clear_db_btn" onclick="handle_clear_database()"/>
+                    <input type="button" value="Create" id="create_btn" class="primary-button" onclick="handleCreateButton()"/>
+                    <input type="button" value="Clear Database" class="danger-button" id="clear_db_btn" onclick="handleClearDatabase()"/>
                 </div>
                 
                 <!-- <div id="model_desc"> -->

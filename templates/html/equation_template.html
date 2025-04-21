@@ -2,7 +2,7 @@
     <label for="equation_type">Equation</label>
     <select id="equation_type">
         {%for key in equation_dict %}
-        <option value=key>equation_dict[key]</option>
+        <option value="{{equation_dict[key]}}">{{key}}</option>
         {% endfor %}
     </select>
 </div>
