@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/static/style/index_style.css">
+        <link rel="icon" href="static/favicon.ico" type="image/x-icon">
     </head>
     <body>
         <div class="main-container">
@@ -51,14 +52,16 @@
                         </div>
                     </div>
                 </div>
+                {{equation_type_html | safe}}
+                {{hyperparams_html | safe}}
             </div>
 
             <div class="right-container">
                 <div class="train-parameters">
                     <h3 class="centered">Train Parameters</h3>
                     <div class="param-group">
-                        <label for="epochs">Количество эпох:</label>
-                        <input type="text" id="epochs" placeholder="Количество эпох"/>
+                        <label for="epochs">Number of epochs:</label>
+                        <input type="text" id="epochs" placeholder="Number of epochs"/>
                     </div>
                     <!-- <div class="param-group">
                         <label for="optimizer">Оптимизатор:</label>
@@ -69,7 +72,7 @@
                         <input type="text" id="optimizer_lr" placeholder="Оптимизатор learning rate"/>
                     </div> -->
                     <div class="param-group">
-                    <label for="optimizer">Оптимизатор:</label>
+                    <label for="optimizer">Optimizer:</label>
                     <select id="optimizer" onchange="updateOptimizerParams()">
                         <option value="Adam">Adam</option>
                         <option value="SGD">SGD</option>
@@ -83,13 +86,13 @@
                     </div>
 
                     <div class="button-container">
-                        <input type="button" value="Update Parameters" class="primary-button" onclick="handle_update_params_button()"/>
+                        <input type="button" value="Update Parameters" class="primary-button" onclick="handleUpdateParamsButton()"/>
                     </div>
                 </div>
                 
                 <div class="button-container">
-                    <input type="button" value="Create" id="create_btn" class="primary-button" onclick="handle_create_button()"/>
-                    <input type="button" value="Clear Database" class="danger-button" id="clear_db_btn" onclick="handle_clear_database()"/>
+                    <input type="button" value="Create" id="create_btn" class="primary-button" onclick="handleCreateButton()"/>
+                    <input type="button" value="Clear Database" class="danger-button" id="clear_db_btn" onclick="handleClearDatabase()"/>
                 </div>
                 
                 <!-- <div id="model_desc"> -->
