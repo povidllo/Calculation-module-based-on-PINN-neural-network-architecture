@@ -1,10 +1,9 @@
 from fastapi import WebSocket
-import asyncio
-import base64
 import torch
 
-from mNeural_abs import *
-from oscillator import oscillator_nn
+from mNeural_abs import ChatMessage, AbsNeuralNet, mHyperParams, mDataSet, mNeuralNetMongo, Optional
+from equations.oscillator_eq.oscillator import oscillator_nn
+from equations.allen_cahn_eq.allen_cahn import allen_cahn_nn
 
 
 class ConnectionManager:
@@ -27,20 +26,15 @@ class ConnectionManager:
 
 
 class NeuralNetMicroservice:
-    def __init__(self):
-        self.inner_model: AbsNeuralNet | None = None
-        self.models_list = {'oscil': oscillator_nn}
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.ws_manager = ConnectionManager()
+    inner_model: AbsNeuralNet = None
+    models_list = {'oscil': oscillator_nn, 'allencahn': allen_cahn_nn}
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    ws_manager = ConnectionManager()
 
     async def create_model(self, params: mHyperParams):
-        print(f"params: {params}")
-        model_type = params.my_model_type
-
-        # await self.init_chat()
-
-        if model_type and model_type in self.models_list:
-            self.inner_model = self.models_list[model_type]()
+        print(f"PARAMS: {params}")
+        if params.my_model_type is not None and params.my_model_type in self.models_list:
+            self.inner_model = (self.models_list[params.my_model_type])()
             await self.inner_model.construct_model(params, self.device)
 
     async def train_model(self):

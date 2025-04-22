@@ -8,17 +8,11 @@ from fastapi.responses import (
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
 from motor.motor_asyncio import AsyncIOMotorClient
-
-import json
-import asyncio
-import jinja2
 
 from mongo_schemas import *
 from mNeuralNetService import NeuralNetMicroservice
 
-from optimizer_setings import optimizer_dict
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
