@@ -6,14 +6,16 @@ html {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+#optimizer-selector {
     width: 185px;
     height: 24px;
     flex-shrink: 0;
     border-radius: 4px;
     border: 1px solid #083384;
-    padding: 5px;
+    padding-left: 5px;
     margin: 2px 0px 8px 0px;
+    background: #FAFAFF;
 }
 
 input[type="button"] {
@@ -112,6 +114,19 @@ h1 {
     border: 2px solid #083384;
     background: #FAFAFF;
 }
+
+/* #optimizer-selector {
+    width: 185px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    border: 1px solid #083384;
+    padding: 5px;
+    margin: 2px 0px 8px 0px;
+    background-color: white;
+    color: #083384;
+    cursor: pointer;
+} */
 
 .checkbox-group {
     margin-bottom: 20px;

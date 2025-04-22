@@ -58,7 +58,12 @@
                     </div>
                     <div class="param-group">
                         <label for="optimizer">Оптимизатор</label>
-                        <input type="text" id="optimizer" />
+                        <select id="optimizer-selector">
+                            <option value="adam">Adam</option>
+                            <option value="sgd">SGD</option>
+                            <option value="rmsprop">RMSprop</option>
+                            <option value="adagrad">Adagrad</option>
+                        </select>
                     </div>
                     <div class="param-group">
                         <label for="optimizer_lr">Learning rate</label>
