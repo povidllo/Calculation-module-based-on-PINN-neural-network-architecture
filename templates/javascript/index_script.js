@@ -5,79 +5,10 @@ const fetchJSON = async (url, options) => {
     const response = await fetch(url, {
         mode: 'cors',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body_item)
-    }).then((response) => response.json())
-}
-
-async function call_bff_get(path){
-    return await fetch(base_url+path, {
-        method: 'GET',
-        mode: 'cors',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    }).then((response) => response.json())
-}
-
-const handle_load_button = async () => {
-    const selectElement = document.getElementById("model_select");
-    const selectedModelId = selectElement.value;
-
-    const response = await call_bff_post("load_model", { "stored_item_id": selectedModelId });
-}
-
-const handle_load_model_list = async() => {
-    value = model_list.value;
-    console.log(value);
-
-    const a = await call_bff_post('load_model', {"value": value});
-
-    console.log('response: ', a);
-}
-
-const handle_train_button = async (nn_id) => {
-    const a = await call_bff_get('train')
-}
-
-const handle_run_button = async (nn_id) => {
-    const a = await call_bff_post('run', {})
-}
-
-const handle_create_button = async () => {
-    const desc = document.getElementById('neural_desc').value;
-
-    // Получаем значения гиперпараметров
-    const params = {
-        // 'my_model_type': "oscil",
-        'my_model_type': document.getElementById('equation_type').value,
-        'my_model_desc': desc,
-
-        // Базовые параметры сети
-        'input_dim': parseInt(document.getElementById('input_dim').value) || 1,
-        'output_dim': parseInt(document.getElementById('output_dim').value) || 1,
-        'hidden_sizes': document.getElementById('hidden_sizes').value ?
-            document.getElementById('hidden_sizes').value.split(',').map(x => parseInt(x.trim())) :
-            [32, 32, 32],
-
-        // Параметры Фурье
-        'Fourier': document.getElementById('fourier').checked,
-        'FinputDim': parseInt(document.getElementById('finput_dim').value) || null,
-        'FourierScale': parseFloat(document.getElementById('fourier_scale').value) || null,
-
-        // Путь к данным
-        'path_true_data': "/data/OSC.npy",
-
-        'epochs': parseInt(document.getElementById('epochs').value) || 100,
-        // 'my_model_type': "oscil"
-    };
-
-    const a = await call_bff_post('create_model', params);
-
-    console.log('pass: ', a);
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+    });
+    return response.json();
 };
 
 const callBffPost = (path, body) => fetchJSON(`${BASE_URL}${path}`, {

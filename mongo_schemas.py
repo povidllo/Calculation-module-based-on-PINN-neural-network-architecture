@@ -3,6 +3,8 @@ from fastapi import Body, UploadFile
 from pydantic import BaseModel, ConfigDict
 from beanie import Document, Indexed, init_beanie, Link, WriteRules
 import fastapi_jsonrpc as jsonrpc
+from collections.abc import Callable, Awaitable
+import abc
 
 cur_host = 'localhost'
 glob_user = 'andy'
@@ -150,6 +152,13 @@ class mNeuralNetMongo(mNeuralNet, Document):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+
+
+
+
+
 
 class mEstimate(BaseModel):
     file_id : Optional[str] = None

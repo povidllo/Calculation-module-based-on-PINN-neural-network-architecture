@@ -9,48 +9,8 @@
         <div class="main-container">
             <div class="left-container">
                 <div class="input-group">
-                    <label for="neural_desc">Описание модели:</label>
-                    <input type="text" id="neural_desc" placeholder="Описание модели"/>
-                </div>
-                <div class="model_name-container">
-                    <label for="equation_type">Уравнение</label>
-                    <select id="equation_type">
-                        <option value="allencahn">AllenCahn</option>
-                        <option value="oscil">Oscilator</option>
-                    </select>
-                </div>
-                <div class="hyperparams-container">
-                    <div class="const-hyperparams-container">
-                        <h3 class="centered">Гиперпараметры архитектуры</h3>
-                        <div class="param-group">
-                            <label for="input_dim">Input Dimension:</label>
-                            <input type="number" id="input_dim" placeholder="1"/>
-                        </div>
-                        <div class="param-group">
-                            <label for="output_dim">Output Dimension:</label>
-                            <input type="number" id="output_dim" placeholder="1"/>
-                        </div>
-                        <div class="param-group">
-                            <label for="hidden_sizes">Hidden Sizes (через запятую):</label>
-                            <input type="text" id="hidden_sizes" placeholder="32,32,32"/>
-                        </div>
-                    </div>
-
-                    <div class="fourier-params">
-                        <h3 class="centered">Параметры Фурье</h3>
-                        <div class="param-group checkbox-group">
-                            <label for="fourier">Использовать Фурье</label>
-                            <input type="checkbox" id="fourier"/>
-                        </div>
-                        <div class="param-group">
-                            <label for="finput_dim">Fourier Input Dimension:</label>
-                            <input type="number" id="finput_dim" placeholder="Optional"/>
-                        </div>
-                        <div class="param-group">
-                            <label for="fourier_scale">Fourier Scale:</label>
-                            <input type="number" id="fourier_scale" placeholder="Optional"/>
-                        </div>
-                    </div>
+                    <label for="neural_desc">Model description:</label>
+                    <input type="text" id="neural_desc" placeholder="Model description"/>
                 </div>
                 {{equation_type_html | safe}}
                 {{hyperparams_html | safe}}
