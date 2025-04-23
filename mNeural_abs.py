@@ -1,11 +1,11 @@
 from mongo_schemas import *
 import abc
+
 from pymongo import MongoClient
 import gridfs
 import pickle
+import numpy as np
 from bson.objectid import ObjectId
-
-from pinn_init_torch import pinn
 
 
 class AbsNeuralNet(abc.ABC):
@@ -57,7 +57,6 @@ class AbsNeuralNet(abc.ABC):
         # Создаем модель с сохраненными гиперпараметрами
         self.neural_model = mNeuralNetMongo(hyper_param=hyper_params)
         self.neural_model.records = []
-
         
         # Если есть параметры оптимизатора, создаем его
         if hasattr(params, 'optimizer'):
@@ -74,10 +73,6 @@ class AbsNeuralNet(abc.ABC):
         # Создаем и сохраняем датасет
         await self.set_dataset()
 
-    async def abs_save_plot(self, plot):
-        new_rec = MongoRecord(record={'raw': plot})
-        await self.append_rec_to_nn(new_rec)
-
     async def abs_save_weights(self, obj):
         try:
             items_dumps = pickle.dumps(obj, protocol=2)
@@ -92,19 +87,6 @@ class AbsNeuralNet(abc.ABC):
             print('gridfs id', ret_id)
         except Exception as exp:
             print('save_weights_exp', exp)
-
-
-
-    async def abs_set_optimizer(self):
-        try:
-            opti = mOptimizerMongo(method='Adam', params={'lr': 0.001})
-            print('Создан новый оптимизатор:', opti)
-
-            await opti.insert()
-            self.neural_model.optimizer = [opti]
-            await mNeuralNetMongo.m_save(self.neural_model)
-        except Exception as exp:
-            print('save_optimizer_exp', exp)
 
     async def abs_load_weights(self):
         weights = None
@@ -220,14 +202,11 @@ class AbsNeuralNet(abc.ABC):
     @abc.abstractmethod
     async def set_dataset(self, dataset: mDataSet = None): pass
 
-    '''
-    тренировка модели
-    '''
+    @abc.abstractmethod
+    async def load_model(self, in_model : mNeuralNet, in_device): pass
+
     @abc.abstractmethod
     async def train(self): pass
 
-    '''
-    обученная модель рассчитывает значения и возвращает график
-    '''
     @abc.abstractmethod
     async def calc(self): pass
