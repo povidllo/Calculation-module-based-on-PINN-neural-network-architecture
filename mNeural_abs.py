@@ -24,7 +24,7 @@ class AbsNeuralNet(abc.ABC):
         self.neural_model = mNeuralNetMongo(hyper_param=hyper_params)
         self.neural_model.records = []
         
-        # Если есть параметры оптимизатора, создаем его
+        # Если есть параметры оптимизатора, создаем егоche
         if hasattr(params, 'optimizer'):
             optimizer = mOptimizerMongo(
                 method=params.optimizer.method,
