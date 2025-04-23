@@ -33,8 +33,8 @@ class ChatMessage(BaseModel):
     user: Optional[str] = None
 
 class mRecord(BaseModel):
-    record: Optional[dict] = None #{epochs : [loss, time]}
-    tag: Optional[str] = None #loss_data - data for plot
+    record: Optional[dict] = None
+    tag: Optional[str] = None #loss_graph - data for plot
 
 class mOptimizer(BaseModel):
     method: Optional[str] = None
