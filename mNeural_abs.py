@@ -76,6 +76,11 @@ class AbsNeuralNet(abc.ABC):
 
         await mNeuralNetMongo.m_save(self.neural_model)
 
+    async def update_chat(self, new_rec: dict | None = None) -> None:
+        # [find_tag] = [i for i in self.neural_model.records if i['tag'] == 'chat']
+        print(self.neural_model.records)
+        ...
+
     async def update_dataset_for_nn(self, new_dataset : mDataSetMongo):
         await self.neural_model.data_set[0].delete()
         self.neural_model.data_set = [new_dataset]

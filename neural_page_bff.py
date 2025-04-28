@@ -135,6 +135,11 @@ async def update_optimizer_params(optimizer_name: dict = Body(...)):
     return {"list_of_id": opti_id_list}
 
 
+@router.get("/test_chat")
+async def test_chat(request: Request):
+    result = await neural_net_manager.get_chat()
+
+
 def main(loop):
     @asynccontextmanager
     async def lifespan(app: FastAPI):

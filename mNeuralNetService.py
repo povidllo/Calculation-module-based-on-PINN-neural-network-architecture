@@ -37,7 +37,7 @@ class NeuralNetMicroservice:
         print(f"params: {params}")
         model_type = params.my_model_type
 
-        # await self.init_chat()
+        await self.init_chat()
 
         if model_type and model_type in self.models_list:
             self.inner_model = self.models_list[model_type]()
@@ -72,10 +72,15 @@ class NeuralNetMicroservice:
         return b''
 
     async def init_chat(self) -> None:
-        ...
+        new_rec = MongoRecord(record={}, tag='chat')
+        await self.inner_model.append_rec_to_nn(new_rec)
+
 
     async def get_chat(self) -> list:
+        await self.inner_model.update_chat()
         ...
 
     async def update_chat(self, body: Optional[str] = None) -> None:
+        # new_rec = self.inner_model.
+        # await self.inner_model.append_rec_to_nn(new_rec)
         ...

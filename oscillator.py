@@ -18,13 +18,6 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
-
-from torchviz import make_dot
-
-from torchvision import models
-from torchsummary import summary
-import hiddenlayer as hl
-
 from tqdm import tqdm
 import torch
 import matplotlib.pyplot as plt
