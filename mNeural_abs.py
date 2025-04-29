@@ -151,7 +151,9 @@ class AbsNeuralNet(abc.ABC):
                 break
 
         self.mydevice = in_device
-        self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
+        # self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
+        layers = [self.neural_model.hyper_param.input_dim] + self.neural_model.hyper_param.hidden_sizes + [self.neural_model.hyper_param.output_dim]
+        self.mymodel = pinn(layers).to(self.mydevice)
         await self.set_optimizer()
 
         cur_state = await self.abs_load_weights()

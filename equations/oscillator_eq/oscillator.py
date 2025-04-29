@@ -17,9 +17,9 @@ from mongo_schemas import *
 from mNeural_abs import *
 
 
-torch.manual_seed(123)
-np.random.seed(44)
-torch.cuda.manual_seed(44)
+# torch.manual_seed(123)
+# np.random.seed(44)
+# torch.cuda.manual_seed(44)
 
 class oscillator_nn(AbsNeuralNet):
     mymodel = None
@@ -215,7 +215,9 @@ class oscillator_nn(AbsNeuralNet):
         await self.create_model(params)
 
         self.mydevice = in_device
-        self.mymodel = pinn(params).to(self.mydevice)
+        # self.mymodel = pinn(params).to(self.mydevice)
+        layers = [params.input_dim] + params.hidden_sizes + [params.output_dim]
+        self.mymodel = pinn(layers).to(self.mydevice)
         await self.set_optimizer()
 
     async def save_weights(self, path):

@@ -19,9 +19,9 @@ import numpy as np
 from pinn_init_torch import pinn
 from equations.allen_cahn_eq.test_data_generator import generator as test_data_generator
 
-torch.manual_seed(123)
-np.random.seed(44)
-torch.cuda.manual_seed(44)
+# torch.manual_seed(123)
+# np.random.seed(44)
+# torch.cuda.manual_seed(44)
 
 class allen_cahn_nn(AbsNeuralNet):
     mymodel = None
@@ -200,7 +200,10 @@ class allen_cahn_nn(AbsNeuralNet):
         await self.create_model(params)
 
         self.mydevice = in_device
-        self.mymodel = pinn(params).to(self.mydevice)
+        # self.mymodel = pinn(params).to(self.mydevice)
+        layers = [params.input_dim] + params.hidden_sizes + [params.output_dim]
+        self.mymodel = pinn(layers).to(self.mydevice)
+
         await self.set_optimizer()
 
     async def save_weights(self, path):
