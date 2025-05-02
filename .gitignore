@@ -5,3 +5,4 @@
 .idea
 *.pyc
 .DS_Store
+*.npy
