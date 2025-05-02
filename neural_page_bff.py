@@ -58,13 +58,13 @@ async def create_neural_model_post(params: mHyperParams = Body(...)):
 @router.get("/train")
 async def train_neural_net():
     result = await neural_net_manager.train_model()
-    return {"result": result}
+    return {"result": "OK"}
 
 
-@router.post("/load_model")
-async def load_model_handler(model_id: mNeuralNetMongo = Body(...)):
-    hyper_param_dict = await neural_net_manager.load_nn(model_id)
-    return hyper_param_dict
+# @router.post("/load_model")
+# async def load_model_handler(model_id: Optional[mNeuralNetMongo] = None):
+#     hyper_param_dict = await neural_net_manager.load_nn(model_id)
+#     return hyper_param_dict
 
 
 @router.get("/")
@@ -87,7 +87,6 @@ async def root(request: Request):
         }
     )
 
-
 @router.post("/run")
 async def run_neural_net_pict():
     encoded_image = await neural_net_manager.run_model()
@@ -100,7 +99,7 @@ async def run_neural_net_pict():
 
 
 @router.post("/update_train_params")
-async def update_train_parameters(params: dict = Body(...)):
+async def update_train_parameters(params: Optional[dict] = None):
     if neural_net_manager.inner_model:
         await neural_net_manager.inner_model.update_train_params(params)
         return {"result": "OK"}
@@ -120,7 +119,7 @@ async def clear_database():
 
 
 @router.post("/update_optimizer_params")
-async def update_optimizer_params(optimizer_name: dict = Body(...)):
+async def update_optimizer_params(optimizer_name: Optional[dict] = None):
 
     opti_name = optimizer_name['optimizer_name']
 
@@ -135,10 +134,10 @@ async def update_optimizer_params(optimizer_name: dict = Body(...)):
     return {"list_of_id": opti_id_list}
 
 
-@router.get("/test_chat")
-async def test_chat(request: Request):
-    result = await neural_net_manager.get_chat()
-
+# @router.get("/test_chat")
+# async def test_chat(request: Request):
+#     result = await neural_net_manager.get_chat()
+#     return {"result": "OK"}
 
 def main(loop):
     @asynccontextmanager
