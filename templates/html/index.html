@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/static/style/index_style.css">
+        <link rel="icon" href="static/favicon.ico" type="image/x-icon">
+    </head>
+    <body>
+        <div class="main-container">
+            <div class="left-container">
+                <div class="input-group">
+                    <label for="neural_desc">Model description:</label>
+                    <input type="text" id="neural_desc" placeholder="Model description"/>
+                </div>
+                {{equation_type_html | safe}}
+                {{hyperparams_html | safe}}
+            </div>
+
+            <div class="right-container">
+                <div class="train-parameters">
+                    <h3 class="centered">Train Parameters</h3>
+                    <div class="param-group">
+                        <label for="epochs">Number of epochs:</label>
+                        <input type="text" id="epochs" placeholder="Number of epochs"/>
+                    </div>
+                    <!-- <div class="param-group">
+                        <label for="optimizer">Оптимизатор:</label>
+                        <input type="text" id="optimizer" placeholder="Оптимизатор"/>
+                    </div>
+                    <div class="param-group">
+                        <label for="optimizer_lr">Оптимизатор learning rate:</label>
+                        <input type="text" id="optimizer_lr" placeholder="Оптимизатор learning rate"/>
+                    </div> -->
+                    <div class="param-group">
+                    <label for="optimizer">Optimizer:</label>
+                    <select id="optimizer" onchange="updateOptimizerParams()">
+                        <option value="Adam">Adam</option>
+                        <option value="SGD">SGD</option>
+                        <option value="RMSprop">RMSprop</option>
+                        <option value="Adagrad">Adagrad</option>
+                    </select>
+                    </div>
+
+                    <div id="optimizer-params" class="param-group">
+                        <!-- Параметры оптимизатора будут добавляться динамически -->
+                    </div>
+
+                    <div class="button-container">
+                        <input type="button" value="Update Parameters" class="primary-button" onclick="handleUpdateParamsButton()"/>
+                    </div>
+                </div>
+                
+                <div class="button-container">
+                    <input type="button" value="Create" id="create_btn" class="primary-button" onclick="handleCreateButton()"/>
+                    <input type="button" value="Clear Database" class="danger-button" id="clear_db_btn" onclick="handleClearDatabase()"/>
+                </div>
+                
+                <!-- <div id="model_desc"> -->
+                    <!-- <label for="model_list">Выбранная модель: </label>
+                    <select id="model_list" onchange="handle_load_model_list()"></select> -->
+
+                <div id="model_desc">{{ table_html|safe }}</div>
+                <!-- </div> -->
+            </div>
+        </div>
+
+        <div class="chat-container" id="chat_container_id">{{ chat_html |safe }}</div>
+
+        <script src="/static/javascript/index_script.js"></script>
+    </body>
+</html>

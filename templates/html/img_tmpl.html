@@ -1,0 +1,11 @@
+<style type=>
+
+.limit {
+	max-width: 80%;
+}
+</style>
+<div id="my_img">
+	{% if myImage %}
+	<img src="data:image/jpeg;base64,{{ myImage | safe }}" class="limit">
+	{% endif %}
+</div>

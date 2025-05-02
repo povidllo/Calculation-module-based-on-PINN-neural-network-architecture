@@ -1,0 +1,6 @@
+<label for="model_select">Выберите модель:</label>
+<select id="model_select" onchange="handleLoadButton()">
+    {% for item in items %}
+    <option value="{{ item.id }}">{{ item.hyper_param.my_model_desc }}</option>
+    {% endfor %}
+</select>
