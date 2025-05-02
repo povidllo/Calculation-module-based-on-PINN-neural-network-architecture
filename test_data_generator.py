@@ -1,5 +1,5 @@
 import numpy as np
-
+from Modules.oscillator.cfg_test_data_gen import get_config
 import torch
 def generator():
     '''
@@ -9,7 +9,8 @@ def generator():
         []: tuple, массив numpy точек пространства(нужен для визуализации)
         []: tuple, размерность тестовых данных
     '''
-    num_t = 400
+    cfg = get_config()
+    num_t = cfg.num_dots[0]
     t = np.linspace(0, 1, num_t).reshape(-1, 1)
     t = torch.FloatTensor(t)
     return t, [t], [num_t]

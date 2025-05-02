@@ -57,7 +57,6 @@ class AbsNeuralNet(abc.ABC):
         # Создаем модель с сохраненными гиперпараметрами
         self.neural_model = mNeuralNetMongo(hyper_param=hyper_params)
         self.neural_model.records = []
-
         
         # Если есть параметры оптимизатора, создаем его
         if hasattr(params, 'optimizer'):
@@ -128,6 +127,11 @@ class AbsNeuralNet(abc.ABC):
 
         await mNeuralNetMongo.m_save(self.neural_model)
 
+    async def update_chat(self, new_rec: dict | None = None) -> None:
+        # [find_tag] = [i for i in self.neural_model.records if i['tag'] == 'chat']
+        print(self.neural_model.records)
+        ...
+
     async def update_dataset_for_nn(self, new_dataset : mDataSetMongo):
         await self.neural_model.data_set[0].delete()
         self.neural_model.data_set = [new_dataset]
@@ -187,14 +191,14 @@ class AbsNeuralNet(abc.ABC):
         
         # Пересоздаем оптимизатор в PyTorch
         await self.set_optimizer(optimizer)
-    
+
     def add_to_loss_graph(self, time, loss, epoch):
         if len(self.loss_graph) == 0:
             self.loss_graph.append([time, 0, loss])
         else:
             # prev = self.loss_graph[-1]
             self.loss_graph.append([time, epoch, loss])
-    
+
     async def set_loss_graph(self):
         for record in self.neural_model.records:
             if record.tag == 'loss_graph':
@@ -202,11 +206,11 @@ class AbsNeuralNet(abc.ABC):
                 record.record['loss_graph'] = self.loss_graph
                 await mNeuralNetMongo.m_save(self.neural_model)
                 return
-            
+
         # Создаем запись с loss_graph
         loss_record = MongoRecord(record={'loss_graph': self.loss_graph}, tag='loss_graph')
         await loss_record.insert()
-        
+
         # Добавляем запись к модели
         self.neural_model.records.append(loss_record)
         await mNeuralNetMongo.m_save(self.neural_model)
