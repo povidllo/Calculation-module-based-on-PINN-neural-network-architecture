@@ -1,0 +1,33 @@
+<div class="hyperparams-container">
+    <div class="const-hyperparams-container">
+        <h3 class="centered">Architecture Hyperparameters</h3>
+        <div class="param-group">
+            <label for="input_dim">Input Dimension:</label>
+            <input type="number" id="input_dim" placeholder="1"/>
+        </div>
+        <div class="param-group">
+            <label for="output_dim">Output Dimension:</label>
+            <input type="number" id="output_dim" placeholder="1"/>
+        </div>
+        <div class="param-group">
+            <label for="hidden_sizes">Hidden Sizes (separated by commas):</label>
+            <input type="text" id="hidden_sizes" placeholder="32,32,32"/>
+        </div>
+    </div>
+
+    <div class="fourier-params">
+        <h3 class="centered">Fourier Parameters</h3>
+        <div class="param-group checkbox-group">
+            <label for="fourier">Use Fourier</label>
+            <input type="checkbox" id="fourier"/>
+        </div>
+        <div class="param-group">
+            <label for="finput_dim">Fourier Input Dimension:</label>
+            <input type="number" id="finput_dim" placeholder="Optional"/>
+        </div>
+        <div class="param-group">
+            <label for="fourier_scale">Fourier Scale:</label>
+            <input type="number" id="fourier_scale" placeholder="Optional"/>
+        </div>
+    </div>
+</div>

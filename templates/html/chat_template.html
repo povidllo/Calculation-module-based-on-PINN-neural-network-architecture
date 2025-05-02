@@ -1,0 +1,9 @@
+<div class="chat-message">
+    {% if image %}
+    <img id="outputImage" src="data:image/jpeg;base64,{{ image | safe }}" alt="" width="500" height="300">
+    {% endif %}
+</div>
+<div class="user-message">
+    <input type="text" id="command_input" placeholder="Введите команду..." />
+    <button id="send_button" class="primary-button" onclick="handleSendCommand()">Отправить</button>
+</div>
