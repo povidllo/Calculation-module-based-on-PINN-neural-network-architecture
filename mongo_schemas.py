@@ -3,8 +3,6 @@ from fastapi import Body, UploadFile
 from pydantic import BaseModel, ConfigDict
 from beanie import Document, Indexed, init_beanie, Link, WriteRules
 import fastapi_jsonrpc as jsonrpc
-from collections.abc import Callable, Awaitable
-import abc
 
 cur_host = 'localhost'
 glob_user = 'andy'
@@ -33,8 +31,8 @@ class ChatMessage(BaseModel):
     user: Optional[str] = None
 
 class mRecord(BaseModel):
-    record: Optional[dict] = None #{epochs : [loss, time]}
-    tag: Optional[str] = None #loss_data - data for plot
+    record: Optional[dict] = None
+    tag: Optional[str] = None #loss_graph - data for plot
 
 class mOptimizer(BaseModel):
     method: Optional[str] = None
@@ -152,13 +150,6 @@ class mNeuralNetMongo(mNeuralNet, Document):
 
     class Config:
         arbitrary_types_allowed = True
-
-
-
-
-
-
-
 
 class mEstimate(BaseModel):
     file_id : Optional[str] = None
