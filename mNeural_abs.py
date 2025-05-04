@@ -153,7 +153,8 @@ class AbsNeuralNet(abc.ABC):
         self.mydevice = in_device
         # self.mymodel = pinn(self.neural_model.hyper_param).to(self.mydevice)
         layers = [self.neural_model.hyper_param.input_dim] + self.neural_model.hyper_param.hidden_sizes + [self.neural_model.hyper_param.output_dim]
-        self.mymodel = pinn(layers).to(self.mydevice)
+        params = self.neural_model.hyper_param
+        self.mymodel = pinn(layers, params.Fourier, params.FInputDim, params.FourierScale).to(self.mydevice)
         await self.set_optimizer()
 
         cur_state = await self.abs_load_weights()

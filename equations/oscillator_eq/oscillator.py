@@ -217,7 +217,7 @@ class oscillator_nn(AbsNeuralNet):
         self.mydevice = in_device
         # self.mymodel = pinn(params).to(self.mydevice)
         layers = [params.input_dim] + params.hidden_sizes + [params.output_dim]
-        self.mymodel = pinn(layers).to(self.mydevice)
+        self.mymodel = pinn(layers, params.Fourier, params.FInputDim, params.FourierScale).to(self.mydevice)
         await self.set_optimizer()
 
     async def save_weights(self, path):
