@@ -91,7 +91,7 @@ class oscillator_nn(AbsNeuralNet):
             self.params['points_data'] = encoded_data
 
             # Для обратной совместимости пока оставляем и старое сохранение
-            np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
+            # np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
 
             return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 
@@ -280,6 +280,10 @@ class oscillator_nn(AbsNeuralNet):
         u_pred = self.mymodel(x)
         u_pred = u_pred.cpu().detach().numpy()
         true = y
+        err = u_pred - true
+
+        err = np.linalg.norm(err, 2) / np.linalg.norm(true, 2)
+        print(f"L2 Relative Error: {err}")
 
         plt.figure(figsize=(10, 6))
 
