@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 import time
+from torch.autograd import Variable
 
 from optim_Adam_torch import create_optim
 from pinn_init_torch import pinn
@@ -137,6 +138,135 @@ class oscillator_nn(AbsNeuralNet):
             # Сравнение с эталоном
             error = np.linalg.norm(u_pred - true, 2) / np.linalg.norm(true, 2)
             return error
+
+        # Генерация равномерно распределённых точек по заданным диапазонам
+        def generate_linear_points(self, num_points, ranges):
+            grids = [torch.linspace(r[0], r[1], num_points).to(self.device) for r in
+                     ranges]  # Создание равномерных точек в каждом диапазоне
+            return torch.stack(torch.meshgrid(*grids, indexing='ij')).reshape(len(ranges),
+                                                                              -1)  # Объединение в сетку и преобразование в двумерный тензор
+
+        # Генерация случайных точек по заданным диапазонам
+        def generate_random_points(self, num_points, ranges):
+            # Генерация случайных значений по каждому диапазону, общее число точек — num_points ** dim
+            grids = [torch.Tensor(num_points ** (len(ranges))).to(self.device).uniform_(r[0], r[1]) for r in ranges]
+            return torch.stack(grids).reshape(len(ranges), -1)  # Объединение в матрицу размером (dim, N)
+
+        # Вычисляет количество линейных точек как линейную функцию от N
+        def l(self, N):
+            return int(self.linear_mult * N)
+
+        # Основной метод генерации распределённых точек для обучения PINN
+        def make_distributed_points(self):
+            x_range = [0, 1]
+            y_range = [0, 1]
+            t_range = [0, self.T * self.t_max]
+
+            # --- Начальные условия ---
+            with torch.no_grad():  # Без вычисления градиентов
+                x_linear, y_linear = self.generate_linear_points(self.l(self.N_IC), [x_range, y_range])
+                x_random, y_random = self.generate_random_points(self.N_IC, [x_range, y_range])
+
+            # Объединяем линейные и случайные точки начального условия
+            self.x_IC = Variable(torch.cat((x_linear, x_random)), requires_grad=True).to(self.device)
+            self.y_IC = Variable(torch.cat((y_linear, y_random)), requires_grad=True).to(self.device)
+            self.t_IC = Variable(torch.zeros_like(self.x_IC), requires_grad=True).to(self.device)  # t = 0 для IC
+            if self.NN_params['input_size'] != 3:
+                self.beta_IC = Variable(self.beta * torch.ones_like(self.x_IC), requires_grad=True).to(self.device)
+
+            # Вызываем пользовательскую функцию для инициализации значений в начальных точках
+            self.Initial_conditions(self.x_IC, self.y_IC)
+
+            # --- Точки для уравнения (PDE Points) ---
+            # Линейные и случайные точки в пространстве и времени
+            x_linear, y_linear, t_linear = self.generate_linear_points(self.l(self.N_PDE), [x_range, y_range, t_range])
+            x_random, y_random, t_random = self.generate_random_points(self.N_PDE, [x_range, y_range, t_range])
+
+            # Инициализация, если PDE точки ещё не заданы
+            try:
+                self.x_PDE
+            except AttributeError:
+                self.x_PDE = torch.Tensor([]).to(self.device)
+                self.y_PDE = torch.Tensor([]).to(self.device)
+                self.t_PDE = torch.Tensor([]).to(self.device)
+
+            # Объединяем новые случайные точки с ранее сгенерированными (отбрасывая старые)
+            x = Variable(torch.cat((x_random, self.x_PDE[self.N_PDE ** 3:])), requires_grad=True).to(self.device)
+            y = Variable(torch.cat((y_random, self.y_PDE[self.N_PDE ** 3:])), requires_grad=True).to(self.device)
+            t = Variable(torch.cat((t_random, self.t_PDE[self.N_PDE ** 3:])), requires_grad=True).to(self.device)
+
+            # Вычисление уравнений (конвекция, дивергенция, корреляция)
+            if self.NN_params['input_size'] == 3:
+                conv, div, corr = self.compute_PDE(x, y, t)
+            else:
+                beta = Variable(self.beta * torch.ones_like(x), requires_grad=True).to(self.device)
+                conv, div, corr = self.compute_PDE(x, y, t, beta)
+
+            # Адаптивное распределение на основе ошибки (если ошибка > 0.01, то включаем точку)
+            pde_dist = self.weights[0] * torch.where(conv.abs() > 0.01, 1, 0) + \
+                       self.weights[1] * torch.where(div.abs() > 0.01, 1, 0) + \
+                       self.weights[2] * torch.where(corr.abs() > 0.01, 1, 0)
+
+            # Семплируем точки по распределению ошибки
+            sampled_indices_pde = torch.multinomial(pde_dist / pde_dist.sum(), self.N_PDE ** 3, replacement=True)
+
+            # Обновляем точки PDE (добавляем линейные + адаптивно выбранные)
+            self.x_PDE = Variable(torch.cat((x_linear, x[sampled_indices_pde])), requires_grad=True)
+            self.y_PDE = Variable(torch.cat((y_linear, y[sampled_indices_pde])), requires_grad=True)
+            self.t_PDE = Variable(torch.cat((t_linear, t[sampled_indices_pde])), requires_grad=True)
+            if self.NN_params['input_size'] != 3:
+                self.beta_PDE = Variable(self.beta * torch.ones_like(self.x_PDE), requires_grad=True).to(self.device)
+
+            # --- Граничные условия ---
+            with torch.no_grad():
+                # Линейные точки на границах
+                x = torch.linspace(0, 1, self.N_BC).to(self.device)
+                y = torch.linspace(0, 1, self.N_BC).to(self.device)
+                t = torch.linspace(0, self.T * self.t_max, self.N_BC).to(self.device)
+                # c_condition_linear = cnd.form_boundaries([x, y, t], self.ones, self.zeros)
+                c_condition_linear = torch.linspace(0, 1, self.N_BC).to(self.device)
+
+                # Случайные точки на границах
+                x = torch.Tensor(self.N_BC).to(self.device).uniform_(0, 1)
+                y = torch.Tensor(self.N_BC).to(self.device).uniform_(0, 1)
+                t = torch.Tensor(self.N_BC).to(self.device).uniform_(0, self.T * self.t_max)
+                # c_condition_random = cnd.form_boundaries([x, y, t], self.ones, self.zeros)
+                c_condition_random = torch.linspace(0, 1, self.N_BC).to(self.device)
+
+                # Объединяем точки и делаем их дифференцируемыми
+                self.x_BC = Variable(torch.cat((c_condition_linear[:, 0], c_condition_random[:, 0])),
+                                     requires_grad=True)
+                self.y_BC = Variable(torch.cat((c_condition_linear[:, 1], c_condition_random[:, 1])),
+                                     requires_grad=True)
+                self.t_BC = Variable(torch.cat((c_condition_linear[:, 2], c_condition_random[:, 2])),
+                                     requires_grad=True)
+
+                # Вычисление граничных условий
+                if self.NN_params['input_size'] == 3:
+                    self.c, self.p, self.u = self.Boundary_conditions(self.x_BC, self.y_BC, self.t_BC, self.beta)
+                else:
+                    self.beta_BC = Variable(self.beta * torch.ones_like(self.x_BC), requires_grad=True)
+                    self.c, self.p, self.u = self.Boundary_conditions(self.x_BC, self.y_BC, self.t_BC, self.beta_BC)
+
+                # Разделение на разные участки границы
+                self.where_c_tb = (self.y_BC == 1) | (self.y_BC == 0)  # верх/низ
+                self.where_c_in = (self.x_BC == 0) & (
+                            (self.y_BC - 1 / 2).abs().round(decimals=5) <= self.zeta / 2)  # вход
+                self.where_c_out = (self.x_BC == 0) & (
+                            (self.y_BC - 1 / 2).abs().round(decimals=5) > self.zeta / 2)  # выход
+
+                # Обработка граничных точек для разных участков
+                self.x_lr = Variable(self.x_BC[self.where_c_out], requires_grad=True).to(self.device)
+                self.y_lr = Variable(self.y_BC[self.where_c_out], requires_grad=True).to(self.device)
+                self.t_lr = Variable(self.t_BC[self.where_c_out], requires_grad=True).to(self.device)
+
+                self.x_tb = Variable(self.x_BC[self.where_c_tb], requires_grad=True).to(self.device)
+                self.y_tb = Variable(self.y_BC[self.where_c_tb], requires_grad=True).to(self.device)
+                self.t_tb = Variable(self.t_BC[self.where_c_tb], requires_grad=True).to(self.device)
+
+                if self.NN_params['input_size'] != 3:
+                    self.beta_lr = Variable(self.beta * torch.ones_like(self.x_lr), requires_grad=True)
+                    self.beta_tb = Variable(self.beta * torch.ones_like(self.x_tb), requires_grad=True)
 
 
     async def set_dataset(self):
