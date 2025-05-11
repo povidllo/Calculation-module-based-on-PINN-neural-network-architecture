@@ -91,7 +91,7 @@ class oscillator_nn(AbsNeuralNet):
             self.params['points_data'] = encoded_data
 
             # Для обратной совместимости пока оставляем и старое сохранение
-            np.save(sys.path[0] + '/data/OSC.npy', y.cpu().detach().numpy())
+            # np.save(sys.path[0] + self.neural_model.hyper_param.path_true_data, y.cpu().detach().numpy())
 
             return {'main': x_physics, 'secondary': x_data, 'secondary_true': y_data}
 
