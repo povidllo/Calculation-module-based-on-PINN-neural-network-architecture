@@ -309,26 +309,20 @@ class allen_cahn_nn(AbsNeuralNet):
         other_nn = allen_cahn_nn()
         await other_nn.load_model(other_model, self.mydevice)
         
-        # Генерируем тестовые данные
         test_data, [t, x], [N, T] = test_data_generator()
         test_variables = torch.FloatTensor(test_data).to(self.mydevice)
         
-        # Получаем предсказания обеих моделей
         with torch.no_grad():
             u_pred1 = self.mymodel(test_variables)
             u_pred2 = other_nn.mymodel(test_variables)
         
-        # Преобразуем в numpy
         u_pred1 = u_pred1.cpu().numpy().reshape(N, T)
         u_pred2 = u_pred2.cpu().numpy().reshape(N, T)
         
-        # Создаем сетку для 3D графиков
         T_mesh, X_mesh = np.meshgrid(t, x)
         
-        # Создаем фигуру с двумя 3D графиками
         fig = plt.figure(figsize=(18, 6))
         
-        # Первый субплот - первая модель
         ax1 = fig.add_subplot(1, 2, 1, projection='3d')
         surf1 = ax1.plot_surface(T_mesh, X_mesh, u_pred1, cmap='jet',
                                 linewidth=0, antialiased=True)
@@ -339,7 +333,6 @@ class allen_cahn_nn(AbsNeuralNet):
         ax1.set_title(f'Модель 1: {self.neural_model.hyper_param.my_model_desc}')
         ax1.set_zlim(-1, 1)
         
-        # Второй субплот - вторая модель
         ax2 = fig.add_subplot(1, 2, 2, projection='3d')
         surf2 = ax2.plot_surface(T_mesh, X_mesh, u_pred2, cmap='jet',
                                 linewidth=0, antialiased=True)
@@ -350,13 +343,11 @@ class allen_cahn_nn(AbsNeuralNet):
         ax2.set_title(f'Модель 2: {other_model.hyper_param.my_model_desc}')
         ax2.set_zlim(-1, 1)
         
-        # Рассчитываем и выводим разницу между моделями
         diff = np.linalg.norm(u_pred1 - u_pred2, 2) / np.linalg.norm(u_pred1, 2)
         plt.suptitle(f'Относительная разница между моделями: {diff:.4f}', y=1.02)
         
         plt.tight_layout()
         
-        # Сохраняем график
         my_stringIObytes = io.BytesIO()
         plt.savefig(my_stringIObytes, format='jpg')
         my_stringIObytes.seek(0)

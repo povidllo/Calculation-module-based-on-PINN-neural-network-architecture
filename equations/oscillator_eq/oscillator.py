@@ -321,33 +321,26 @@ class oscillator_nn(AbsNeuralNet):
         other_nn = oscillator_nn()
         await other_nn.load_model(other_model, self.mydevice)
         
-        # Генерируем тестовые данные
         x, _, _ = test_data_generator()
         
-        # Получаем предсказания обеих моделей
         u_pred1 = self.mymodel(x)
         u_pred2 = other_nn.mymodel(x)
         
-        # Преобразуем в numpy
         u_pred1 = u_pred1.cpu().detach().numpy()
         u_pred2 = u_pred2.cpu().detach().numpy()
         x_plot = x.cpu().numpy() if torch.is_tensor(x) else x
         
-        # Создаем график сравнения
         plt.figure(figsize=(12, 6))
         
-        # Строим графики обеих моделей
         plt.plot(x_plot, u_pred1, 'b-', linewidth=2, label=f'Модель 1: {self.neural_model.hyper_param.my_model_desc}')
         plt.plot(x_plot, u_pred2, 'r--', linewidth=2, label=f'Модель 2: {other_model.hyper_param.my_model_desc}')
         
-        # Настройки графика
         plt.xlabel('Временная координата (t)', fontsize=12)
         plt.ylabel('Значение y', fontsize=12)
         plt.title('Сравнение предсказаний двух моделей', fontsize=14)
         plt.legend(loc='upper right', fontsize=12)
         plt.grid(True, linestyle='--', alpha=0.7)
         
-        # Рассчитываем и выводим разницу между моделями
         diff = np.linalg.norm(u_pred1 - u_pred2, 2) / np.linalg.norm(u_pred1, 2)
         plt.text(0.05, 0.95, f'Относительная разница между моделями: {diff:.4f}',
                 transform=plt.gca().transAxes, fontsize=12,
@@ -355,7 +348,6 @@ class oscillator_nn(AbsNeuralNet):
         
         plt.tight_layout()
         
-        # Сохраняем график
         my_stringIObytes = io.BytesIO()
         plt.savefig(my_stringIObytes, format='jpg')
         my_stringIObytes.seek(0)
