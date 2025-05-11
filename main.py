@@ -19,6 +19,9 @@ from mongo_schemas import *
 from mNeuralNetService import NeuralNetMicroservice
 
 from optimizer_setings import optimizer_dict
+from bokeh.plotting import figure, show
+from bokeh.io import output_file
+from bokeh.models import LinearAxis, Range1d
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -134,6 +137,37 @@ async def update_optimizer_params(optimizer_name: dict = Body(...)):
 
     return {"list_of_id": opti_id_list}
 
+
+@router.get("/show_graph")
+async def show_graph():
+    data = await neural_net_manager.inner_model.get_loss_graph()
+
+    print(data)
+
+    # Разбиваем на составляющие
+    time = [item[0] for item in data]
+    epochs = [item[1] for item in data]
+    loss = [item[2] for item in data]
+
+    # Основная фигура с осью X = epochs (внизу)
+    p = figure(title="Loss vs Epochs and Time", x_axis_label="Epochs", y_axis_label="Loss", width=700, height=400)
+
+    # Основная линия
+    p.line(epochs, loss, line_width=2, color="navy", legend_label="Loss")
+    p.circle(epochs, loss, size=6, color="navy")
+
+    # Дополнительная ось X (вверху) для времени
+    p.extra_x_ranges = {"time_range": Range1d(start=min(time), end=max(time))}
+    p.add_layout(LinearAxis(x_range_name="time_range", axis_label="Time (s)"), 'above')
+
+    # Невидимая линия, просто чтобы активировать верхнюю ось
+    p.line(time, loss, x_range_name="time_range", line_alpha=0, line_width=0)
+
+    # Вывод в HTML
+    output_file("loss_dual_x_axis.html")
+    show(p)
+
+    return {"result": "OK"}
 
 def main(loop):
     @asynccontextmanager

@@ -214,6 +214,13 @@ class AbsNeuralNet(abc.ABC):
         self.neural_model.records.append(loss_record)
         await mNeuralNetMongo.m_save(self.neural_model)
 
+    async def get_loss_graph(self):
+        for record in self.neural_model.records:
+            if record.tag == 'loss_graph':
+                return record.record['loss_graph']
+            return None
+        return None
+
     @abc.abstractmethod
     async def construct_model(self, params : mHyperParams, in_device): pass
 

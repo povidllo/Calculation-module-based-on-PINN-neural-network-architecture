@@ -110,6 +110,8 @@ const handleSendCommand = async () => {
         await callBffGet('train');
     } else if (command === 'run') {
         await callBffPost('run', {});
+    } else if (command === 'graph') {
+        await callBffGet('show_graph')
     }
 };
 
