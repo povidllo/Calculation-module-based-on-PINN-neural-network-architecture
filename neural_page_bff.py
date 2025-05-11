@@ -58,7 +58,6 @@ async def create_neural_model_post(params: mHyperParams = Body(...)):
 @router.get("/train")
 async def train_neural_net():
     result = await neural_net_manager.train_model()
-
     return {"result": "OK"}
 
 
