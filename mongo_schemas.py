@@ -59,7 +59,7 @@ class mHyperParams(BaseModel):
     FInputDim : Optional[bool] = None
     FourierScale : Optional[bool] = None
     
-    path_true_data : Optional[str] = "/data/OSC.npy"
+    path_true_data : Optional[str] = "/equations/oscillator_eq/OSC.npy"
     save_weights_path : Optional[str] = "/osc_1d.pth"
 
 
