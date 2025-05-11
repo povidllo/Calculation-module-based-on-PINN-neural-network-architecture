@@ -1,0 +1,8 @@
+<div class="param-group">
+
+  {% for parameter in optimizer_list %}
+  <label for={{parameter['id']}}>{{parameter['label']}}</label>
+  <input type={{parameter['type']}} id={{parameter['id']}} value="{{parameter['default_value']}}">
+  {% endfor %}
+
+</div>
