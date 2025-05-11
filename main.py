@@ -85,6 +85,13 @@ async def run_neural_net_pict():
     return {"OK"}
 
 
+async def compare_models(model1_id: str, model2_id: str):
+    base64_encoded_image = await neural_net_manager.compare_models(model1_id, model2_id)
+    image_html = templates.get_template("/html/chat_template.html").render({"image": base64_encoded_image})
+    letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['chat_container_id', image_html])
+    await neural_net_manager.ws_manager.send_personal_message_json(letter)
+    return {"OK"}
+
 
 async def update_train_parameters(params: dict = None):
 
@@ -136,6 +143,7 @@ def main(main_loop):
     app.add_api_route("/update_train_params", update_train_parameters, methods=["POST"])
     app.add_api_route("/clear_database", clear_database, methods=["GET"])
     app.add_api_route("/get_host", get_host, methods=["GET"])
+    app.add_api_route("/compare_models", compare_models, methods=["POST"])
 
     app.mount("/static", StaticFiles(directory="templates"), name="static")
 

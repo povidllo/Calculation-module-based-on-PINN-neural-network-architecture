@@ -234,3 +234,6 @@ class AbsNeuralNet(abc.ABC):
     '''
     @abc.abstractmethod
     async def calc(self): pass
+
+    @abc.abstractmethod
+    async def compare_with(self, other_model: mNeuralNetMongo): pass

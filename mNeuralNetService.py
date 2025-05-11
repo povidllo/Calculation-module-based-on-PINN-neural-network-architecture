@@ -69,3 +69,20 @@ class NeuralNetMicroservice:
             base64_encoded_image = await self.inner_model.calc()
 
         return base64_encoded_image
+
+    async def compare_models(self, model1_id: str, model2_id: str):
+        # Загружаем обе модели
+        model1 = await mNeuralNetMongo.get(model1_id, fetch_links=True)
+        model2 = await mNeuralNetMongo.get(model2_id, fetch_links=True)
+        
+        # Проверяем, что модели одного типа
+        if model1.hyper_param.my_model_type != model2.hyper_param.my_model_type:
+            raise ValueError("Модели должны быть одного типа для сравнения")
+            
+        # Создаем экземпляры моделей
+        self.inner_model = (self.models_list[model1.hyper_param.my_model_type])()
+        await self.inner_model.load_model(model1, self.device)
+        
+        # Получаем график сравнения
+        base64_encoded_image = await self.inner_model.compare_with(model2)
+        return base64_encoded_image
