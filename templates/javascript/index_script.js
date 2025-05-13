@@ -45,7 +45,7 @@ const handleRunButton = async () => {
 
 const handleCreateButton = async () => {
     const desc = document.getElementById('neural_desc')?.value;
-    const model_type = document.getElementById(equation_type)?.value || 'oscil';
+    const model_type = document.getElementById('equation_type').value || 'oscil';
 
     const getValue = id => parseInt(document.getElementById(id)?.value) || 1;
     const getOptional = (id, parser) => {
