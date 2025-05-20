@@ -1,0 +1,15 @@
+<div id="main_div">
+    {% for item_type, data in items %}
+        {% include "/html/" + item_type + ".html" with context %}
+    {% endfor %}
+</div>
+
+<style>
+    #main_div {
+        height: 100px; /* фиксированная высота */
+        overflow-y: auto; /* вертикальный скролл */
+        border: 1px solid #ccc; /* опционально, для наглядности */
+        display: flex;
+        flex-direction: column;
+    }
+</style>

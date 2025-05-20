@@ -112,6 +112,10 @@ const handleSendCommand = async () => {
         await callBffPost('run', {});
     } else if (command === 'graph') {
         await callBffGet('show_graph')
+    } else if (command === 'records') {
+        await callBffGet("print_rec")
+    } else if (command === 'chat') {
+        await callBffGet("inc_chat")
     }
 };
 

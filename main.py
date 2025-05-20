@@ -63,6 +63,15 @@ async def train_neural_net():
     result = await neural_net_manager.train_model()
     return {"result": result}
 
+@router.get("/print_rec")
+async def print_rec():
+    await neural_net_manager.inner_model.print_rec()
+
+    return {"Response": "OK"}
+
+@router.get("/inc_chat")
+async def inc_chat():
+    pass
 
 @router.post("/load_model")
 async def load_model_handler(model_id: mNeuralNetMongo = Body(...)):

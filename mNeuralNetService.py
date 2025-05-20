@@ -68,4 +68,5 @@ class NeuralNetMicroservice:
         if self.inner_model is not None:
             base64_encoded_image = await self.inner_model.calc()
 
+
         return base64_encoded_image

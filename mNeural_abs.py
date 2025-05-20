@@ -122,6 +122,10 @@ class AbsNeuralNet(abc.ABC):
         
         return weights
 
+    async def print_rec(self):
+        if self.neural_model is not None:
+            for rec in self.neural_model.records:
+                print(rec.record)
 
     async def append_rec_to_nn(self, new_rec : MongoRecord):
         self.neural_model.records.append(new_rec)
