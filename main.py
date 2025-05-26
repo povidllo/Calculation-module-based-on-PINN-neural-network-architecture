@@ -19,9 +19,10 @@ from mongo_schemas import *
 from mNeuralNetService import NeuralNetMicroservice
 
 from optimizer_setings import optimizer_dict
-from bokeh.plotting import figure, show
-from bokeh.io import output_file
-from bokeh.models import LinearAxis, Range1d
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+import base64
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -158,25 +159,41 @@ async def show_graph():
     epochs = [item[1] for item in data]
     loss = [item[2] for item in data]
 
-    # Основная фигура с осью X = epochs (внизу)
-    p = figure(title="Loss vs Epochs and Time", x_axis_label="Epochs", y_axis_label="Loss", width=700, height=400)
+    # epochs = np.arange(1, 11)
+    # loss = np.random.uniform(0.2, 1.0, size=len(epochs))
+    # time = np.linspace(0, 1200, len(epochs))
+    # Создаем фигуру
+    fig, ax1 = plt.subplots(figsize=(8, 5))
 
-    # Основная линия
-    p.line(epochs, loss, line_width=2, color="navy", legend_label="Loss")
-    p.circle(epochs, loss, size=6, color="navy")
+    ax1.plot(epochs, loss, marker='o', label='Loss')
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('Loss')
+    ax1.set_xticks(epochs)
+    ax1.set_yscale('log')
+    ax1.grid(True)
 
-    # Дополнительная ось X (вверху) для времени
-    p.extra_x_ranges = {"time_range": Range1d(start=min(time), end=max(time))}
-    p.add_layout(LinearAxis(x_range_name="time_range", axis_label="Time (s)"), 'above')
+    ax2 = ax1.twiny()
+    ax2.set_xlim(ax1.get_xlim())
+    ax2.set_xticks(epochs)
+    ax2.set_xticklabels([f"{int(t)}s" for t in time])
+    ax2.set_xlabel('Time')
 
-    # Невидимая линия, просто чтобы активировать верхнюю ось
-    p.line(time, loss, x_range_name="time_range", line_alpha=0, line_width=0)
+    plt.title('Loss over Epochs and Time')
+    plt.tight_layout()
 
-    # Вывод в HTML
-    output_file("loss_dual_x_axis.html")
-    show(p)
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='jpg', dpi=300)
+    plt.close(fig)
+    buffer.seek(0)
 
-    return {"result": "OK"}
+    img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+
+    image_html = templates.get_template("html/chat_template.html").render({"image": img_base64})
+
+    letter = ChatMessage(user=glob_user, msg_type='jinja_tmpl', data=['chat_container_id', image_html])
+    await neural_net_manager.ws_manager.send_personal_message_json(letter)
+
+    return {"status": "OK"}
 
 def main(loop):
     @asynccontextmanager
