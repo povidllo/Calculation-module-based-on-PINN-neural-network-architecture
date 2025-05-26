@@ -94,7 +94,6 @@ class AbsNeuralNet(abc.ABC):
             print('save_weights_exp', exp)
 
 
-
     async def abs_set_optimizer(self):
         try:
             opti = mOptimizerMongo(method='Adam', params={'lr': 0.001})
@@ -143,7 +142,7 @@ class AbsNeuralNet(abc.ABC):
     '''
     async def load_model(self, in_model: mNeuralNet, in_device):
         load_nn = await mNeuralNetMongo.get(in_model.stored_item_id, fetch_links=True)
-
+        print(f"Смотри сюда!!!! \n{load_nn.model_dump()}")
         self.neural_model = load_nn
         # self.neural_model.records = []
         await self.set_dataset()
@@ -194,6 +193,10 @@ class AbsNeuralNet(abc.ABC):
         
         # Пересоздаем оптимизатор в PyTorch
         await self.set_optimizer(optimizer)
+
+
+    def delete_loss_graph(self):
+        self.loss_graph = []
     
     def add_to_loss_graph(self, time, loss, epoch):
         if len(self.loss_graph) == 0:

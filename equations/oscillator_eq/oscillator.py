@@ -230,6 +230,7 @@ class oscillator_nn(AbsNeuralNet):
         self.config = self.neural_model.hyper_param
         epochs = self.config.epochs
         start_time = time.time()
+        self.delete_loss_graph()
         for epoch in tqdm(range(epochs)):
             self.torch_optimizer.zero_grad()
             u_pred = self.mymodel(self.variables)

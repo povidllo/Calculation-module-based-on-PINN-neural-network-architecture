@@ -159,16 +159,12 @@ async def show_graph():
     epochs = [item[1] for item in data]
     loss = [item[2] for item in data]
 
-    # epochs = np.arange(1, 11)
-    # loss = np.random.uniform(0.2, 1.0, size=len(epochs))
-    # time = np.linspace(0, 1200, len(epochs))
-    # Создаем фигуру
     fig, ax1 = plt.subplots(figsize=(8, 5))
 
     ax1.plot(epochs, loss, marker='o', label='Loss')
     ax1.set_xlabel('Epoch')
     ax1.set_ylabel('Loss')
-    ax1.set_xticks(epochs)
+    # ax1.set_xticks(epochs)
     ax1.set_yscale('log')
     ax1.grid(True)
 

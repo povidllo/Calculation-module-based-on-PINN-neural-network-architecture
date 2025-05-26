@@ -52,6 +52,8 @@ class NeuralNetMicroservice:
 
         my_nn = await mNeuralNetMongo.get_item_by_id(inp_nn)
 
+        print(f"\n\nТуточки \n{my_nn.model_dump()} \nценок\n")
+
         print(f"my_nn - {type(my_nn)} {my_nn.model_dump()}")
         print(f"hyper_param1 - {type(my_nn.hyper_param)}, {my_nn.hyper_param}")
         params = await my_nn.hyper_param.fetch()

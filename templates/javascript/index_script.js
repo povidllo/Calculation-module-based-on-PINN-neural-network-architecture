@@ -106,11 +106,11 @@ const handleClearDatabase = async () => {
 
 const handleSendCommand = async () => {
     const command = document.getElementById('command_input')?.value;
-    if (command === 'train') {
+    if (command === 't') {
         await callBffGet('train');
-    } else if (command === 'run') {
+    } else if (command === 'r') {
         await callBffPost('run', {});
-    } else if (command === 'graph') {
+    } else if (command === 'g') {
         await callBffGet('show_graph')
     } else if (command === 'records') {
         await callBffGet("print_rec")
